@@ -1,0 +1,32 @@
+# app/api/v1/api.py - Main API router
+
+from fastapi import APIRouter
+
+# Import endpoint routers
+from app.api.v1.endpoints import auth
+
+# Create main API router
+api_router = APIRouter()
+
+# Health check for API
+@api_router.get("/health")
+async def api_health():
+    """API health check"""
+    return {"status": "healthy", "api_version": "v1"}
+
+# Include endpoint routers
+api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+
+# Temporary test endpoint
+@api_router.get("/test")
+async def test_endpoint():
+    """Test endpoint to verify API is working"""
+    return {
+        "message": "BC Legal Tech API v1 is working!",
+        "endpoints": [
+            "/api/v1/health",
+            "/api/v1/test",
+            "/api/v1/auth/register",
+            "/api/v1/auth/login"
+        ]
+    }

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_DB: bc_legal_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./setup-database.sql:/docker-entrypoint-initdb.d/01-setup.sql
+    networks:
+      - bc-legal-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - bc-legal-network
+
+  localstack-minimal:
+    image: localstack/localstack:3.8.1  # Use stable version
+    container_name: bc-legal-localstack
+    environment:
+      SERVICES: s3
+      DEBUG: 0  # Reduce logging
+      DATA_DIR: /var/lib/localstack/data
+      PERSISTENCE: 0  # Disable persistence to avoid file issues
+      S3_SKIP_SIGNATURE_VALIDATION: 1
+      DISABLE_CORS_CHECKS: 1
+    ports:
+      - "4566:4566"
+    networks:
+      - bc-legal-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  localstack_data:
+
+networks:
+  bc-legal-network:
+    driver: bridge
+    
