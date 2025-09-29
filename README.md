@@ -1,6 +1,6 @@
 # BC Legal Tech
 
-AI-powered legal document intelligence platform for Canadian law firms.
+AI-powered legal document intelligence platform for law firms in British Columbia.
 
 ## Quick Start
 

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Create FastAPI application
 app = FastAPI(
     title="BC Legal Tech API",
-    description="AI-powered legal document intelligence platform for Canadian law firms",
+    description="AI-powered legal document intelligence platform for law firms in British Columbia.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
