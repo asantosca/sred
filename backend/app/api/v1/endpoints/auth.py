@@ -1,6 +1,6 @@
 # app/api/v1/endpoints/auth.py - Authentication endpoints
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 
@@ -44,8 +44,8 @@ async def register_company(
     )
     
     return AuthResponse(
-        user=UserResponse.from_orm(admin_user),
-        company=CompanyResponse.from_orm(company),
+        user=UserResponse.model_validate(admin_user),
+        company=CompanyResponse.model_validate(company),
         token=token
     )
 
@@ -73,8 +73,8 @@ async def login(
     )
     
     return AuthResponse(
-        user=UserResponse.from_orm(user),
-        company=CompanyResponse.from_orm(company),
+        user=UserResponse.model_validate(user),
+        company=CompanyResponse.model_validate(company),
         token=token
     )
 
@@ -98,15 +98,58 @@ async def logout():
     """
     return {"message": "Successfully logged out"}
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=AuthResponse)
 async def get_current_user(
-    # TODO: Add dependency to get current user from token
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get current user information
+    Get current authenticated user information
+    
+    Returns the full user profile, company details, and a fresh token.
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Get current user not implemented yet"
+    from app.services.auth import AuthService
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    from app.models.models import User
+    from app.core.tenant import get_tenant_context
+    
+    # Extract tenant context from request (handles JWT extraction)
+    tenant_context = await get_tenant_context(request)
+    
+    if not tenant_context:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    # Fetch user with company relationship
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.company))
+        .where(User.id == tenant_context.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Get user permissions
+    auth_service = AuthService(db)
+    access_token = await auth_service.create_user_auth_token(user)
+    
+    # Prepare response
+    token = Token(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    return AuthResponse(
+        user=UserResponse.model_validate(user),
+        company=CompanyResponse.model_validate(user.company),
+        token=token
     )
