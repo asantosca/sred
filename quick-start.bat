@@ -85,7 +85,7 @@ goto end
 
 :backend
 echo 🐍 Starting backend server...
-cd bc-legal-backend
+cd backend
 echo Starting FastAPI server at http://localhost:8000
 poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 cd ..
@@ -93,7 +93,7 @@ goto end
 
 :frontend
 echo ⚛️  Starting frontend server...
-cd bc-legal-frontend
+cd frontend
 echo Starting React development server at http://localhost:5173
 npm run dev
 cd ..

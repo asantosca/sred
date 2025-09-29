@@ -76,7 +76,7 @@ Write-Host "   SUCCESS: .env file created" -ForegroundColor Green
 
 Write-Host "`nPython environment setup complete!" -ForegroundColor Green
 Write-Host "`nNext steps:" -ForegroundColor Cyan
-Write-Host "1. Stay in bc-legal-backend directory" -ForegroundColor White
+Write-Host "1. Stay in backend directory" -ForegroundColor White
 Write-Host "2. Virtual environment is already activated" -ForegroundColor White
 Write-Host "3. Ready to create FastAPI project structure" -ForegroundColor White
 Write-Host "`nTo reactivate venv later: .\venv\Scripts\Activate.ps1" -ForegroundColor Yellow

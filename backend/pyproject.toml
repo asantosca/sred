@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "bc-legal-backend"
+name = "backend"
 version = "0.1.0"
 description = "AI-powered legal document intelligence platform"
-authors = ["Alexandre alexandre@bclocaltech.ca"]
+authors = ["Alexandre alexandre@bclegaltech.ca"]
 
 [tool.poetry.dependencies]
 python = "^3.12"  # Python 3.12 LTS (supported until 2028)

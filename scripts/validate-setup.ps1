@@ -88,7 +88,7 @@ function Verify-Python312 {
 function Update-PyprojectToml {
     Write-Host "`nStep 4: Updating pyproject.toml..." -ForegroundColor Yellow
     
-    $pyprojectPath = "bc-legal-backend\pyproject.toml"
+    $pyprojectPath = "backend\pyproject.toml"
     
     if (Test-Path $pyprojectPath) {
         try {
@@ -124,7 +124,7 @@ function Configure-Poetry {
         
         # Remove any existing virtual environments
         Write-Host "  Cleaning old Poetry environments..." -ForegroundColor Cyan
-        Set-Location "bc-legal-backend" -ErrorAction SilentlyContinue
+        Set-Location "backend" -ErrorAction SilentlyContinue
         poetry env remove --all 2>$null
         
         # Configure Poetry to use Python 3.12
@@ -147,7 +147,7 @@ function Configure-Poetry {
 function Test-Installation {
     Write-Host "`nStep 6: Testing complete setup..." -ForegroundColor Yellow
     
-    Set-Location "bc-legal-backend" -ErrorAction SilentlyContinue
+    Set-Location "backend" -ErrorAction SilentlyContinue
     
     try {
         # Test Poetry install
@@ -188,7 +188,7 @@ function Show-NextSteps {
     
     Write-Host "`nNext Steps:" -ForegroundColor Yellow
     Write-Host "1. Install backend dependencies:" -ForegroundColor White
-    Write-Host "   cd bc-legal-backend" -ForegroundColor Gray
+    Write-Host "   cd backend" -ForegroundColor Gray
     Write-Host "   poetry install" -ForegroundColor Gray
     
     Write-Host "2. Start FastAPI development server:" -ForegroundColor White

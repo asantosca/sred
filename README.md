@@ -13,14 +13,14 @@ AI-powered legal document intelligence platform for Canadian law firms.
 2. **Setup backend:**
 
    ```bash
-   cd bc-legal-backend
+   cd backend
    poetry install
    poetry run uvicorn app.main:app --reload
    ```
 
 3. **Setup frontend:**
    ```bash
-   cd bc-legal-frontend
+   cd frontend
    npm install
    npm run dev
    ```
@@ -29,9 +29,9 @@ AI-powered legal document intelligence platform for Canadian law firms.
 
 ```
 bc-legal-tech/
-├── bc-legal-backend/     # FastAPI backend
-├── bc-legal-frontend/    # React frontend
-├── bc-legal-infrastructure/  # Terraform configs
+├── backend/     # FastAPI backend
+├── frontend/    # React frontend
+├── infrastructure/  # Terraform configs
 ├── docker-compose.yml   # Local development services
 └── setup-database.sql   # Database schema
 ```
@@ -54,6 +54,6 @@ bc-legal-tech/
 
 ## Documentation
 
-- [API Documentation](bc-legal-backend/README.md)
-- [Frontend Guide](bc-legal-frontend/README.md)
-- [Infrastructure Setup](bc-legal-infrastructure/README.md)
+- [API Documentation](backend/README.md)
+- [Frontend Guide](frontend/README.md)
+- [Infrastructure Setup](infrastructure/README.md)
