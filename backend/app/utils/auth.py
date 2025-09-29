@@ -1,24 +1,37 @@
-# app/utils/auth.py - Temporary fix for password hashing
+# app/utils/auth.py - Authentication utilities with proper bcrypt
 
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-import hashlib
-import os
+from passlib.context import CryptContext
+import logging
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
+# Password hashing with bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plaintext password against its hash - temporary simple implementation"""
-    # Simple SHA256 hash for testing (NOT for production)
-    test_hash = hashlib.sha256(plain_password.encode()).hexdigest()
-    return test_hash == hashed_password
+    """Verify a plaintext password against its hash"""
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
 
 def get_password_hash(password: str) -> str:
-    """Generate password hash - temporary simple implementation"""
-    # Simple SHA256 hash for testing (NOT for production)
-    # TODO: Fix bcrypt and switch back to proper password hashing
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Generate password hash with bcrypt"""
+    try:
+        # Bcrypt has a 72-byte limit, handle long passwords
+        if len(password.encode('utf-8')) > 72:
+            logger.warning("Password exceeds 72 bytes, truncating")
+            password = password[:72]
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error(f"Password hashing error: {e}")
+        raise ValueError("Failed to hash password")
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""
