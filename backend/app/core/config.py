@@ -1,7 +1,7 @@
 # app/core/config.py - Simple configuration for BC Legal Tech
 
 import os
-from typing import List
+from typing import List, Optional
 
 class Settings:
     """Simple settings class"""
@@ -25,6 +25,13 @@ class Settings:
     
     # CORS settings
     ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+
+    # AWS/S3 settings (should already be there)
+    AWS_ACCESS_KEY_ID: str = "test"
+    AWS_SECRET_ACCESS_KEY: str = "test"
+    AWS_ENDPOINT_URL: Optional[str] = "http://localhost:4566"  # LocalStack
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "bc-legal-documents"
 
 # Create global settings instance
 settings = Settings()

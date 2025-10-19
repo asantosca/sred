@@ -1,0 +1,48 @@
+# Claude Code Configuration for BC Legal Tech
+
+# Project context
+project_name = "BC Legal Tech"
+project_type = "fullstack"
+tech_stack = ["FastAPI", "React", "TypeScript", "PostgreSQL", "Redis", "S3"]
+
+# Development guidelines
+[guidelines]
+commit_style = "conventional"  # Use conventional commits (feat:, fix:, etc.)
+code_style = "Follow PEP 8 for Python, ESLint config for TypeScript"
+test_before_commit = true
+
+# File patterns to focus on
+[file_patterns]
+backend = "backend/app/**/*.py"
+frontend = "frontend/src/**/*.{ts,tsx}"
+config = "*.{yml,yaml,json,toml}"
+docs = "**/*.md"
+
+# Common tasks
+[tasks.backend_start]
+description = "Start FastAPI backend"
+command = "cd backend && poetry run uvicorn app.main:app --reload"
+
+[tasks.frontend_start]
+description = "Start React frontend"
+command = "cd frontend && npm run dev"
+
+[tasks.docker_start]
+description = "Start Docker services"
+command = "docker-compose up -d"
+
+[tasks.docker_stop]
+description = "Stop Docker services"
+command = "docker-compose down"
+
+# Ignore patterns for Claude Code
+[ignore]
+patterns = [
+  "**/__pycache__/**",
+  "**/node_modules/**",
+  "**/venv/**",
+  "**/dist/**",
+  "**/build/**",
+  "**/.pytest_cache/**",
+  "**/coverage/**"
+]
