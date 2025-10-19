@@ -14,17 +14,19 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 Complete basic auth flow and user management for multi-tenant system.
 
-### Tasks
+### Tasks (Priority Order)
 
-- [ ] Implement refresh token endpoint in `/api/v1/auth/refresh`
-- [ ] Implement `/api/v1/auth/me` endpoint to get current user from JWT token
-- [ ] Add JWT middleware for protected routes with token validation
-- [ ] Implement password reset flow (request reset, verify token, reset password)
-- [ ] Add email service integration for user invitations and password resets
-- [ ] Create user profile update endpoint (allow users to update their own profile)
-- [ ] Add user avatar upload functionality
+1. [ ] **Add JWT middleware for protected routes with token validation** ⭐ (Required for all other features)
+2. [ ] **Implement `/api/v1/auth/me` endpoint** to get current user from JWT token (Required by frontend)
+3. [ ] Implement refresh token endpoint in `/api/v1/auth/refresh`
+4. [ ] Implement password reset flow (request reset, verify token, reset password)
+5. [ ] Add email service integration for user invitations and password resets
+6. [ ] Create user profile update endpoint (allow users to update their own profile)
+7. [ ] Add user avatar upload functionality
 
 **Status**: Basic auth exists, needs completion of TODO endpoints
+
+**Note**: Tasks ordered by dependency - JWT middleware unlocks all protected endpoints.
 
 ---
 
@@ -34,7 +36,7 @@ Build complete document lifecycle management.
 
 ### Tasks
 
-- [ ] Create document upload API endpoint with S3 integration
+- [ ] Create document upload API endpoint with S3 integration (PDF, DOCX, TXT, Excel, Images)
 - [ ] Implement document listing with pagination, filtering, and search
 - [ ] Add document download/preview endpoints with signed URLs
 - [ ] Implement document deletion with S3 cleanup
@@ -45,24 +47,42 @@ Build complete document lifecycle management.
 
 **Status**: Schema exists, implementation needed
 
+**Supported Formats**: PDF, Word (DOCX), Text, Excel, Scanned Images (for OCR)
+
 ---
 
 ## MILESTONE 3: Document Processing & RAG Pipeline
 
 AI-powered document intelligence with embeddings and vector search.
 
+**PRIORITY**: This is our key differentiator - build the best RAG system for legal documents.
+
 ### Tasks
 
-- [ ] Implement document text extraction service (PDF, DOCX, TXT parsers)
-- [ ] Create document chunking service with configurable chunk size/overlap
-- [ ] Integrate OpenAI embedding API for vector generation
+**Core RAG Pipeline:**
+- [ ] Implement document text extraction service (PDF, DOCX, TXT, Excel parsers)
+- [ ] Add OCR support for scanned documents (legal case files, historical documents)
+- [ ] Create **semantic chunking service** (not just fixed-size - use paragraph/section boundaries)
+- [ ] Integrate **legal-optimized embeddings** (Voyage AI voyage-law-2 or OpenAI text-embedding-3-large)
+- [ ] Update database schema for configurable vector dimensions (currently hardcoded to 1536)
 - [ ] Build background task queue for document processing (using Celery/Redis)
 - [ ] Implement vector similarity search with PGvector
+
+**Anti-Hallucination Features:**
+- [ ] Implement **hybrid search** (vector similarity + keyword/BM25 for exact term matching)
+- [ ] Add **re-ranking** of retrieved chunks for relevance
+- [ ] Implement **confidence scoring** for answers
+- [ ] Add **citation tracking** with document name, page number, and chunk location
+- [ ] Build "I don't know" responses when confidence is low or no relevant docs found
 - [ ] Create document processing status tracking and webhooks
-- [ ] Add OCR support for scanned documents
 - [ ] Implement reprocessing failed documents
 
 **Status**: PGvector enabled, RAG pipeline not implemented
+
+**Embedding Model Decision**:
+- **Option A**: Voyage AI voyage-law-2 (1024 dims) - Legal-specific, trained on legal corpus
+- **Option B**: OpenAI text-embedding-3-large (3072 dims) - Proven, highly accurate
+- **Chat Model**: Claude 3.5 Sonnet (superior reasoning, less prone to hallucination)
 
 ---
 
@@ -73,16 +93,23 @@ Build conversational interface with RAG-powered responses.
 ### Tasks
 
 - [ ] Create conversation CRUD endpoints (create, list, get, delete)
-- [ ] Implement message creation with streaming support
-- [ ] Build RAG context retrieval (find relevant chunks for query)
-- [ ] Integrate Claude/OpenAI API for chat completions
+- [ ] Implement message creation with streaming support (SSE/WebSocket)
+- [ ] Build RAG context retrieval (hybrid search + re-ranking from Milestone 3)
+- [ ] Integrate **Claude 3.5 Sonnet API** for chat completions
 - [ ] Implement conversation history management and context window
-- [ ] Add message rating system (thumbs up/down with feedback)
+- [ ] **Add cited sources in AI responses** (document name, page number, clickable links to source)
+- [ ] **Implement confidence indicators** (show when AI is uncertain)
+- [ ] Add message rating system (thumbs up/down with feedback for improvement)
 - [ ] Create conversation export to PDF/DOCX
 - [ ] Implement conversation sharing between users
-- [ ] Add cited sources in AI responses (link chunks to source documents)
 
 **Status**: Schema exists, chat system not implemented
+
+**Anti-Hallucination in Responses**:
+- Always cite source documents with page numbers
+- Return "I don't have enough information" when confidence is low
+- Show retrieved chunks vs. generated answer for verification
+- Allow lawyers to verify by jumping to source document
 
 ---
 
@@ -222,9 +249,11 @@ Prepare for market and onboard first customers.
 - **Frontend**: React + TypeScript + Vite + TailwindCSS
 - **Database**: PostgreSQL 15 with PGvector extension
 - **Cache**: Redis
-- **Storage**: S3 (LocalStack for local dev)
-- **AI**: OpenAI/Claude for embeddings and chat
-- **Infrastructure**: Terraform for IaC
+- **Storage**: AWS S3 (LocalStack for local dev)
+- **AI Embeddings**: Voyage AI voyage-law-2 (legal-optimized) OR OpenAI text-embedding-3-large
+- **AI Chat**: Claude 3.5 Sonnet (superior reasoning, less hallucination)
+- **Document Processing**: Celery + Redis for background tasks
+- **Infrastructure**: Terraform for IaC on AWS
 
 ### Multi-Tenancy
 
@@ -267,13 +296,17 @@ Complete production-ready platform:
 
 ## Key Differentiators
 
-1. **BC-Specific**: Tailored for British Columbia law firms
-2. **Multi-Tenancy**: Secure isolation between firms
-3. **Flexible Pricing**: Scales from solo to enterprise
-4. **RAG-Powered**: Intelligent document search and Q&A
-5. **Role-Based Access**: Mirrors law firm hierarchy
-6. **Matter Management**: Organize by cases/clients
-7. **Compliance-First**: Security and audit logging built-in
+1. **Best-in-Class RAG**: Superior legal document intelligence with anti-hallucination measures
+   - Legal-optimized embeddings (Voyage AI voyage-law-2)
+   - Hybrid search (semantic + keyword)
+   - Always cited sources with page numbers
+   - Confidence scoring and "I don't know" responses
+2. **BC-Specific**: Tailored for British Columbia law firms
+3. **Multi-Tenancy**: Secure isolation between firms (solo to enterprise)
+4. **Role-Based Access**: Mirrors law firm hierarchy (Partners, Associates, Paralegals)
+5. **Matter Management**: Organize by cases/clients (Milestone 6)
+6. **Compliance-First**: Security, audit logging, GDPR-ready
+7. **Multiple File Formats**: PDF, Word, Excel, scanned documents with OCR
 
 ---
 
@@ -292,6 +325,30 @@ Complete production-ready platform:
 3. Begin Milestone 1 implementation
 4. Establish testing and deployment practices
 5. Create feedback loop with beta users
+
+---
+
+---
+
+## Technical Decisions Summary
+
+### AI/ML Stack
+- **Embeddings**: Voyage AI voyage-law-2 (legal-specific, 1024 dims) recommended
+  - Alternative: OpenAI text-embedding-3-large (3072 dims)
+- **Chat Completions**: Claude 3.5 Sonnet (best reasoning, least hallucination)
+- **Vector DB**: PostgreSQL + PGvector extension
+- **Search Strategy**: Hybrid (vector similarity + BM25 keyword matching)
+
+### Document Support
+- **Text Extraction**: PDF, DOCX, TXT, Excel
+- **OCR**: Scanned documents and images
+- **Chunking**: Semantic (paragraph/section-aware), not fixed-size
+- **Processing**: Async with Celery + Redis
+
+### Deployment
+- **Cloud**: AWS
+- **Infrastructure**: Terraform
+- **Environments**: Local (Docker Compose) → Staging → Production
 
 ---
 
