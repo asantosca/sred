@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from app.api.v1.api import api_router
+from app.middleware.auth import JWTAuthMiddleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +20,7 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Add CORS middleware
+# Add CORS middleware (must be first)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:8000"],
@@ -27,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add JWT Authentication middleware
+app.add_middleware(JWTAuthMiddleware)
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")

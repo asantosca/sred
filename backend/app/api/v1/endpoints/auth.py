@@ -99,30 +99,24 @@ async def logout():
     return {"message": "Successfully logged out"}
 
 @router.get("/me", response_model=AuthResponse)
-async def get_current_user(
+async def get_current_user_info(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Get current authenticated user information
-    
+
     Returns the full user profile, company details, and a fresh token.
+    Uses the JWT middleware to validate authentication.
     """
-    from app.services.auth import AuthService
+    from app.middleware.auth import get_current_user
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
     from app.models.models import User
-    from app.core.tenant import get_tenant_context
-    
-    # Extract tenant context from request (handles JWT extraction)
-    tenant_context = await get_tenant_context(request)
-    
-    if not tenant_context:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
-        )
-    
+
+    # Get current user from JWT (validates token, raises 401 if invalid)
+    tenant_context = await get_current_user(request)
+
     # Fetch user with company relationship
     result = await db.execute(
         select(User)
@@ -130,24 +124,30 @@ async def get_current_user(
         .where(User.id == tenant_context.user_id)
     )
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
-    # Get user permissions
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+
+    # Create fresh auth token
     auth_service = AuthService(db)
     access_token = await auth_service.create_user_auth_token(user)
-    
+
     # Prepare response
     token = Token(
         access_token=access_token,
         token_type="bearer",
         expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
-    
+
     return AuthResponse(
         user=UserResponse.model_validate(user),
         company=CompanyResponse.model_validate(user.company),
