@@ -115,6 +115,9 @@ Premium capabilities for scaling to larger firms.
 
 ### Tasks
 
+- [ ] **Add Google OAuth authentication** (Sign in with Google)
+- [ ] Add Microsoft OAuth authentication (Sign in with Microsoft/Office 365)
+- [ ] Implement account linking for OAuth providers
 - [ ] Implement usage tracking and billing metering (documents, storage, API calls)
 - [ ] Add subscription management with Stripe integration
 - [ ] Create plan enforcement and upgrade prompts
@@ -127,6 +130,8 @@ Premium capabilities for scaling to larger firms.
 - [ ] Build admin panel for platform management (view all companies, stats)
 
 **Status**: Not started
+
+**Note**: OAuth providers added here after core MVP is stable to avoid early distraction.
 
 ---
 
