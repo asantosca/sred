@@ -5,6 +5,8 @@ from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import logging
+import secrets
+import hashlib
 
 from app.core.config import settings
 
@@ -83,10 +85,29 @@ def extract_token_data(token: str) -> Optional[Dict[str, Any]]:
     payload = verify_token(token)
     if not payload:
         return None
-    
+
     return {
         "user_id": payload.get("sub"),
         "company_id": payload.get("company_id"),
         "is_admin": payload.get("is_admin", False),
         "permissions": payload.get("permissions", [])
     }
+
+def create_refresh_token() -> str:
+    """Generate a secure random refresh token"""
+    return secrets.token_urlsafe(32)
+
+def hash_refresh_token(token: str) -> str:
+    """Create a secure hash of the refresh token for storage"""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+def create_refresh_token_jwt(user_id: str, company_id: str) -> str:
+    """Create JWT refresh token with extended expiration"""
+    token_data = {
+        "sub": str(user_id),
+        "company_id": str(company_id),
+        "type": "refresh"
+    }
+
+    expires_delta = timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+    return create_access_token(token_data, expires_delta)

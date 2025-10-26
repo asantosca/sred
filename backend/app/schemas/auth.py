@@ -73,6 +73,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+    refresh_token: Optional[str] = None
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None
@@ -80,9 +81,36 @@ class TokenData(BaseModel):
     is_admin: bool = False
     permissions: List[str] = []
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class PasswordResetRequest(BaseModel):
+    """Request password reset with email"""
+    email: EmailStr
+
+class PasswordResetVerify(BaseModel):
+    """Verify password reset token"""
+    token: str
+
+class PasswordResetConfirm(BaseModel):
+    """Confirm password reset with new password"""
+    token: str
+    new_password: str
+
+    @validator('new_password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+
 class AuthResponse(BaseModel):
     """Complete authentication response"""
     user: UserResponse
     company: CompanyResponse
     token: Token
-    

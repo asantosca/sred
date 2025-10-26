@@ -64,13 +64,43 @@ class Group(Base):
 class UserGroup(Base):
     """Many-to-many relationship between users and groups"""
     __tablename__ = "user_groups"
-    
+
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
     group_id = Column(UUID(as_uuid=True), ForeignKey("groups.id"), primary_key=True)
     assigned_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     assigned_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Fixed relationships with explicit foreign_keys
     user = relationship("User", foreign_keys=[user_id], back_populates="user_groups")
     group = relationship("Group", back_populates="user_groups")
     assigned_by_user = relationship("User", foreign_keys=[assigned_by])
+
+class RefreshToken(Base):
+    """Refresh token model for JWT token rotation"""
+    __tablename__ = "refresh_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    token_hash = Column(String(255), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_revoked = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    user = relationship("User")
+
+class PasswordResetToken(Base):
+    """Password reset token model for secure password resets"""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    token_hash = Column(String(255), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    user = relationship("User")
