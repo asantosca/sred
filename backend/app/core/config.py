@@ -27,6 +27,9 @@ class Settings:
     # CORS settings
     ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
 
+    # Frontend URL (for email links, redirects, etc.)
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
     # AWS/S3 settings
     AWS_ACCESS_KEY_ID: str = "test"
     AWS_SECRET_ACCESS_KEY: str = "test"

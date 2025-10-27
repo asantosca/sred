@@ -23,6 +23,7 @@ class EmailService:
         self.smtp_ssl = settings.SMTP_SSL
         self.from_email = settings.EMAIL_FROM
         self.from_name = settings.EMAIL_FROM_NAME
+        self.frontend_url = settings.FRONTEND_URL
 
     async def send_email(
         self,
@@ -114,9 +115,8 @@ class EmailService:
         Returns:
             True if email sent successfully
         """
-        # In production, this would be a proper URL
-        # For now, we'll use a placeholder
-        reset_url = f"http://localhost:3000/reset-password?token={reset_token}"
+        # Build password reset URL using configured frontend URL
+        reset_url = f"{self.frontend_url}/reset-password?token={reset_token}"
 
         greeting = f"Hi {user_name}," if user_name else "Hi,"
 
