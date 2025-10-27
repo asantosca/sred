@@ -28,26 +28,36 @@ class AuthService:
     async def create_company_with_admin(self, registration: CompanyRegistration) -> tuple[Company, User]:
         """Create a new company with admin user and default groups"""
         
-        # Check if company name already exists
+        # Check if company name already exists and its activation status
         existing_company = await self.db.execute(
             select(Company).where(Company.name == registration.company_name)
         )
+
+        # if company exists and is active, raise error
         if existing_company.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Company name already exists"
-            )
+            if existing_company.scalar_one_or_none().is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Company name already exists"
+                )
+            # company exists but is inactive. Allow re-registration by deleting existing record
+            await self.db.delete(existing_company.scalar_one())
+            await self.db.commit()
         
-        # Check if admin email already exists
+        # Check if admin email already exists and is active. Allow re-registration if inactive
         existing_user = await self.db.execute(
             select(User).where(User.email == registration.admin_email)
         )
         if existing_user.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
+            if existing_user.scalar_one_or_none().is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+            # User exists but is inactive. Allow re-registration by deleting existing record
+            await self.db.delete(existing_user.scalar_one())
+            await self.db.commit()
+
         try:
             # Create company
             company = Company(

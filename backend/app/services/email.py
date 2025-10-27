@@ -101,6 +101,104 @@ class EmailService:
             logger.error(f"Failed to send email to {to_email}: {e}")
             return False
 
+    async def send_admin_email_confirmation(
+        self, to_email: str, reset_token: str, user_name: Optional[str] = None
+    ) -> bool:
+        """
+        Send email to admin user with password reset link for email confirmation
+
+        Args:
+            to_email: Admin user's email address
+            reset_token: Password reset token
+            user_name: User's name (optional)
+
+        Returns:
+            True if email sent successfully
+        """
+        # Build confirmation URL using configured frontend URL
+        confirm_url = f"{self.frontend_url}/confirm-email?token={reset_token}"
+
+        greeting = f"Hi {user_name}," if user_name else "Hi,"
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .button {{
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background-color: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #666;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Password Reset Request</h2>
+                <p>{greeting}</p>
+                <p>We received a request to reset your password for your BC Legal Tech account.</p>
+                <p>Click the button below to reset your password:</p>
+                <a href="{reset_url}" class="button">Reset Password</a>
+                <p>Or copy and paste this link into your browser:</p>
+                <p><a href="{reset_url}">{reset_url}</a></p>
+                <p><strong>This link will expire in 1 hour.</strong></p>
+                <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+                <div class="footer">
+                    <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
+                    <p>This is an automated email, please do not reply.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+        {greeting}
+
+        We received a request to reset your password for your BC Legal Tech account.
+
+        Click this link to reset your password:
+        {reset_url}
+
+        This link will expire in 1 hour.
+
+        If you didn't request a password reset, you can safely ignore this email.
+
+        ---
+        BC Legal Tech - AI-Powered Legal Document Intelligence
+        This is an automated email, please do not reply.
+        """
+
+        return await self.send_email(
+            to_email=to_email,
+            subject="Reset Your Password - BC Legal Tech",
+            html_body=html_body,
+            text_body=text_body,
+        )
+
+
+
     async def send_password_reset_email(
         self, to_email: str, reset_token: str, user_name: Optional[str] = None
     ) -> bool:

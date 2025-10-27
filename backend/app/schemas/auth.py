@@ -114,3 +114,8 @@ class AuthResponse(BaseModel):
     user: UserResponse
     company: CompanyResponse
     token: Token
+
+class RegistrationResponse(BaseModel):
+    user: UserResponse
+    company: CompanyResponse
+    message: str

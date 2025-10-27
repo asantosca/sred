@@ -19,6 +19,7 @@ class Company(Base):
     tenancy_type = Column(String(50), default="shared_rls")
     settings = Column(JSON, default=dict)
     subscription_status = Column(String(50), default="trial")
+    is_active = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -35,7 +36,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=True)
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

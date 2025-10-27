@@ -13,6 +13,7 @@ CREATE TABLE companies (
     tenancy_type TEXT DEFAULT 'shared_rls' CHECK (tenancy_type IN ('shared_rls', 'dedicated_schema', 'dedicated_instance')),
     settings JSONB DEFAULT '{}',
     subscription_status TEXT DEFAULT 'trial' CHECK (subscription_status IN ('trial', 'active', 'cancelled', 'suspended')),
+    is_active BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -25,7 +26,7 @@ CREATE TABLE users (
     first_name TEXT,
     last_name TEXT,
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    is_active BOOLEAN DEFAULT true,
+    is_active BOOLEAN DEFAULT false,
     is_company_admin BOOLEAN DEFAULT false,
     last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

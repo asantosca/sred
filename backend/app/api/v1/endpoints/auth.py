@@ -7,7 +7,7 @@ from datetime import timedelta
 from app.db.session import get_db
 from app.services.auth import AuthService
 from app.schemas.auth import (
-    CompanyRegistration, UserLogin, AuthResponse,
+    CompanyRegistration, UserLogin, AuthResponse, RegistrationResponse,
     Token, UserResponse, CompanyResponse, RefreshTokenRequest,
     PasswordResetRequest, PasswordResetVerify, PasswordResetConfirm
 )
@@ -21,7 +21,7 @@ async def register_company(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Register a new company with admin user
+    Register a new company with admin user and make user inactive until email verification
     
     This creates:
     - A new company
@@ -29,27 +29,37 @@ async def register_company(
     - Default user groups (Administrators, Partners, Associates, etc.)
     - Assigns admin to Administrators group
     """
+    from app.services.email import EmailService
     auth_service = AuthService(db)
     
-    # Create company and admin user
+    # Create company and admin user. Both are inactive requiring email confirmation.
     company, admin_user = await auth_service.create_company_with_admin(registration)
 
-    # Create authentication tokens
-    access_token = await auth_service.create_user_auth_token(admin_user)
-    refresh_token = await auth_service.create_refresh_token(admin_user)
+    # Send email verification link
+    email_service = EmailService()
+    await email_service.send_verification_email(admin_user.email, admin_user.id)
 
-    # Prepare response
-    token = Token(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        refresh_token=refresh_token
-    )
-    
-    return AuthResponse(
+    auth_service = AuthService(db)
+    # Request password reset (returns token and whether user exists)
+    reset_token, user_exists = await auth_service.request_password_reset(admin_user.email)
+
+    # Only send email if user exists (prevents unnecessary email attempts)
+    try:
+        await email_service.send_admin_email_confirmation(
+            to_email=admin_user.email,
+            reset_token=reset_token
+        )
+    except Exception as e:
+        # Log error but don't reveal to user
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send admin email confirmation: {e}")
+
+
+    return RegistrationResponse(
         user=UserResponse.model_validate(admin_user),
         company=CompanyResponse.model_validate(company),
-        token=token
+        message="Registration successful. Please check your email to verify your account."
     )
 
 @router.post("/login", response_model=AuthResponse)
