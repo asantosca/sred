@@ -336,12 +336,13 @@ class AuthService:
             db_token.revoked_at = datetime.utcnow()
             await self.db.commit()
 
-    async def request_password_reset(self, email: str) -> str:
+    async def request_password_reset(self, email: str) -> tuple[str, bool]:
         """
         Request password reset for user
 
-        Returns the reset token (for email sending)
-        Note: Returns a token even if user doesn't exist (security best practice to prevent email enumeration)
+        Returns: (reset_token, user_exists)
+        Note: Always generates a token (security best practice to prevent timing attacks),
+        but only saves it to database if user exists
         """
         from datetime import timedelta
         from hashlib import sha256
@@ -352,8 +353,9 @@ class AuthService:
         )
         user = result.scalar_one_or_none()
 
-        # Generate token regardless (prevent email enumeration)
+        # Generate token regardless (prevent timing attacks)
         reset_token = secrets.token_urlsafe(32)
+        user_exists = user is not None
 
         if user:
             # Hash the token for storage
@@ -387,7 +389,7 @@ class AuthService:
         else:
             logger.warning(f"Password reset requested for non-existent email: {email}")
 
-        return reset_token
+        return reset_token, user_exists
 
     async def verify_password_reset_token(self, token: str) -> bool:
         """

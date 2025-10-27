@@ -193,23 +193,23 @@ async def request_password_reset(
     auth_service = AuthService(db)
     email_service = EmailService()
 
-    # Request password reset (returns token even if user doesn't exist)
-    reset_token = await auth_service.request_password_reset(request_data.email)
+    # Request password reset (returns token and whether user exists)
+    reset_token, user_exists = await auth_service.request_password_reset(request_data.email)
 
-    # Send email (only if user exists, but we don't reveal this)
-    # The email service handles the logic internally
-    try:
-        await email_service.send_password_reset_email(
-            to_email=request_data.email,
-            reset_token=reset_token
-        )
-    except Exception as e:
-        # Log error but don't reveal to user
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to send password reset email: {e}")
+    # Only send email if user exists (prevents unnecessary email attempts)
+    if user_exists:
+        try:
+            await email_service.send_password_reset_email(
+                to_email=request_data.email,
+                reset_token=reset_token
+            )
+        except Exception as e:
+            # Log error but don't reveal to user
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send password reset email: {e}")
 
-    # Always return success (security: prevent email enumeration)
+    # Always return same response (security: prevent email enumeration)
     return {
         "message": "If the email exists, a password reset link has been sent",
         "detail": "Please check your email for instructions"

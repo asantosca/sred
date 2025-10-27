@@ -8,8 +8,8 @@ class Settings:
     
     # Database settings
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql://postgres:postgres@localhost:5432/bc_legal_db"
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_db"
     )
     
     # Basic app settings
