@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -185,7 +185,7 @@ class AuthService:
             )
         
         # Update last active timestamp
-        user.last_active = datetime.utcnow()
+        user.last_active = datetime.now(timezone.utc)
         await self.db.commit()
         
         return user, user.company
@@ -236,7 +236,7 @@ class AuthService:
         token_hash = hash_refresh_token(refresh_token)
 
         # Calculate expiration
-        expires_at = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
         # Store in database
         db_refresh_token = RefreshToken(
@@ -292,7 +292,7 @@ class AuthService:
             )
 
         # Check if token is expired
-        if db_token.expires_at < datetime.utcnow():
+        if db_token.expires_at < datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token has expired"
@@ -333,7 +333,7 @@ class AuthService:
 
         if db_token:
             db_token.is_revoked = True
-            db_token.revoked_at = datetime.utcnow()
+            db_token.revoked_at = datetime.now(timezone.utc)
             await self.db.commit()
 
     async def request_password_reset(self, email: str) -> tuple[str, bool]:
@@ -371,10 +371,10 @@ class AuthService:
             )
             for token in existing_tokens.scalars():
                 token.is_used = True
-                token.used_at = datetime.utcnow()
+                token.used_at = datetime.now(timezone.utc)
 
             # Create new reset token (expires in 1 hour)
-            expires_at = datetime.utcnow() + timedelta(hours=1)
+            expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
             db_reset_token = PasswordResetToken(
                 id=uuid.uuid4(),
@@ -413,7 +413,7 @@ class AuthService:
         if db_token.is_used:
             return False
 
-        if db_token.expires_at < datetime.utcnow():
+        if db_token.expires_at < datetime.now(timezone.utc):
             return False
 
         return True
@@ -448,7 +448,7 @@ class AuthService:
                 detail="Reset token has already been used"
             )
 
-        if db_token.expires_at < datetime.utcnow():
+        if db_token.expires_at < datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reset token has expired"
@@ -473,7 +473,7 @@ class AuthService:
 
         # Mark token as used
         db_token.is_used = True
-        db_token.used_at = datetime.utcnow()
+        db_token.used_at = datetime.now(timezone.utc)
 
         await self.db.commit()
 
