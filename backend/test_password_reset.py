@@ -35,9 +35,8 @@ def test_password_reset_flow(email: str):
 
     # Step 3: Verify token
     print(f"\n3. Verifying token...")
-    response = requests.post(
-        f"{BASE_URL}/auth/password-reset/verify",
-        json={"token": token}
+    response = requests.get(
+        f"{BASE_URL}/auth/password-reset/verify?token={token}"
     )
     print(f"   Status: {response.status_code}")
     print(f"   Response: {json.dumps(response.json(), indent=2)}")
@@ -62,7 +61,7 @@ def test_password_reset_flow(email: str):
         result = response.json()
         print(f"   ✅ Password reset successful!")
         print(f"   User: {result['user']['email']}")
-        print(f"   Access Token: {result['access_token'][:50]}...")
+        print(f"   Access Token: {result['token']['access_token'][:50]}...")
     else:
         print(f"   ❌ Password reset failed!")
         print(f"   Response: {json.dumps(response.json(), indent=2)}")

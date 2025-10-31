@@ -5,6 +5,7 @@ AI-powered legal document intelligence platform for law firms in British Columbi
 ## Vision
 
 Serve law firms of different sizes, from solo lawyers to large firms:
+
 - **Solo Lawyers**: One person is tenant, admin, and user
 - **Multi-User Firms**: One tenant (law firm) with multiple admins and users
 
@@ -16,11 +17,11 @@ Complete basic auth flow and user management for multi-tenant system.
 
 ### Tasks (Priority Order)
 
-1. [ ] **Add JWT middleware for protected routes with token validation** ⭐ (Required for all other features)
-2. [ ] **Implement `/api/v1/auth/me` endpoint** to get current user from JWT token (Required by frontend)
-3. [ ] Implement refresh token endpoint in `/api/v1/auth/refresh`
+1. [x] **Add JWT middleware for protected routes with token validation** ⭐ (Required for all other features)
+2. [x] **Implement `/api/v1/auth/me` endpoint** to get current user from JWT token (Required by frontend)
+3. [x] Implement refresh token endpoint in `/api/v1/auth/refresh`
 4. [ ] Implement password reset flow (request reset, verify token, reset password)
-5. [ ] Add email service integration for user invitations and password resets
+5. [x] Add email service integration for user invitations and password resets
 6. [ ] Create user profile update endpoint (allow users to update their own profile)
 7. [ ] Add user avatar upload functionality
 
@@ -60,6 +61,7 @@ AI-powered document intelligence with embeddings and vector search.
 ### Tasks
 
 **Core RAG Pipeline:**
+
 - [ ] Implement document text extraction service (PDF, DOCX, TXT, Excel parsers)
 - [ ] Add OCR support for scanned documents (legal case files, historical documents)
 - [ ] Create **semantic chunking service** (not just fixed-size - use paragraph/section boundaries)
@@ -69,6 +71,7 @@ AI-powered document intelligence with embeddings and vector search.
 - [ ] Implement vector similarity search with PGvector
 
 **Anti-Hallucination Features:**
+
 - [ ] Implement **hybrid search** (vector similarity + keyword/BM25 for exact term matching)
 - [ ] Add **re-ranking** of retrieved chunks for relevance
 - [ ] Implement **confidence scoring** for answers
@@ -80,6 +83,7 @@ AI-powered document intelligence with embeddings and vector search.
 **Status**: PGvector enabled, RAG pipeline not implemented
 
 **Embedding Model Decision**:
+
 - **Option A**: Voyage AI voyage-law-2 (1024 dims) - Legal-specific, trained on legal corpus
 - **Option B**: OpenAI text-embedding-3-large (3072 dims) - Proven, highly accurate
 - **Chat Model**: Claude 3.5 Sonnet (superior reasoning, less prone to hallucination)
@@ -106,6 +110,7 @@ Build conversational interface with RAG-powered responses.
 **Status**: Schema exists, chat system not implemented
 
 **Anti-Hallucination in Responses**:
+
 - Always cite source documents with page numbers
 - Return "I don't have enough information" when confidence is low
 - Show retrieved chunks vs. generated answer for verification
@@ -274,6 +279,7 @@ Prepare for market and onboard first customers.
 ### For MVP (Solo Lawyers)
 
 Focus on core functionality first:
+
 1. **Milestones 1-2**: Auth + Document Management
 2. **Milestone 3**: Basic RAG pipeline
 3. **Milestone 4**: Simple chat interface
@@ -284,6 +290,7 @@ Focus on core functionality first:
 ### For Full Launch (Multi-User Firms)
 
 Complete production-ready platform:
+
 1. **Milestones 1-5**: Complete all core features
 2. **Milestone 6**: Advanced features for differentiation
 3. **Milestones 7-8**: Testing and security hardening
@@ -333,6 +340,7 @@ Complete production-ready platform:
 ## Technical Decisions Summary
 
 ### AI/ML Stack
+
 - **Embeddings**: Voyage AI voyage-law-2 (legal-specific, 1024 dims) recommended
   - Alternative: OpenAI text-embedding-3-large (3072 dims)
 - **Chat Completions**: Claude 3.5 Sonnet (best reasoning, least hallucination)
@@ -340,12 +348,14 @@ Complete production-ready platform:
 - **Search Strategy**: Hybrid (vector similarity + BM25 keyword matching)
 
 ### Document Support
+
 - **Text Extraction**: PDF, DOCX, TXT, Excel
 - **OCR**: Scanned documents and images
 - **Chunking**: Semantic (paragraph/section-aware), not fixed-size
 - **Processing**: Async with Celery + Redis
 
 ### Deployment
+
 - **Cloud**: AWS
 - **Infrastructure**: Terraform
 - **Environments**: Local (Docker Compose) → Staging → Production
