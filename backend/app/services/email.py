@@ -102,21 +102,21 @@ class EmailService:
             return False
 
     async def send_admin_email_confirmation(
-        self, to_email: str, reset_token: str, user_name: Optional[str] = None
+        self, to_email: str, token: str, user_name: Optional[str] = None
     ) -> bool:
         """
-        Send email to admin user with password reset link for email confirmation
+        Send email to admin user with confirmation link for email verification
 
         Args:
             to_email: Admin user's email address
-            reset_token: Password reset token
+            token: Password reset token used for email confirmation
             user_name: User's name (optional)
 
         Returns:
             True if email sent successfully
         """
         # Build confirmation URL using configured frontend URL
-        confirm_url = f"{self.frontend_url}/confirm-email?token={reset_token}"
+        confirm_url = f"{self.frontend_url}/confirm-email?token={token}"
 
         greeting = f"Hi {user_name}," if user_name else "Hi,"
 
@@ -138,7 +138,7 @@ class EmailService:
                 .button {{
                     display: inline-block;
                     padding: 12px 24px;
-                    background-color: #007bff;
+                    background-color: #28a745;
                     color: white;
                     text-decoration: none;
                     border-radius: 4px;
@@ -155,15 +155,15 @@ class EmailService:
         </head>
         <body>
             <div class="container">
-                <h2>Password Reset Request</h2>
+                <h2>Confirm Your Email Address</h2>
                 <p>{greeting}</p>
-                <p>We received a request to reset your password for your BC Legal Tech account.</p>
-                <p>Click the button below to reset your password:</p>
-                <a href="{reset_url}" class="button">Reset Password</a>
+                <p>Thank you for registering your company with BC Legal Tech!</p>
+                <p>To complete your registration and activate your account, please set your password by clicking the button below:</p>
+                <a href="{confirm_url}" class="button">Set Your Password</a>
                 <p>Or copy and paste this link into your browser:</p>
-                <p><a href="{reset_url}">{reset_url}</a></p>
+                <p><a href="{confirm_url}">{confirm_url}</a></p>
                 <p><strong>This link will expire in 1 hour.</strong></p>
-                <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+                <p>Once you set your password, you'll be able to log in and start using BC Legal Tech.</p>
                 <div class="footer">
                     <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
                     <p>This is an automated email, please do not reply.</p>
@@ -176,14 +176,14 @@ class EmailService:
         text_body = f"""
         {greeting}
 
-        We received a request to reset your password for your BC Legal Tech account.
+        Thank you for registering your company with BC Legal Tech!
 
-        Click this link to reset your password:
-        {reset_url}
+        To complete your registration and activate your account, please set your password by clicking this link:
+        {confirm_url}
 
         This link will expire in 1 hour.
 
-        If you didn't request a password reset, you can safely ignore this email.
+        Once you set your password, you'll be able to log in and start using BC Legal Tech.
 
         ---
         BC Legal Tech - AI-Powered Legal Document Intelligence
@@ -192,7 +192,7 @@ class EmailService:
 
         return await self.send_email(
             to_email=to_email,
-            subject="Reset Your Password - BC Legal Tech",
+            subject="Confirm Your Email - BC Legal Tech",
             html_body=html_body,
             text_body=text_body,
         )

@@ -15,44 +15,47 @@ from app.core.config import settings
 
 router = APIRouter()
 
-@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def register_company(
     registration: CompanyRegistration,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new company with admin user and make user inactive until email verification
-    
+
     This creates:
-    - A new company
-    - An admin user for the company
+    - A new company (inactive)
+    - An admin user for the company (inactive)
     - Default user groups (Administrators, Partners, Associates, etc.)
     - Assigns admin to Administrators group
+    - Sends confirmation email to admin
+
+    The admin must click the confirmation link in their email to set their password
+    and activate both their account and the company.
     """
     from app.services.email import EmailService
+    import logging
+
+    logger = logging.getLogger(__name__)
     auth_service = AuthService(db)
-    
+    email_service = EmailService()
+
     # Create company and admin user. Both are inactive requiring email confirmation.
     company, admin_user = await auth_service.create_company_with_admin(registration)
 
-    # Send email verification link
-    email_service = EmailService()
-    await email_service.send_verification_email(admin_user.email, admin_user.id)
-
-    auth_service = AuthService(db)
-    # Request password reset (returns token and whether user exists)
+    # Request password reset token for email confirmation
     reset_token, user_exists = await auth_service.request_password_reset(admin_user.email)
 
-    # Only send email if user exists (prevents unnecessary email attempts)
+    # Send confirmation email with password setup link
     try:
+        user_name = f"{admin_user.first_name} {admin_user.last_name}" if admin_user.first_name else None
         await email_service.send_admin_email_confirmation(
             to_email=admin_user.email,
-            reset_token=reset_token
+            token=reset_token,
+            user_name=user_name
         )
     except Exception as e:
-        # Log error but don't reveal to user
-        import logging
-        logger = logging.getLogger(__name__)
+        # Log error but don't reveal to user (security: prevent email enumeration)
         logger.error(f"Failed to send admin email confirmation: {e}")
 
 

@@ -32,68 +32,91 @@ class AuthService:
         existing_company = await self.db.execute(
             select(Company).where(Company.name == registration.company_name)
         )
+        existing_company_obj = existing_company.scalar_one_or_none()
 
-        # if company exists and is active, raise error
-        if existing_company.scalar_one_or_none():
-            if existing_company.scalar_one_or_none().is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Company name already exists"
-                )
-            # company exists but is inactive. Allow re-registration by deleting existing record
-            await self.db.delete(existing_company.scalar_one())
-            await self.db.commit()
-        
-        # Check if admin email already exists and is active. Allow re-registration if inactive
+        if existing_company_obj and existing_company_obj.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Company name already exists"
+            )
+
+        # Check if admin email already exists and is active
         existing_user = await self.db.execute(
             select(User).where(User.email == registration.admin_email)
         )
-        if existing_user.scalar_one_or_none():
-            if existing_user.scalar_one_or_none().is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
-                )
-            # User exists but is inactive. Allow re-registration by deleting existing record
-            await self.db.delete(existing_user.scalar_one())
-            await self.db.commit()
+        existing_user_obj = existing_user.scalar_one_or_none()
+
+        if existing_user_obj and existing_user_obj.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
 
         try:
-            # Create company
-            company = Company(
-                id=uuid.uuid4(),
-                name=registration.company_name,
-                plan_tier=registration.plan_tier,
-                subscription_status="trial"
-            )
-            self.db.add(company)
+            # Create or update company (inactive until admin email confirmation)
+            if existing_company_obj:
+                # Reuse existing inactive company
+                company = existing_company_obj
+                company.plan_tier = registration.plan_tier
+                company.subscription_status = "trial"
+                company.is_active = False
+            else:
+                # Create new company
+                company = Company(
+                    id=uuid.uuid4(),
+                    name=registration.company_name,
+                    plan_tier=registration.plan_tier,
+                    subscription_status="trial",
+                    is_active=False
+                )
+                self.db.add(company)
             await self.db.flush()  # Get the company ID
-            
-            # Create admin user
-            admin_user = User(
-                id=uuid.uuid4(),
-                email=registration.admin_email,
-                password_hash=get_password_hash(registration.admin_password),
-                first_name=registration.admin_first_name,
-                last_name=registration.admin_last_name,
-                is_admin=True,
-                company_id=company.id
-            )
-            self.db.add(admin_user)
+
+            # Create or update admin user (inactive until email confirmation)
+            if existing_user_obj:
+                # Reuse existing inactive user
+                admin_user = existing_user_obj
+                admin_user.password_hash = get_password_hash(registration.admin_password)
+                admin_user.first_name = registration.admin_first_name
+                admin_user.last_name = registration.admin_last_name
+                admin_user.is_admin = True
+                admin_user.is_active = False
+                admin_user.company_id = company.id
+            else:
+                # Create new user
+                admin_user = User(
+                    id=uuid.uuid4(),
+                    email=registration.admin_email,
+                    password_hash=get_password_hash(registration.admin_password),
+                    first_name=registration.admin_first_name,
+                    last_name=registration.admin_last_name,
+                    is_admin=True,
+                    is_active=False,
+                    company_id=company.id
+                )
+                self.db.add(admin_user)
             await self.db.flush()  # Get the user ID
             
-            # Create default groups
-            default_groups = await self._create_default_groups(company.id)
-            
-            # Assign admin to Administrator group
+            # Create default groups (or get existing ones if company existed)
+            default_groups = await self._create_default_groups(company.id, skip_if_exist=bool(existing_company_obj))
+
+            # Assign admin to Administrator group (check if assignment already exists)
             admin_group = next((g for g in default_groups if g.name == "Administrators"), None)
             if admin_group:
-                user_group = UserGroup(
-                    user_id=admin_user.id,
-                    group_id=admin_group.id,
-                    assigned_by=admin_user.id
+                # Check if user is already assigned to this group
+                existing_assignment = await self.db.execute(
+                    select(UserGroup).where(
+                        UserGroup.user_id == admin_user.id,
+                        UserGroup.group_id == admin_group.id
+                    )
                 )
-                self.db.add(user_group)
+                if not existing_assignment.scalar_one_or_none():
+                    user_group = UserGroup(
+                        user_id=admin_user.id,
+                        group_id=admin_group.id,
+                        assigned_by=admin_user.id
+                    )
+                    self.db.add(user_group)
             
             await self.db.commit()
             
@@ -108,8 +131,21 @@ class AuthService:
                 detail="Failed to create company"
             )
     
-    async def _create_default_groups(self, company_id: uuid.UUID) -> list[Group]:
+    async def _create_default_groups(self, company_id: uuid.UUID, skip_if_exist: bool = False) -> list[Group]:
         """Create default groups for a new company"""
+
+        # If company already existed, fetch and return existing groups
+        if skip_if_exist:
+            result = await self.db.execute(
+                select(Group).where(
+                    Group.company_id == company_id,
+                    Group.is_default == True
+                )
+            )
+            existing_groups = list(result.scalars().all())
+            if existing_groups:
+                return existing_groups
+
         default_groups_data = [
             {
                 "name": "Administrators",
@@ -480,6 +516,16 @@ class AuthService:
 
         # Update password
         user.password_hash = get_password_hash(new_password)
+
+        # Activate user if they're not active (for email confirmation flow)
+        if not user.is_active:
+            user.is_active = True
+            logger.info(f"User {user.email} activated via email confirmation")
+
+            # If user is admin and company is inactive, activate the company too
+            if user.is_admin and user.company and not user.company.is_active:
+                user.company.is_active = True
+                logger.info(f"Company {user.company.name} activated via admin email confirmation")
 
         # Mark token as used
         db_token.is_used = True
