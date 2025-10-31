@@ -30,6 +30,11 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         "/api/v1/auth/register",
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
+        "/api/v1/auth/confirm-email",
+        "/api/v1/auth/confirm-email/verify",
+        "/api/v1/auth/password-reset/request",
+        "/api/v1/auth/password-reset/verify",
+        "/api/v1/auth/password-reset/confirm",
     }
 
     async def dispatch(self, request: Request, call_next):

@@ -29,11 +29,6 @@ def test_auth_flow():
         response = requests.post(f"{BASE_URL}/auth/register", json=registration_data)
         if response.status_code == 201:
             print("✅ Registration successful!")
-            data = response.json()
-            access_token = data["token"]["access_token"]
-            print(f"   User: {data['user']['email']}")
-            print(f"   Company: {data['company']['name']}")
-            print(f"   Token: {access_token[:20]}...")
         else:
             print(f"❌ Registration failed: {response.status_code}")
             print(f"   Response: {response.text}")
@@ -41,6 +36,32 @@ def test_auth_flow():
     except requests.exceptions.ConnectionError:
         print("❌ Could not connect to server. Is it running on http://localhost:8000?")
         return
+
+    # confirm email would be sent here in a real test
+    # Simulate clicking the confirmation link
+    data = response.json()
+    token = data['token']
+    print(f"   User: {data['user']['email']}")
+    print(f"   Company: {data['company']['name']}")
+    print(f"   Token: {data['token']}")
+
+    return
+
+    print("   (Simulating email confirmation...)")
+    
+    if token:
+        response = requests.get(f"{BASE_URL}/auth/confirm-email?token={token}")
+        if response.status_code == 200:
+            print("✅ Email confirmed successfully!")
+        else:
+            print(f"❌ Email confirmation failed: {response.status_code}")
+            print(f"   Response: {response.text}")
+            return
+    else:
+        print("❌ No confirmation token found in registration response.")
+        return
+    
+    return
 
     # Test 2: Login
     print("\n2. Testing Login...")

@@ -2,16 +2,22 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import timedelta
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from datetime import timedelta, datetime, timezone
+import logging
 
 from app.db.session import get_db
 from app.services.auth import AuthService
 from app.schemas.auth import (
     CompanyRegistration, UserLogin, AuthResponse, RegistrationResponse,
     Token, UserResponse, CompanyResponse, RefreshTokenRequest,
-    PasswordResetRequest, PasswordResetVerify, PasswordResetConfirm
+    PasswordResetRequest, PasswordResetConfirm
 )
+from app.models.models import User, PasswordResetToken
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -25,13 +31,13 @@ async def register_company(
 
     This creates:
     - A new company (inactive)
-    - An admin user for the company (inactive)
+    - An admin user for the company (inactive) with the provided password
     - Default user groups (Administrators, Partners, Associates, etc.)
     - Assigns admin to Administrators group
     - Sends confirmation email to admin
 
-    The admin must click the confirmation link in their email to set their password
-    and activate both their account and the company.
+    The admin must click the confirmation link in their email to activate both
+    their account and the company. The password is set during registration.
     """
     from app.services.email import EmailService
     import logging
@@ -62,7 +68,8 @@ async def register_company(
     return RegistrationResponse(
         user=UserResponse.model_validate(admin_user),
         company=CompanyResponse.model_validate(company),
-        message="Registration successful. Please check your email to verify your account."
+        message="Registration successful. Please check your email to verify your account.",
+        token=reset_token
     )
 
 @router.post("/login", response_model=AuthResponse)
@@ -228,9 +235,9 @@ async def request_password_reset(
         "detail": "Please check your email for instructions"
     }
 
-@router.post("/password-reset/verify", status_code=status.HTTP_200_OK)
+@router.get("/password-reset/verify", status_code=status.HTTP_200_OK)
 async def verify_password_reset_token(
-    verify_data: PasswordResetVerify,
+    token: str,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -238,10 +245,12 @@ async def verify_password_reset_token(
 
     Check if a password reset token is valid without using it.
     Useful for frontend to validate token before showing reset form.
+
+    Example: GET /api/v1/auth/password-reset/verify?token=abc123
     """
     auth_service = AuthService(db)
 
-    is_valid = await auth_service.verify_password_reset_token(verify_data.token)
+    is_valid = await auth_service.verify_password_reset_token(token)
 
     if not is_valid:
         raise HTTPException(
@@ -250,6 +259,116 @@ async def verify_password_reset_token(
         )
 
     return {"message": "Token is valid", "valid": True}
+
+@router.get("/confirm-email/verify", status_code=status.HTTP_200_OK)
+async def verify_email_confirmation_token(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verify email confirmation token
+
+    Check if an email confirmation token is valid without using it.
+    Useful for frontend to validate token before showing password setup form.
+
+    Example: GET /api/v1/auth/confirm-email/verify?token=abc123
+    """
+    auth_service = AuthService(db)
+
+    is_valid = await auth_service.verify_password_reset_token(token)
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired confirmation token"
+        )
+
+    return {"message": "Token is valid", "valid": True}
+
+@router.post("/confirm-email", response_model=AuthResponse)
+async def confirm_email(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Confirm email address for new admin user
+
+    This endpoint is used during the registration flow. When an admin registers
+    (providing email AND password), they receive an email with a confirmation link.
+    Clicking that link will:
+    - Activate their user account
+    - Activate their company (if they are the admin)
+    - Return authentication tokens for immediate login
+
+    The password was already set during registration, so this just activates the account.
+
+    Request body: {"token": "confirmation_token"}
+    """
+    from hashlib import sha256
+
+    auth_service = AuthService(db)
+
+    # Verify and get the token from database
+    token_hash = sha256(token.encode()).hexdigest()
+
+    result = await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+    )
+    db_token = result.scalar_one_or_none()
+
+    if not db_token or db_token.is_used or db_token.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired confirmation token"
+        )
+
+    # Get the user
+    user_result = await db.execute(
+        select(User)
+        .options(selectinload(User.company))
+        .where(User.id == db_token.user_id)
+    )
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Activate user
+    if not user.is_active:
+        user.is_active = True
+        logger.info(f"User {user.email} activated via email confirmation")
+
+        # If user is admin and company is inactive, activate the company too
+        if user.is_admin and user.company and not user.company.is_active:
+            user.company.is_active = True
+            logger.info(f"Company {user.company.name} activated via admin email confirmation")
+
+    # Mark token as used
+    db_token.is_used = True
+    db_token.used_at = datetime.now(timezone.utc)
+
+    await db.commit()
+
+    # Create new authentication tokens
+    access_token = await auth_service.create_user_auth_token(user)
+    refresh_token = await auth_service.create_refresh_token(user)
+
+    # Prepare response
+    token_obj = Token(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        refresh_token=refresh_token
+    )
+
+    return AuthResponse(
+        user=UserResponse.model_validate(user),
+        company=CompanyResponse.model_validate(user.company),
+        token=token_obj
+    )
 
 @router.post("/password-reset/confirm", response_model=AuthResponse)
 async def confirm_password_reset(

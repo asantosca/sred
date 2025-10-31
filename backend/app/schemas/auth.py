@@ -119,3 +119,4 @@ class RegistrationResponse(BaseModel):
     user: UserResponse
     company: CompanyResponse
     message: str
+    token: str
