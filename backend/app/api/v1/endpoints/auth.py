@@ -285,7 +285,7 @@ async def verify_email_confirmation_token(
 
     return {"message": "Token is valid", "valid": True}
 
-@router.post("/confirm-email", response_model=AuthResponse)
+@router.get("/confirm-email", response_model=AuthResponse)
 async def confirm_email(
     token: str,
     db: AsyncSession = Depends(get_db)

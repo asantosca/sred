@@ -45,8 +45,6 @@ def test_auth_flow():
     print(f"   Company: {data['company']['name']}")
     print(f"   Token: {data['token']}")
 
-    return
-
     print("   (Simulating email confirmation...)")
     
     if token:
@@ -61,7 +59,6 @@ def test_auth_flow():
         print("❌ No confirmation token found in registration response.")
         return
     
-    return
 
     # Test 2: Login
     print("\n2. Testing Login...")
