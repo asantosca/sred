@@ -29,6 +29,23 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserProfileUpdate(BaseModel):
+    """Schema for updating user profile"""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+    @validator('first_name', 'last_name')
+    def validate_name_fields(cls, v):
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError('Name fields cannot be empty')
+        return v.strip() if v else v
+
+class AvatarUploadResponse(BaseModel):
+    """Response after uploading avatar"""
+    avatar_url: str
+    message: str
+
 class UserResponse(UserBase):
     id: uuid.UUID
     is_active: bool

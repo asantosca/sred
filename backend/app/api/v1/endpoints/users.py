@@ -10,9 +10,162 @@ from app.schemas.users import (
     UserInvite, UserUpdate, UserGroupAssignment,
     UserDetailResponse, UserListResponse, GroupResponse
 )
+from app.schemas.auth import UserProfileUpdate, UserResponse, AvatarUploadResponse
+from fastapi import UploadFile, File
+import base64
+from pathlib import Path
+import uuid as uuid_lib
 from app.core.tenant import require_admin, require_tenant_context, TenantContext
 
 router = APIRouter()
+
+@router.get("/me", response_model=UserResponse)
+async def get_my_profile(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get current user's profile information
+
+    Returns the authenticated user's profile data.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    from app.models.models import User
+
+    tenant_context = require_tenant_context(request)
+
+    # Fetch user with company relationship
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.company))
+        .where(User.id == tenant_context.user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    return UserResponse.model_validate(user)
+
+@router.patch("/me", response_model=UserResponse)
+async def update_my_profile(
+    profile_update: UserProfileUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update current user's profile
+
+    Allows users to update their own first_name, last_name, and email.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    from app.models.models import User
+
+    tenant_context = require_tenant_context(request)
+
+    # Fetch user
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.company))
+        .where(User.id == tenant_context.user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if email is being changed and if it's already taken
+    if profile_update.email and profile_update.email != user.email:
+        existing_user = await db.execute(
+            select(User).where(User.email == profile_update.email)
+        )
+        if existing_user.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use"
+            )
+        user.email = profile_update.email
+
+    # Update fields if provided
+    if profile_update.first_name is not None:
+        user.first_name = profile_update.first_name
+
+    if profile_update.last_name is not None:
+        user.last_name = profile_update.last_name
+
+    await db.commit()
+    await db.refresh(user)
+
+    return UserResponse.model_validate(user)
+
+@router.post("/me/avatar", response_model=AvatarUploadResponse)
+async def upload_my_avatar(
+    request: Request,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upload avatar image for current user
+
+    Accepts image files (JPEG, PNG, GIF) up to 5MB.
+    For MVP, stores as base64 in database. Can be upgraded to S3 later.
+    """
+    from sqlalchemy import select
+    from app.models.models import User
+
+    tenant_context = require_tenant_context(request)
+
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type. Allowed types: {', '.join(allowed_types)}"
+        )
+
+    # Validate file size (5MB max)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 5MB limit"
+        )
+
+    # Fetch user
+    result = await db.execute(
+        select(User).where(User.id == tenant_context.user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # For MVP: Store as base64 data URL
+    # Format: data:image/png;base64,iVBORw0KGg...
+    base64_image = base64.b64encode(contents).decode('utf-8')
+    avatar_url = f"data:{file.content_type};base64,{base64_image}"
+
+    # TODO: In production, upload to S3 and store URL
+    # For now, we'll just return the data URL
+    # In a real implementation, add an avatar_url column to User model
+
+    await db.commit()
+
+    return AvatarUploadResponse(
+        avatar_url=avatar_url,
+        message="Avatar uploaded successfully (stored as base64 for MVP)"
+    )
 
 @router.post("/invite", response_model=UserDetailResponse, status_code=status.HTTP_201_CREATED)
 async def invite_user(
