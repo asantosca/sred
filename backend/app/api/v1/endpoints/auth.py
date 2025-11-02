@@ -12,7 +12,7 @@ from app.services.auth import AuthService
 from app.schemas.auth import (
     CompanyRegistration, UserLogin, AuthResponse, RegistrationResponse,
     Token, UserResponse, CompanyResponse, RefreshTokenRequest,
-    PasswordResetRequest, PasswordResetConfirm
+    PasswordResetRequest, PasswordResetConfirm, PasswordChange
 )
 from app.models.models import User, PasswordResetToken
 from app.core.config import settings
@@ -135,10 +135,25 @@ async def refresh_token(
     )
 
 @router.post("/logout")
-async def logout():
+async def logout(
+    refresh_request: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Logout user (client-side token removal)
+    Logout user and revoke refresh token
+
+    Revokes the provided refresh token to prevent it from being used again.
+    The client should also delete the access token from local storage.
     """
+    auth_service = AuthService(db)
+
+    try:
+        # Revoke the refresh token
+        await auth_service.revoke_refresh_token(refresh_request.refresh_token)
+    except HTTPException:
+        # Token might already be revoked or invalid - that's fine for logout
+        pass
+
     return {"message": "Successfully logged out"}
 
 @router.get("/me", response_model=AuthResponse)
@@ -405,3 +420,62 @@ async def confirm_password_reset(
         company=CompanyResponse.model_validate(user.company),
         token=token
     )
+
+@router.post("/change-password")
+async def change_password(
+    password_change: PasswordChange,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Change password for logged-in user
+
+    Allows authenticated users to change their password by providing their current password.
+    All existing refresh tokens will be revoked for security.
+    """
+    from app.core.tenant import require_tenant_context
+    from app.utils.auth import verify_password, get_password_hash
+
+    # Get current user from JWT
+    tenant_context = require_tenant_context(request)
+
+    # Fetch user
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.company))
+        .where(User.id == tenant_context.user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Verify current password
+    if not verify_password(password_change.current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    # Verify new password is different
+    if password_change.current_password == password_change.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+
+    # Update password
+    user.password_hash = get_password_hash(password_change.new_password)
+
+    # Revoke all existing refresh tokens for security
+    auth_service = AuthService(db)
+    await auth_service.revoke_all_user_refresh_tokens(user.id)
+
+    await db.commit()
+
+    logger.info(f"Password changed for user {user.email}")
+
+    return {"message": "Password changed successfully. Please log in again with your new password."}

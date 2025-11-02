@@ -382,6 +382,25 @@ class AuthService:
             db_token.revoked_at = datetime.now(timezone.utc)
             await self.db.commit()
 
+    async def revoke_all_user_refresh_tokens(self, user_id: uuid.UUID) -> None:
+        """Revoke all refresh tokens for a user (used when password changes)"""
+        result = await self.db.execute(
+            select(RefreshToken)
+            .where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.is_revoked == False
+            )
+        )
+        tokens = result.scalars().all()
+
+        for token in tokens:
+            token.is_revoked = True
+            token.revoked_at = datetime.now(timezone.utc)
+
+        if tokens:
+            await self.db.commit()
+            logger.info(f"Revoked {len(tokens)} refresh tokens for user {user_id}")
+
     async def request_password_reset(self, email: str) -> tuple[str, bool]:
         """
         Request password reset for user
