@@ -20,9 +20,19 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def invite_user(self, user_invite: UserInvite, company_id: uuid.UUID, invited_by: uuid.UUID) -> User:
-        """Invite a new user to the company"""
-        
+    async def invite_user(
+        self,
+        user_invite: UserInvite,
+        company_id: uuid.UUID,
+        invited_by: uuid.UUID
+    ) -> tuple[User, str]:
+        """
+        Invite a new user to the company
+
+        Returns:
+            tuple[User, str]: The created user and the password reset token for invitation
+        """
+
         # Check if email already exists in this company
         existing_user = await self.db.execute(
             select(User).where(
@@ -35,7 +45,7 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User with this email already exists in your company"
             )
-        
+
         # Verify groups belong to this company
         if user_invite.group_ids:
             groups_result = await self.db.execute(
@@ -50,25 +60,23 @@ class UserService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="One or more groups not found in your company"
                 )
-        
+
         try:
-            # Generate temporary password
-            temp_password = secrets.token_urlsafe(16)
-            
-            # Create user
+            # Create user as inactive - they must set password to activate
+            # Use a placeholder password hash (user cannot log in with this)
             new_user = User(
                 id=uuid.uuid4(),
                 email=user_invite.email,
-                password_hash=get_password_hash(temp_password),
+                password_hash=get_password_hash(secrets.token_urlsafe(32)),  # Random, unusable password
                 first_name=user_invite.first_name,
                 last_name=user_invite.last_name,
-                is_active=True,
+                is_active=False,  # Inactive until they set their password
                 is_admin=False,
                 company_id=company_id
             )
             self.db.add(new_user)
             await self.db.flush()
-            
+
             # Assign to groups
             for group_id in user_invite.group_ids:
                 user_group = UserGroup(
@@ -77,14 +85,18 @@ class UserService:
                     assigned_by=invited_by
                 )
                 self.db.add(user_group)
-            
+
             await self.db.commit()
-            
-            # TODO: Send invitation email with temp_password
-            logger.info(f"User {new_user.email} invited to company {company_id}. Temp password: {temp_password}")
-            
-            return new_user
-            
+
+            # Generate password reset token for invitation
+            from app.services.auth import AuthService
+            auth_service = AuthService(self.db)
+            invitation_token, _ = await auth_service.request_password_reset(new_user.email)
+
+            logger.info(f"User {new_user.email} invited to company {company_id}")
+
+            return new_user, invitation_token
+
         except Exception as e:
             await self.db.rollback()
             logger.error(f"Failed to invite user: {e}")

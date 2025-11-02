@@ -309,12 +309,13 @@ class EmailService:
             to_email: Invitee's email address
             invited_by: Name of person who sent invitation
             company_name: Name of the company/law firm
-            invitation_token: Invitation token for signup
+            invitation_token: Password reset token for setting password
 
         Returns:
             True if email sent successfully
         """
-        invitation_url = f"http://localhost:3000/accept-invitation?token={invitation_token}"
+        # Use password reset flow for invitations
+        invitation_url = f"{self.frontend_url}/reset-password?token={invitation_token}"
 
         html_body = f"""
         <!DOCTYPE html>
@@ -361,11 +362,11 @@ class EmailService:
                     <li>Get instant answers with cited sources</li>
                     <li>Collaborate with your team</li>
                 </ul>
-                <p>Click the button below to accept the invitation and create your account:</p>
-                <a href="{invitation_url}" class="button">Accept Invitation</a>
+                <p>Click the button below to set your password and activate your account:</p>
+                <a href="{invitation_url}" class="button">Set Your Password</a>
                 <p>Or copy and paste this link into your browser:</p>
                 <p><a href="{invitation_url}">{invitation_url}</a></p>
-                <p><strong>This invitation will expire in 7 days.</strong></p>
+                <p><strong>This invitation will expire in 1 hour.</strong></p>
                 <div class="footer">
                     <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
                     <p>This is an automated email, please do not reply.</p>
@@ -384,10 +385,10 @@ class EmailService:
 
         BC Legal Tech is an AI-powered legal document intelligence platform.
 
-        Click this link to accept the invitation and create your account:
+        Click this link to set your password and activate your account:
         {invitation_url}
 
-        This invitation will expire in 7 days.
+        This invitation will expire in 1 hour.
 
         ---
         BC Legal Tech - AI-Powered Legal Document Intelligence

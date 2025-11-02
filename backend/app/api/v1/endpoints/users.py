@@ -164,22 +164,56 @@ async def invite_user(
 ):
     """
     Invite a new user to the company (Admin only)
-    
-    Creates a new user account with a temporary password.
-    The user will be assigned to the specified groups.
-    
-    TODO: Send invitation email with temporary password
+
+    Creates a new inactive user account and sends an invitation email.
+    The invited user must click the link in the email to set their password
+    and activate their account.
     """
+    from sqlalchemy import select
+    from app.models.models import User, Company
+    from app.services.email import EmailService
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     # Require admin privileges
     tenant_context = require_admin(request)
-    
+
+    # Invite user and get invitation token
     user_service = UserService(db)
-    new_user = await user_service.invite_user(
+    new_user, invitation_token = await user_service.invite_user(
         user_invite,
         tenant_context.company_id,
         tenant_context.user_id
     )
-    
+
+    # Get inviter's name and company name for the email
+    inviter_result = await db.execute(
+        select(User).where(User.id == tenant_context.user_id)
+    )
+    inviter = inviter_result.scalar_one_or_none()
+    inviter_name = f"{inviter.first_name} {inviter.last_name}".strip() if inviter and inviter.first_name else inviter.email if inviter else "Admin"
+
+    company_result = await db.execute(
+        select(Company).where(Company.id == tenant_context.company_id)
+    )
+    company = company_result.scalar_one_or_none()
+    company_name = company.name if company else "Your Company"
+
+    # Send invitation email
+    email_service = EmailService()
+    try:
+        await email_service.send_user_invitation_email(
+            to_email=new_user.email,
+            invited_by=inviter_name,
+            company_name=company_name,
+            invitation_token=invitation_token
+        )
+        logger.info(f"Invitation email sent to {new_user.email}")
+    except Exception as e:
+        logger.error(f"Failed to send invitation email to {new_user.email}: {e}")
+        # Don't fail the invitation if email fails - admin can resend
+
     # Convert to response with groups
     return await _build_user_detail_response(new_user, db)
 
