@@ -60,7 +60,8 @@ async def update_my_profile(
     """
     Update current user's profile
 
-    Allows users to update their own first_name, last_name, and email.
+    Allows users to update their own first_name and last_name.
+    Email changes are not permitted - users must contact support/admin.
     """
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
@@ -81,18 +82,6 @@ async def update_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-
-    # Check if email is being changed and if it's already taken
-    if profile_update.email and profile_update.email != user.email:
-        existing_user = await db.execute(
-            select(User).where(User.email == profile_update.email)
-        )
-        if existing_user.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already in use"
-            )
-        user.email = profile_update.email
 
     # Update fields if provided
     if profile_update.first_name is not None:

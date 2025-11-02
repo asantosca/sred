@@ -30,10 +30,14 @@ class UserLogin(BaseModel):
     password: str
 
 class UserProfileUpdate(BaseModel):
-    """Schema for updating user profile"""
+    """Schema for updating user profile
+
+    Note: Email changes are not permitted through self-service.
+    Users must contact support/admin to change their email address.
+    This is a security measure for legal/compliance platforms.
+    """
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    email: Optional[EmailStr] = None
 
     @validator('first_name', 'last_name')
     def validate_name_fields(cls, v):

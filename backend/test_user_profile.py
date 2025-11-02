@@ -36,8 +36,8 @@ def test_user_profile():
     login_response = requests.post(
         f"{BASE_URL}/auth/login",
         json={
-            "email": "admin@testcompany.com",
-            "password": "TestPass123"
+            "email": "admin@testfirm.com",
+            "password": "TestPass123!"
         }
     )
 
@@ -98,25 +98,8 @@ def test_user_profile():
         print(f"   ❌ Failed to update profile!")
         print(f"   Response: {json.dumps(update_response.json(), indent=2)}")
 
-    # Step 4: Try to update email to existing one (should fail)
-    print("\n4. Testing email validation (should fail)...")
-    bad_email_response = requests.patch(
-        f"{BASE_URL}/users/me",
-        headers=headers,
-        json={
-            "email": "admin@testcompany.com"  # Same email
-        }
-    )
-
-    print(f"   Status: {bad_email_response.status_code}")
-    if bad_email_response.status_code == 400:
-        print(f"   ✅ Correctly rejected duplicate email")
-    else:
-        print(f"   ⚠️  Unexpected response")
-        print(f"   Response: {json.dumps(bad_email_response.json(), indent=2)}")
-
-    # Step 5: Upload avatar
-    print("\n5. Uploading avatar image...")
+    # Step 4: Upload avatar
+    print("\n4. Uploading avatar image...")
 
     # Create a test image
     test_image = create_test_image()
@@ -142,8 +125,8 @@ def test_user_profile():
         print(f"   ❌ Failed to upload avatar!")
         print(f"   Response: {json.dumps(avatar_response.json(), indent=2)}")
 
-    # Step 6: Try invalid file type
-    print("\n6. Testing file type validation (should fail)...")
+    # Step 5: Try invalid file type
+    print("\n5. Testing file type validation (should fail)...")
 
     bad_file = io.BytesIO(b"This is not an image")
     files = {
