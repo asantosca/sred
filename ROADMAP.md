@@ -31,30 +31,61 @@ Complete basic auth flow and user management for multi-tenant system.
 
 ---
 
-## MILESTONE 2: Document Management System
+## MILESTONE 2: Core Document Upload (MVP)
 
-Build complete document lifecycle management.
+Basic document upload with matter association and security controls.
 
 ### Tasks
 
-- [ ] Create document upload API endpoint with S3 integration (PDF, DOCX, TXT, Excel, Images)
-- [ ] Implement document listing with pagination, filtering, and search
-- [ ] Add document download/preview endpoints with signed URLs
-- [ ] Implement document deletion with S3 cleanup
-- [ ] Add document metadata update (rename, change access groups)
-- [ ] Implement document access control based on user groups
-- [ ] Add document versioning system
-- [ ] Create document sharing with external users (time-limited links)
+- [ ] Create matters table and API endpoints (CRUD operations)
+- [ ] Implement matter access control (who can upload to which matters)
+- [ ] Create core document upload API endpoint with S3 integration
+- [ ] Build document classification system (Contract, Pleading, Correspondence, Discovery, Exhibit)
+- [ ] Implement security controls (confidentiality levels, privilege designation)
+- [ ] Add basic document metadata (title, date, status, type-specific fields)
+- [ ] Create document listing with matter-based filtering
+- [ ] Add document download endpoints with signed URLs
+- [ ] Implement basic document deletion with S3 cleanup
 
 **Status**: Schema exists, implementation needed
 
-**Supported Formats**: PDF, Word (DOCX), Text, Excel, Scanned Images (for OCR)
+**Upload Modes**: Quick Upload (5 required fields, ~60 seconds)
+
+**Core Tables**: matters, documents, users, matter_access
+
+**Supported Formats**: PDF, DOCX, DOC, TXT, MSG, EML (max 50MB)
 
 ---
 
-## MILESTONE 3: Document Processing & RAG Pipeline
+## MILESTONE 2.5: Enhanced Document Classification
 
-AI-powered document intelligence with embeddings and vector search.
+Type-specific metadata and improved upload experience.
+
+### Tasks
+
+- [ ] Implement type-specific field sets for each document category:
+  - Contract fields (type, value, effective/expiration dates, governing law)
+  - Pleading fields (court, case number, opposing party, filing date)
+  - Correspondence fields (author, recipient, cc, subject)
+  - Discovery fields (type, parties, numbers, due dates)
+  - Exhibit fields (exhibit number, related documents)
+- [ ] Add document status tracking (Draft, Final, Executed, Filed)
+- [ ] Implement Standard Upload mode (12-15 fields, 2-3 minutes)
+- [ ] Create auto-detection features (filename patterns, basic OCR for dates)
+- [ ] Add document search within matters
+- [ ] Implement basic duplicate detection (file hash comparison)
+
+**Status**: Not started
+
+**Upload Modes**: Quick + Standard Upload
+
+**Enhanced Features**: Type-specific metadata, auto-detection, search
+
+---
+
+## MILESTONE 3: Document Processing & RAG Pipeline + Version Control
+
+AI-powered document intelligence with embeddings, vector search, and version management.
 
 **PRIORITY**: This is our key differentiator - build the best RAG system for legal documents.
 
@@ -80,7 +111,18 @@ AI-powered document intelligence with embeddings and vector search.
 - [ ] Create document processing status tracking and webhooks
 - [ ] Implement reprocessing failed documents
 
+**Version Control System:**
+
+- [ ] Create document version tracking (parent/child relationships, version numbers)
+- [ ] Implement document superseding (mark previous versions as superseded)
+- [ ] Add version comparison and change summaries
+- [ ] Create document relationships table (amendments, exhibits, responses)
+- [ ] Build similar document detection for version suggestions
+- [ ] Add document processing queue table for async operations
+
 **Status**: PGvector enabled, RAG pipeline not implemented
+
+**New Tables**: document_relationships, document_processing_queue
 
 **Embedding Model Decision**:
 
@@ -90,11 +132,13 @@ AI-powered document intelligence with embeddings and vector search.
 
 ---
 
-## MILESTONE 4: AI Chat & Conversation System
+## MILESTONE 4: AI Chat & Conversation System + Workflow Integration
 
-Build conversational interface with RAG-powered responses.
+Build conversational interface with RAG-powered responses and document workflow management.
 
 ### Tasks
+
+**Core Chat System:**
 
 - [ ] Create conversation CRUD endpoints (create, list, get, delete)
 - [ ] Implement message creation with streaming support (SSE/WebSocket)
@@ -107,7 +151,19 @@ Build conversational interface with RAG-powered responses.
 - [ ] Create conversation export to PDF/DOCX
 - [ ] Implement conversation sharing between users
 
+**Document Workflow Integration:**
+
+- [ ] Add document review assignment system (assign to users, set deadlines)
+- [ ] Implement review status tracking (needs review, under review, approved, etc.)
+- [ ] Create priority levels (normal, high, urgent) for document processing
+- [ ] Add workflow instructions and internal notes
+- [ ] Build document access logging for audit trails
+- [ ] Create notification system for review assignments and deadlines
+- [ ] Add review dashboard for assigned documents
+
 **Status**: Schema exists, chat system not implemented
+
+**New Tables**: document_access_log, enhanced workflow fields in documents table
 
 **Anti-Hallucination in Responses**:
 
@@ -118,11 +174,13 @@ Build conversational interface with RAG-powered responses.
 
 ---
 
-## MILESTONE 5: Frontend Application
+## MILESTONE 5: Frontend Application + Advanced Upload Features
 
-Build complete React UI with modern UX.
+Build complete React UI with modern UX and advanced document upload capabilities.
 
 ### Tasks
+
+**Core Frontend Components:**
 
 - [ ] Create authentication pages (Login, Register, Password Reset)
 - [ ] Build dashboard with overview stats and recent activity
@@ -131,13 +189,28 @@ Build complete React UI with modern UX.
 - [ ] Build chat interface with message history and streaming responses
 - [ ] Implement conversation sidebar with search and filters
 - [ ] Create user management UI (Admin: list, invite, edit, deactivate users)
-- [ ] Build group management UI (Admin: create, edit, delete groups)
+- [ ] Build matter management UI (create, edit, assign users to matters)
 - [ ] Create settings pages (Profile, Company, Billing, Integrations)
 - [ ] Implement responsive mobile layout
 - [ ] Add dark mode support
 - [ ] Create loading states, error boundaries, and toast notifications
 
+**Advanced Upload Features:**
+
+- [ ] Build comprehensive upload UI (8-screen flow from fileupload.md)
+- [ ] Implement Detailed Upload mode (version control, workflow, relationships)
+- [ ] Create bulk upload interface (multiple files with shared metadata)
+- [ ] Add Excel import functionality for bulk metadata
+- [ ] Implement auto-detection features (OCR for dates, parties, document patterns)
+- [ ] Build document relationship management UI
+- [ ] Create upload session management (save drafts, resume later)
+- [ ] Add smart recommendations based on user patterns
+
 **Status**: Frontend structure exists, components not built
+
+**Upload Modes**: Quick + Standard + Detailed + Bulk
+
+**New Features**: Advanced upload UI, bulk operations, auto-detection
 
 ---
 
@@ -280,12 +353,14 @@ Prepare for market and onboard first customers.
 
 Focus on core functionality first:
 
-1. **Milestones 1-2**: Auth + Document Management
-2. **Milestone 3**: Basic RAG pipeline
-3. **Milestone 4**: Simple chat interface
-4. **Milestone 5**: Essential frontend pages
+1. **Milestone 1**: Auth (Complete ✅)
+2. **Milestone 2**: Core Document Upload (Quick mode, matter-based organization)
+3. **Milestone 2.5**: Enhanced Classification (Standard mode, type-specific fields)
+4. **Milestone 3**: Basic RAG pipeline + Version Control
+5. **Milestone 4**: Simple chat interface + Basic Workflow
+6. **Milestone 5**: Essential frontend pages + Advanced Upload
 
-**Timeline**: 2-3 months
+**Timeline**: 3-4 months (with enhanced upload features)
 
 ### For Full Launch (Multi-User Firms)
 
@@ -362,4 +437,53 @@ Complete production-ready platform:
 
 ---
 
-**Last Updated**: 2025-10-19
+**Last Updated**: 2025-11-04
+
+---
+
+## Document Upload Implementation Details
+
+Based on comprehensive fileupload.md specification:
+
+### Upload Flow Evolution
+
+**Milestone 2 (MVP)**: Quick Upload mode
+- 5 required fields (Matter, Type, Title, Date, Confidentiality)
+- ~60 seconds to complete
+- Single file upload only
+- Basic matter association and security
+
+**Milestone 2.5**: Standard Upload mode
+- 12-15 fields including type-specific metadata
+- ~2-3 minutes to complete
+- Auto-detection features (filename patterns, basic OCR)
+- Enhanced classification and validation
+
+**Milestone 5**: Detailed + Bulk Upload modes
+- Complete 8-screen upload flow
+- Version control, workflow assignment, document relationships
+- Bulk upload with Excel import
+- Advanced auto-detection and smart recommendations
+- ~5+ minutes for detailed mode
+
+### Key Database Tables
+
+**Core Tables (Milestone 2)**:
+- `matters` - Case/matter information
+- `documents` - Document metadata and file info
+- `users` - User accounts
+- `matter_access` - User permissions per matter
+
+**Enhanced Tables (Milestone 3+)**:
+- `document_relationships` - Version chains, amendments, exhibits
+- `document_access_log` - Audit trail
+- `upload_sessions` - Save draft uploads
+- `document_processing_queue` - Background processing
+
+### Security & Compliance Features
+
+- **Confidentiality Levels**: Standard, Highly Confidential, Attorney Eyes Only
+- **Privilege Protection**: Attorney-Client, Work Product, Settlement Communications
+- **Matter-Based Access Control**: Users only see documents for assigned matters
+- **Audit Logging**: Track all document access and modifications
+- **Version Control**: Full document history with superseding capabilities

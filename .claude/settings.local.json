@@ -16,7 +16,9 @@
       "Bash(python -m uvicorn:*)",
       "Bash(timeout:*)",
       "Bash(python -m alembic:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
