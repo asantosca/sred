@@ -1,4 +1,5 @@
 # Document Upload UI Specification (Condensed)
+
 ## Legal RAG Application - Upload Interface
 
 ---
@@ -16,7 +17,7 @@
 ## Screen Flow Summary
 
 ```
-[1. Mode Selection] 
+[1. Mode Selection]
     → [2. File & Matter]
         → [3. Classification + Type-Specific Fields]
             → [4. Security & Privilege]
@@ -33,6 +34,7 @@
 **Purpose**: Choose upload approach
 
 **Options**:
+
 - **Quick Upload**: 5 required fields (Matter, Type, Date, Status, Confidentiality)
 - **Standard Upload**: Quick + Privilege, Parties, Type-specific metadata (DEFAULT)
 - **Detailed Upload**: Everything including version control, workflow, relationships
@@ -53,6 +55,7 @@
 | matter_id | Searchable dropdown | Yes | User must have upload permission | - |
 
 **Features**:
+
 - Autocomplete matter search
 - Show 4-5 recent matters
 - Display matter details once selected
@@ -65,59 +68,64 @@
 
 **Core Fields** (all document types):
 
-| Field | Type | Required | Options/Format | Auto-Detect |
-|-------|------|----------|----------------|-------------|
-| document_type | Dropdown | Yes | Contract, Pleading, Correspondence, Discovery, Exhibit, Memo, Other | Filename pattern |
-| document_title | Text(500) | Yes | Free text | From filename |
-| document_date | Date | Yes | MM/DD/YYYY | OCR header/footer |
-| document_status | Radio | Yes | Draft, Final, Executed, Filed | - |
+| Field           | Type      | Required | Options/Format                                                      | Auto-Detect       |
+| --------------- | --------- | -------- | ------------------------------------------------------------------- | ----------------- |
+| document_type   | Dropdown  | Yes      | Contract, Pleading, Correspondence, Discovery, Exhibit, Memo, Other | Filename pattern  |
+| document_title  | Text(500) | Yes      | Free text                                                           | From filename     |
+| document_date   | Date      | Yes      | MM/DD/YYYY                                                          | OCR header/footer |
+| document_status | Radio     | Yes      | Draft, Final, Executed, Filed                                       | -                 |
 
 **Type-Specific Field Sets**:
 
 ### Contract Fields
-| Field | Type | Required | Format |
-|-------|------|----------|--------|
-| contract_type | Dropdown | No | Service Agreement, NDA, Employment, Lease, etc. |
-| contract_value | Currency | No | Decimal(15,2) |
-| contract_effective_date | Date | No | MM/DD/YYYY |
-| contract_expiration_date | Date | No | MM/DD/YYYY |
-| governing_law | Text(100) | No | Free text |
+
+| Field                    | Type      | Required | Format                                          |
+| ------------------------ | --------- | -------- | ----------------------------------------------- |
+| contract_type            | Dropdown  | No       | Service Agreement, NDA, Employment, Lease, etc. |
+| contract_value           | Currency  | No       | Decimal(15,2)                                   |
+| contract_effective_date  | Date      | No       | MM/DD/YYYY                                      |
+| contract_expiration_date | Date      | No       | MM/DD/YYYY                                      |
+| governing_law            | Text(100) | No       | Free text                                       |
 
 ### Pleading Fields
-| Field | Type | Required | Format |
-|-------|------|----------|--------|
-| pleading_type | Dropdown | Yes | Complaint, Answer, Motion, Brief, Order |
-| court_jurisdiction | Text(255) | Yes | Free text |
-| case_number | Text(100) | Yes | Free text |
-| filing_date | Date | No | MM/DD/YYYY |
-| judge_name | Text(255) | No | Free text |
-| opposing_party | Text(255) | Yes | Free text |
-| opposing_counsel | Text(255) | No | Free text |
+
+| Field              | Type      | Required | Format                                  |
+| ------------------ | --------- | -------- | --------------------------------------- |
+| pleading_type      | Dropdown  | Yes      | Complaint, Answer, Motion, Brief, Order |
+| court_jurisdiction | Text(255) | Yes      | Free text                               |
+| case_number        | Text(100) | Yes      | Free text                               |
+| filing_date        | Date      | No       | MM/DD/YYYY                              |
+| judge_name         | Text(255) | No       | Free text                               |
+| opposing_party     | Text(255) | Yes      | Free text                               |
+| opposing_counsel   | Text(255) | No       | Free text                               |
 
 ### Correspondence Fields
-| Field | Type | Required | Format |
-|-------|------|----------|--------|
-| correspondence_type | Dropdown | No | Email, Letter, Memo |
-| author | Text(255) | Yes | Free text |
-| recipient | Text(255) | Yes | Free text |
-| cc | Text(255) | No | Free text |
-| subject | Text(500) | No | Free text |
+
+| Field               | Type      | Required | Format              |
+| ------------------- | --------- | -------- | ------------------- |
+| correspondence_type | Dropdown  | No       | Email, Letter, Memo |
+| author              | Text(255) | Yes      | Free text           |
+| recipient           | Text(255) | Yes      | Free text           |
+| cc                  | Text(255) | No       | Free text           |
+| subject             | Text(500) | No       | Free text           |
 
 ### Discovery Fields
-| Field | Type | Required | Format |
-|-------|------|----------|--------|
-| discovery_type | Dropdown | Yes | Interrogatories, RFP, RFA, Deposition |
-| propounding_party | Text(255) | No | Free text |
-| responding_party | Text(255) | No | Free text |
-| discovery_number | Text(100) | No | Free text |
-| response_due_date | Date | No | MM/DD/YYYY |
-| response_status | Dropdown | No | Pending, Partial, Complete |
+
+| Field             | Type      | Required | Format                                |
+| ----------------- | --------- | -------- | ------------------------------------- |
+| discovery_type    | Dropdown  | Yes      | Interrogatories, RFP, RFA, Deposition |
+| propounding_party | Text(255) | No       | Free text                             |
+| responding_party  | Text(255) | No       | Free text                             |
+| discovery_number  | Text(100) | No       | Free text                             |
+| response_due_date | Date      | No       | MM/DD/YYYY                            |
+| response_status   | Dropdown  | No       | Pending, Partial, Complete            |
 
 ### Exhibit Fields
-| Field | Type | Required | Format |
-|-------|------|----------|--------|
-| exhibit_number | Text(100) | Yes | Free text |
-| related_to_document_id | Document picker | No | UUID |
+
+| Field                  | Type            | Required | Format    |
+| ---------------------- | --------------- | -------- | --------- |
+| exhibit_number         | Text(100)       | Yes      | Free text |
+| related_to_document_id | Document picker | No       | UUID      |
 
 **UI Behavior**: Fields appear/hide based on document_type selection
 
@@ -127,18 +135,20 @@
 
 **Confidentiality Level** (required):
 
-| Level | Access | Description |
-|-------|--------|-------------|
-| Standard Confidential | All team members on matter | Default level |
-| Highly Confidential | Attorneys on matter only | Sensitive documents |
-| Attorney Eyes Only | Lead attorneys & partners | Most sensitive |
+| Level                 | Access                     | Description         |
+| --------------------- | -------------------------- | ------------------- |
+| Standard Confidential | All team members on matter | Default level       |
+| Highly Confidential   | Attorneys on matter only   | Sensitive documents |
+| Attorney Eyes Only    | Lead attorneys & partners  | Most sensitive      |
 
 **Privilege Designation** (optional checkboxes):
+
 - Attorney-Client Privileged
 - Work Product
 - Confidential Settlement Communications
 
 **Privilege Warning Modal**: Appears when any privilege checkbox selected
+
 - Requires 2 confirmation checkboxes
 - Explains legal requirements
 - Must confirm before proceeding
@@ -160,56 +170,65 @@
 **Default State**: All sections collapsed
 
 ### Section A: Parties & Participants
-| Field | Type | Required |
-|-------|------|----------|
-| author | Text(255) | No |
-| recipient | Text(255) | No |
-| opposing_counsel | Text(255) | No |
+
+| Field            | Type      | Required |
+| ---------------- | --------- | -------- |
+| author           | Text(255) | No       |
+| recipient        | Text(255) | No       |
+| opposing_counsel | Text(255) | No       |
 
 ### Section B: Version Control
-| Field | Type | Required | Conditional |
-|-------|------|----------|-------------|
-| is_new_version | Radio (Yes/No) | No | - |
+
+| Field              | Type            | Required    | Conditional           |
+| ------------------ | --------------- | ----------- | --------------------- |
+| is_new_version     | Radio (Yes/No)  | No          | -                     |
 | parent_document_id | Document picker | Conditional | If is_new_version=Yes |
-| version_label | Text(100) | Conditional | If is_new_version=Yes |
-| change_summary | Textarea | Conditional | If is_new_version=Yes |
-| mark_superseded | Radio | Conditional | If is_new_version=Yes |
+| version_label      | Text(100)       | Conditional | If is_new_version=Yes |
+| change_summary     | Textarea        | Conditional | If is_new_version=Yes |
+| mark_superseded    | Radio           | Conditional | If is_new_version=Yes |
 
 **Features**:
+
 - Search for previous version
 - Show similar documents in matter
 - Auto-suggest version label (v2.0, v3.0, etc.)
 - Option to mark previous as superseded or keep both current
 
 ### Section C: Workflow & Review
-| Field | Type | Required | Conditional |
-|-------|------|----------|-------------|
-| needs_review | Radio (Yes/No) | No | - |
-| assigned_to | User picker | Conditional | If needs_review=Yes |
-| review_deadline | Date | Conditional | If needs_review=Yes |
-| priority | Radio | Conditional | If needs_review=Yes |
-| review_instructions | Textarea | No | - |
+
+| Field               | Type           | Required    | Conditional         |
+| ------------------- | -------------- | ----------- | ------------------- |
+| needs_review        | Radio (Yes/No) | No          | -                   |
+| assigned_to         | User picker    | Conditional | If needs_review=Yes |
+| review_deadline     | Date           | Conditional | If needs_review=Yes |
+| priority            | Radio          | Conditional | If needs_review=Yes |
+| review_instructions | Textarea       | No          | -                   |
 
 **Options**:
+
 - Priority: Normal, High, Urgent
 - User picker shows team members on matter
 
 ### Section D: Notes & Tags
-| Field | Type | Required | Max |
-|-------|------|----------|-----|
-| internal_notes | Textarea | No | 5000 chars |
-| tags | Text (comma-sep) | No | 50 tags |
+
+| Field          | Type             | Required | Max        |
+| -------------- | ---------------- | -------- | ---------- |
+| internal_notes | Textarea         | No       | 5000 chars |
+| tags           | Text (comma-sep) | No       | 50 tags    |
 
 **Features**:
+
 - Suggested tags based on document content
 - Tag autocomplete from existing tags
 
 ### Section E: Related Documents
-| Field | Type | Required |
-|-------|------|----------|
-| related_documents | Multiple relationships | No |
+
+| Field             | Type                   | Required |
+| ----------------- | ---------------------- | -------- |
+| related_documents | Multiple relationships | No       |
 
 **Relationship Types**:
+
 - Amendment of / Amended by
 - Exhibit to / Has exhibit
 - Supersedes / Superseded by
@@ -225,6 +244,7 @@
 **Layout**: Summary of all entered data with [Edit] links
 
 **Sections Displayed**:
+
 1. File Details (filename, matter)
 2. Classification (type, title, date, status, type-specific fields)
 3. Security (confidentiality, privilege)
@@ -233,6 +253,7 @@
 6. What Happens Next (bulleted list of actions)
 
 **Final Confirmation**:
+
 - Checkbox: "I confirm the information above is correct and I have authority to upload this document"
 - Required before [Upload] button is enabled
 
@@ -246,6 +267,7 @@
 ## Screen 7: Upload Progress
 
 **Progress Steps** (shown sequentially):
+
 1. Uploading file (0-100% progress bar)
 2. Creating database record
 3. Extracting text
@@ -262,6 +284,7 @@
 ## Screen 8: Success Confirmation
 
 **Display**:
+
 - Success message with document title
 - Summary of what was done
 - Document ID and direct link
@@ -269,6 +292,7 @@
 - Next steps
 
 **Actions**:
+
 - [View Document]
 - [Upload Another]
 - [Back to Matter]
@@ -284,12 +308,14 @@
 **Step 2**: Upload multiple files (drag-drop, up to 50 files)
 
 **Step 3**: Set common metadata
+
 - Document Type (or "Mixed" to set individually)
 - Document Status
 - Confidentiality Level
 - Privilege checkboxes
 
 **Step 4**: Review & customize individual files
+
 - List of all uploaded files
 - Auto-detected metadata for each
 - [Edit] button per file
@@ -297,6 +323,7 @@
 - Can remove files from list
 
 **Alternative**: Upload Excel with metadata
+
 - [Download Template] provides Excel file
 - Columns: Filename, Document_Type, Document_Date, Document_Status, etc.
 - [Upload Metadata File] reads Excel and maps to files
@@ -312,56 +339,56 @@ Filename | Document_Type | Document_Title | Document_Date | Document_Status | Co
 
 ### Universal Fields (All Documents)
 
-| Field Name | DB Column | Type | Length | Required | Default | Validation |
-|------------|-----------|------|--------|----------|---------|------------|
-| File | - | File | - | Yes | - | Extensions, size ≤50MB |
-| Matter | matter_id | UUID | - | Yes | - | User has access |
-| Document Type | document_type | VARCHAR | 100 | Yes | - | Valid type |
-| Document Title | document_title | VARCHAR | 500 | Yes | From filename | 3-500 chars |
-| Document Date | document_date | DATE | - | Yes | - | Valid date |
-| Document Status | document_status | VARCHAR | 50 | Yes | 'final' | Valid status |
-| Confidentiality | confidentiality_level | VARCHAR | 50 | Yes | 'standard_confidential' | Valid level |
+| Field Name      | DB Column             | Type    | Length | Required | Default                 | Validation             |
+| --------------- | --------------------- | ------- | ------ | -------- | ----------------------- | ---------------------- |
+| File            | -                     | File    | -      | Yes      | -                       | Extensions, size ≤50MB |
+| Matter          | matter_id             | UUID    | -      | Yes      | -                       | User has access        |
+| Document Type   | document_type         | VARCHAR | 100    | Yes      | -                       | Valid type             |
+| Document Title  | document_title        | VARCHAR | 500    | Yes      | From filename           | 3-500 chars            |
+| Document Date   | document_date         | DATE    | -      | Yes      | -                       | Valid date             |
+| Document Status | document_status       | VARCHAR | 50     | Yes      | 'final'                 | Valid status           |
+| Confidentiality | confidentiality_level | VARCHAR | 50     | Yes      | 'standard_confidential' | Valid level            |
 
 ### Security Fields
 
-| Field Name | DB Column | Type | Required | Default |
-|------------|-----------|------|----------|---------|
-| Attorney-Client | privilege_attorney_client | BOOLEAN | No | false |
-| Work Product | privilege_work_product | BOOLEAN | No | false |
-| Settlement Comm | privilege_settlement | BOOLEAN | No | false |
-| Is Privileged (computed) | is_privileged | BOOLEAN | - | false |
+| Field Name               | DB Column                 | Type    | Required | Default |
+| ------------------------ | ------------------------- | ------- | -------- | ------- |
+| Attorney-Client          | privilege_attorney_client | BOOLEAN | No       | false   |
+| Work Product             | privilege_work_product    | BOOLEAN | No       | false   |
+| Settlement Comm          | privilege_settlement      | BOOLEAN | No       | false   |
+| Is Privileged (computed) | is_privileged             | BOOLEAN | -        | false   |
 
 ### Version Fields
 
-| Field Name | DB Column | Type | Required | Conditional |
-|------------|-----------|------|----------|-------------|
-| New Version | - | Radio | No | - |
-| Parent Document | parent_document_id | UUID | Conditional | If new version |
-| Version Label | version_label | VARCHAR(100) | Conditional | If new version |
-| Change Summary | change_summary | TEXT | No | - |
-| Version Number | version_number | INTEGER | - | Auto-increment |
-| Is Current | is_current_version | BOOLEAN | - | true |
-| Effective Date | effective_date | DATE | - | Today |
-| Superseded Date | superseded_date | DATE | - | NULL |
-| Root Document | root_document_id | UUID | - | Auto-set |
+| Field Name      | DB Column          | Type         | Required    | Conditional    |
+| --------------- | ------------------ | ------------ | ----------- | -------------- |
+| New Version     | -                  | Radio        | No          | -              |
+| Parent Document | parent_document_id | UUID         | Conditional | If new version |
+| Version Label   | version_label      | VARCHAR(100) | Conditional | If new version |
+| Change Summary  | change_summary     | TEXT         | No          | -              |
+| Version Number  | version_number     | INTEGER      | -           | Auto-increment |
+| Is Current      | is_current_version | BOOLEAN      | -           | true           |
+| Effective Date  | effective_date     | DATE         | -           | Today          |
+| Superseded Date | superseded_date    | DATE         | -           | NULL           |
+| Root Document   | root_document_id   | UUID         | -           | Auto-set       |
 
 ### Workflow Fields
 
-| Field Name | DB Column | Type | Required | Conditional |
-|------------|-----------|------|----------|-------------|
-| Needs Review | - | Radio | No | - |
-| Assigned To | assigned_to | UUID | Conditional | If needs review |
-| Review Deadline | review_deadline | DATE | Conditional | If needs review |
-| Priority | priority | VARCHAR(20) | Conditional | If needs review |
-| Review Instructions | review_instructions | TEXT | No | - |
-| Review Status | review_status | VARCHAR(50) | - | 'not_required' |
+| Field Name          | DB Column           | Type        | Required    | Conditional     |
+| ------------------- | ------------------- | ----------- | ----------- | --------------- |
+| Needs Review        | -                   | Radio       | No          | -               |
+| Assigned To         | assigned_to         | UUID        | Conditional | If needs review |
+| Review Deadline     | review_deadline     | DATE        | Conditional | If needs review |
+| Priority            | priority            | VARCHAR(20) | Conditional | If needs review |
+| Review Instructions | review_instructions | TEXT        | No          | -               |
+| Review Status       | review_status       | VARCHAR(50) | -           | 'not_required'  |
 
 ### Metadata Fields
 
-| Field Name | DB Column | Type | Max | Required |
-|------------|-----------|------|-----|----------|
-| Internal Notes | internal_notes | TEXT | 5000 | No |
-| Tags | tags | TEXT[] | 50 tags | No |
+| Field Name     | DB Column      | Type   | Max     | Required |
+| -------------- | -------------- | ------ | ------- | -------- |
+| Internal Notes | internal_notes | TEXT   | 5000    | No       |
+| Tags           | tags           | TEXT[] | 50 tags | No       |
 
 ### Type-Specific Fields
 
@@ -409,7 +436,7 @@ CREATE INDEX idx_matter_status ON matters(matter_status);
 CREATE TABLE documents (
     document_id UUID PRIMARY KEY,
     matter_id UUID NOT NULL REFERENCES matters(matter_id),
-    
+
     -- File Info
     filename VARCHAR(500) NOT NULL,
     original_filename VARCHAR(500) NOT NULL,
@@ -418,7 +445,7 @@ CREATE TABLE documents (
     storage_path VARCHAR(1000) NOT NULL,
     file_hash VARCHAR(64) NOT NULL,
     mime_type VARCHAR(100),
-    
+
     -- Classification
     document_type VARCHAR(100) NOT NULL,
     document_subtype VARCHAR(100),
@@ -427,7 +454,7 @@ CREATE TABLE documents (
     date_received DATE,
     filed_date DATE,
     document_status VARCHAR(50) NOT NULL,
-    
+
     -- Version Control
     is_current_version BOOLEAN DEFAULT TRUE,
     version_label VARCHAR(100),
@@ -437,32 +464,32 @@ CREATE TABLE documents (
     effective_date DATE,
     superseded_date DATE,
     change_summary TEXT,
-    
+
     -- Security
     confidentiality_level VARCHAR(50) NOT NULL DEFAULT 'standard_confidential',
     is_privileged BOOLEAN DEFAULT FALSE,
     privilege_attorney_client BOOLEAN DEFAULT FALSE,
     privilege_work_product BOOLEAN DEFAULT FALSE,
     privilege_settlement BOOLEAN DEFAULT FALSE,
-    
+
     -- Parties
     author VARCHAR(255),
     recipient VARCHAR(255),
     opposing_counsel VARCHAR(255),
     opposing_party VARCHAR(255),
-    
+
     -- Court Info (Pleadings)
     court_jurisdiction VARCHAR(255),
     case_number VARCHAR(100),
     judge_name VARCHAR(255),
-    
+
     -- Contract Info
     contract_type VARCHAR(100),
     contract_value DECIMAL(15,2),
     contract_effective_date DATE,
     contract_expiration_date DATE,
     governing_law VARCHAR(100),
-    
+
     -- Discovery Info
     discovery_type VARCHAR(100),
     propounding_party VARCHAR(255),
@@ -470,31 +497,31 @@ CREATE TABLE documents (
     discovery_number VARCHAR(100),
     response_due_date DATE,
     response_status VARCHAR(50),
-    
+
     -- Exhibit Info
     exhibit_number VARCHAR(100),
-    
+
     -- Correspondence Info
     correspondence_type VARCHAR(50),
     cc VARCHAR(255),
     subject VARCHAR(500),
-    
+
     -- Workflow
     review_status VARCHAR(50) DEFAULT 'not_required',
     assigned_to UUID,
     review_deadline DATE,
     priority VARCHAR(20) DEFAULT 'normal',
     review_instructions TEXT,
-    
+
     -- Metadata
     internal_notes TEXT,
     tags TEXT[],
-    
+
     -- Processing
     processing_status VARCHAR(50) DEFAULT 'pending',
     text_extracted BOOLEAN DEFAULT FALSE,
     indexed_for_search BOOLEAN DEFAULT FALSE,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT NOW(),
     created_by UUID NOT NULL,
@@ -630,6 +657,7 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 ## Validation Rules
 
 ### File Validation
+
 - **Max Size**: 50MB (52,428,800 bytes)
 - **Allowed Extensions**: .pdf, .docx, .doc, .txt, .msg, .eml
 - **Allowed MIME Types**: application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, text/plain, application/vnd.ms-outlook, message/rfc822
@@ -637,6 +665,7 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 ### Required Field Logic
 
 **Always Required**:
+
 - matter_id
 - document_type
 - document_title
@@ -645,6 +674,7 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 - confidentiality_level
 
 **Conditionally Required**:
+
 - If document_type = "pleading": court_jurisdiction, case_number, opposing_party
 - If document_type = "correspondence": author, recipient
 - If document_type = "discovery": discovery_type
@@ -653,15 +683,18 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 - If needs_review = true: assigned_to, review_deadline
 
 **Date Validation**:
+
 - All dates must be valid MM/DD/YYYY format
 - contract_expiration_date must be ≥ contract_effective_date
 - review_deadline must be future date
 
 **Privilege Validation**:
+
 - If any privilege checkbox = true, user must check both confirmation boxes in warning modal
 - Automatically set is_privileged = true when any privilege checkbox = true
 
 **Text Length**:
+
 - document_title: 3-500 characters
 - internal_notes: max 5000 characters
 - change_summary: max 2000 characters
@@ -674,30 +707,35 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 ### Auto-Detection
 
 **Filename Patterns**:
-- "*Agreement*.pdf" → Contract
-- "Complaint*.pdf" → Pleading (Complaint)
-- "Letter*.pdf" → Correspondence
-- "Interrogatories*.pdf" → Discovery
+
+- "_Agreement_.pdf" → Contract
+- "Complaint\*.pdf" → Pleading (Complaint)
+- "Letter\*.pdf" → Correspondence
+- "Interrogatories\*.pdf" → Discovery
 
 **Date Extraction**: OCR scan first 3 pages for dates in headers/footers/signature blocks
 
 **Party Extraction**: OCR letterhead, captions, signature blocks
 
 ### Duplicate Detection
+
 - Calculate SHA-256 hash on upload
 - Check if hash exists in database
 - If found, show warning with options: new version / different document / duplicate
 
 ### Similar Document Suggestions
+
 - Search matter for documents with similar filenames
 - Offer to link as version
 
 ### Smart Recommendations
+
 - Based on user's historical patterns for matter/client/document type
 - Suggest confidentiality level, assigned reviewer, priority
 - [Apply These Defaults] button
 
 ### Draft Saving
+
 - [Save Draft] button in Detailed mode
 - Store in upload_sessions table
 - Resume later from "Drafts" section
@@ -707,24 +745,28 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 ## Implementation Priority
 
 **Phase 1 (MVP)**:
+
 - Screens 2-4: File, Classification, Security
 - Core tables: matters, documents, users, matter_access
 - Single file upload only
 - Basic validation
 
 **Phase 2**:
+
 - Screen 5: Additional Details (all sections)
 - Tables: document_relationships, upload_sessions
 - Version control
 - Workflow assignment
 
 **Phase 3**:
+
 - Bulk upload
 - Excel import
 - Auto-detection features
 - Smart recommendations
 
 **Phase 4**:
+
 - Advanced features
 - Mobile interface
 - Enhanced validation
@@ -734,30 +776,39 @@ CREATE INDEX idx_queue_status ON document_processing_queue(status, created_at);
 ## Key Enums and Constants
 
 ### Document Types
+
 Contract, Pleading, Correspondence, Discovery, Exhibit, Memo, Research, Other
 
 ### Document Status
+
 Draft, Final, Executed, Filed
 
 ### Confidentiality Levels
+
 standard_confidential, highly_confidential, attorney_eyes_only
 
 ### Review Status
+
 not_required, needs_review, under_review, reviewed, approved, rejected
 
 ### Priority Levels
+
 normal, high, urgent
 
 ### User Roles
+
 partner, attorney, associate, paralegal, legal_assistant, admin
 
 ### Access Roles (Matter)
+
 lead_attorney, associate, paralegal, read_only
 
 ### Processing Steps
+
 text_extraction, ocr, embedding_generation, vector_indexing, metadata_enhancement
 
 ### Relationship Types
+
 amendment_of, amended_by, exhibit_to, has_exhibit, supersedes, superseded_by, response_to, has_response, related_to
 
 ---
@@ -801,7 +852,7 @@ amendment_of, amended_by, exhibit_to, has_exhibit, supersedes, superseded_by, re
   "version_number": 2,
   "parent_document_id": "[v1.0 UUID]",
   "confidentiality_level": "standard_confidential",
-  "contract_value": 125000.00,
+  "contract_value": 125000.0,
   "review_status": "needs_review",
   "assigned_to": "[Sarah Chen UUID]",
   "review_deadline": "2024-01-25",
@@ -823,19 +874,23 @@ amendment_of, amended_by, exhibit_to, has_exhibit, supersedes, superseded_by, re
 ## Error Handling
 
 **File Validation Errors**:
+
 - File too large → "File exceeds 50MB limit. Please compress or split."
 - Invalid type → "File type not supported. Please upload PDF, DOCX, DOC, TXT, MSG, or EML."
 
 **Permission Errors**:
+
 - No matter access → "You don't have permission to upload to this matter. Contact lead attorney."
 - No upload permission → "You have read-only access to this matter."
 
 **Validation Errors**:
+
 - Missing required fields → "Please complete required fields: [list]"
 - Invalid date → "Please enter a valid date in MM/DD/YYYY format"
 - Invalid contract dates → "Expiration date must be on or after effective date"
 
 **Upload Errors**:
+
 - Network error → "Upload failed. Check connection and retry."
 - Server error → "Server error. Contact support if problem persists."
 - Storage error → "Failed to save file. Retry or contact support."

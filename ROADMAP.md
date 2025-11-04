@@ -448,18 +448,21 @@ Based on comprehensive fileupload.md specification:
 ### Upload Flow Evolution
 
 **Milestone 2 (MVP)**: Quick Upload mode
+
 - 5 required fields (Matter, Type, Title, Date, Confidentiality)
 - ~60 seconds to complete
 - Single file upload only
 - Basic matter association and security
 
 **Milestone 2.5**: Standard Upload mode
+
 - 12-15 fields including type-specific metadata
 - ~2-3 minutes to complete
 - Auto-detection features (filename patterns, basic OCR)
 - Enhanced classification and validation
 
 **Milestone 5**: Detailed + Bulk Upload modes
+
 - Complete 8-screen upload flow
 - Version control, workflow assignment, document relationships
 - Bulk upload with Excel import
@@ -469,12 +472,14 @@ Based on comprehensive fileupload.md specification:
 ### Key Database Tables
 
 **Core Tables (Milestone 2)**:
+
 - `matters` - Case/matter information
 - `documents` - Document metadata and file info
 - `users` - User accounts
 - `matter_access` - User permissions per matter
 
 **Enhanced Tables (Milestone 3+)**:
+
 - `document_relationships` - Version chains, amendments, exhibits
 - `document_access_log` - Audit trail
 - `upload_sessions` - Save draft uploads
