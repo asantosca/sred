@@ -1,7 +1,7 @@
 # app/models/models.py - Fixed database models for BC Legal Tech
 
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -105,3 +105,165 @@ class PasswordResetToken(Base):
 
     # Relationships
     user = relationship("User")
+
+class Matter(Base):
+    """Matter/Case model for organizing documents and work"""
+    __tablename__ = "matters"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    matter_number = Column(String(50), nullable=False)
+    client_name = Column(String(255), nullable=False)
+    case_type = Column(String(100), nullable=False)
+    matter_status = Column(String(50), nullable=False, default="active")
+    description = Column(Text, nullable=True)
+    
+    # Dates
+    opened_date = Column(Date, nullable=False)
+    closed_date = Column(Date, nullable=True)
+    
+    # Lead attorney
+    lead_attorney_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    
+    # Audit fields
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    company = relationship("Company")
+    lead_attorney = relationship("User", foreign_keys=[lead_attorney_user_id])
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+    matter_access = relationship("MatterAccess", back_populates="matter", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="matter", cascade="all, delete-orphan")
+
+class MatterAccess(Base):
+    """User access control for matters"""
+    __tablename__ = "matter_access"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    access_role = Column(String(50), nullable=False)  # lead_attorney, associate, paralegal, read_only
+    
+    # Permissions
+    can_upload = Column(Boolean, default=True)
+    can_edit = Column(Boolean, default=True)
+    can_delete = Column(Boolean, default=False)
+    
+    # Audit fields
+    granted_at = Column(DateTime(timezone=True), server_default=func.now())
+    granted_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    matter = relationship("Matter", back_populates="matter_access")
+    user = relationship("User", foreign_keys=[user_id])
+    granted_by_user = relationship("User", foreign_keys=[granted_by])
+
+class Document(Base):
+    """Document metadata and file information"""
+    __tablename__ = "documents"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=False)
+    
+    # File Information
+    filename = Column(String(500), nullable=False)
+    original_filename = Column(String(500), nullable=False)
+    file_extension = Column(String(10), nullable=False)
+    file_size_bytes = Column(BigInteger, nullable=False)
+    storage_path = Column(String(1000), nullable=False)
+    file_hash = Column(String(64), nullable=False)
+    mime_type = Column(String(100), nullable=True)
+    
+    # Classification
+    document_type = Column(String(100), nullable=False)
+    document_subtype = Column(String(100), nullable=True)
+    document_title = Column(String(500), nullable=False)
+    document_date = Column(Date, nullable=False)
+    date_received = Column(Date, nullable=True)
+    filed_date = Column(Date, nullable=True)
+    document_status = Column(String(50), nullable=False)
+    
+    # Version Control
+    is_current_version = Column(Boolean, default=True)
+    version_label = Column(String(100), nullable=True)
+    version_number = Column(Integer, default=1)
+    parent_document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"), nullable=True)
+    root_document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"), nullable=True)
+    effective_date = Column(Date, nullable=True)
+    superseded_date = Column(Date, nullable=True)
+    change_summary = Column(Text, nullable=True)
+    
+    # Security
+    confidentiality_level = Column(String(50), nullable=False, default="standard_confidential")
+    is_privileged = Column(Boolean, default=False)
+    privilege_attorney_client = Column(Boolean, default=False)
+    privilege_work_product = Column(Boolean, default=False)
+    privilege_settlement = Column(Boolean, default=False)
+    
+    # Parties
+    author = Column(String(255), nullable=True)
+    recipient = Column(String(255), nullable=True)
+    opposing_counsel = Column(String(255), nullable=True)
+    opposing_party = Column(String(255), nullable=True)
+    
+    # Court Info (for pleadings)
+    court_jurisdiction = Column(String(255), nullable=True)
+    case_number = Column(String(100), nullable=True)
+    judge_name = Column(String(255), nullable=True)
+    
+    # Contract Info
+    contract_type = Column(String(100), nullable=True)
+    contract_value = Column(DECIMAL(15, 2), nullable=True)
+    contract_effective_date = Column(Date, nullable=True)
+    contract_expiration_date = Column(Date, nullable=True)
+    governing_law = Column(String(100), nullable=True)
+    
+    # Discovery Info
+    discovery_type = Column(String(100), nullable=True)
+    propounding_party = Column(String(255), nullable=True)
+    responding_party = Column(String(255), nullable=True)
+    discovery_number = Column(String(100), nullable=True)
+    response_due_date = Column(Date, nullable=True)
+    response_status = Column(String(50), nullable=True)
+    
+    # Exhibit Info
+    exhibit_number = Column(String(100), nullable=True)
+    
+    # Correspondence Info
+    correspondence_type = Column(String(50), nullable=True)
+    cc = Column(String(255), nullable=True)
+    subject = Column(String(500), nullable=True)
+    
+    # Workflow
+    review_status = Column(String(50), default="not_required")
+    assigned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    review_deadline = Column(Date, nullable=True)
+    priority = Column(String(20), default="normal")
+    review_instructions = Column(Text, nullable=True)
+    
+    # Metadata
+    internal_notes = Column(Text, nullable=True)
+    tags = Column(ARRAY(String), nullable=True)
+    
+    # Processing
+    processing_status = Column(String(50), default="pending")
+    text_extracted = Column(Boolean, default=False)
+    indexed_for_search = Column(Boolean, default=False)
+    
+    # Audit fields
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    matter = relationship("Matter", back_populates="documents")
+    parent_document = relationship("Document", remote_side=[id], foreign_keys=[parent_document_id])
+    root_document = relationship("Document", remote_side=[id], foreign_keys=[root_document_id])
+    assigned_to_user = relationship("User", foreign_keys=[assigned_to])
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
