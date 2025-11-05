@@ -1,0 +1,168 @@
+"""
+Document processing service for RAG pipeline.
+
+Handles text extraction, chunking, and embedding generation for documents.
+Integrates with the document_processing_queue for async task management.
+"""
+
+import logging
+from datetime import datetime, timezone
+from typing import Optional
+from uuid import UUID
+
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.models import Document
+from app.services.text_extraction import text_extraction_service
+from app.services.storage import storage_service
+
+logger = logging.getLogger(__name__)
+
+
+class DocumentProcessor:
+    """Service for processing documents through the RAG pipeline."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def process_text_extraction(self, document_id: UUID) -> bool:
+        """
+        Extract text from a document and store it in the database.
+
+        Args:
+            document_id: UUID of the document to process
+
+        Returns:
+            True if extraction succeeded, False otherwise
+        """
+        try:
+            # Get document from database
+            query = select(Document).where(Document.id == document_id)
+            result = await self.db.execute(query)
+            document = result.scalar_one_or_none()
+
+            if not document:
+                logger.error(f"Document {document_id} not found")
+                return False
+
+            # Check if already extracted
+            if document.text_extracted:
+                logger.info(f"Document {document_id} already has extracted text")
+                return True
+
+            # Download file from storage
+            logger.info(f"Downloading document {document_id} from S3: {document.storage_path}")
+            file_content = await storage_service.download_file(document.storage_path)
+
+            if not file_content:
+                error_msg = "Failed to download file from storage"
+                logger.error(f"Document {document_id}: {error_msg}")
+                await self._mark_extraction_failed(document, error_msg)
+                return False
+
+            # Extract text
+            logger.info(f"Extracting text from document {document_id} ({document.filename})")
+            extraction_result = text_extraction_service.extract_text(
+                file_content=file_content,
+                filename=document.filename,
+                mime_type=document.mime_type
+            )
+
+            if extraction_result['success']:
+                # Update document with extracted text
+                await self._save_extraction_results(document, extraction_result)
+                logger.info(
+                    f"Successfully extracted text from document {document_id}: "
+                    f"{extraction_result['metadata'].get('word_count', 0)} words, "
+                    f"{extraction_result['metadata'].get('page_count', 0)} pages"
+                )
+                return True
+            else:
+                # Mark extraction as failed
+                error_msg = extraction_result.get('error', 'Unknown extraction error')
+                logger.error(f"Document {document_id} extraction failed: {error_msg}")
+                await self._mark_extraction_failed(document, error_msg)
+                return False
+
+        except Exception as e:
+            logger.error(f"Error processing document {document_id}: {str(e)}", exc_info=True)
+            try:
+                # Try to mark as failed in database
+                query = select(Document).where(Document.id == document_id)
+                result = await self.db.execute(query)
+                document = result.scalar_one_or_none()
+                if document:
+                    await self._mark_extraction_failed(document, str(e))
+            except Exception as db_error:
+                logger.error(f"Failed to mark document as failed: {str(db_error)}")
+            return False
+
+    async def _save_extraction_results(
+        self,
+        document: Document,
+        extraction_result: dict
+    ) -> None:
+        """Save extraction results to the document."""
+        metadata = extraction_result.get('metadata', {})
+
+        # Update document fields
+        document.extracted_text = extraction_result['text']
+        document.page_count = metadata.get('page_count')
+        document.word_count = metadata.get('word_count')
+        document.extraction_method = metadata.get('extraction_method')
+        document.extraction_date = datetime.now(timezone.utc)
+        document.text_extracted = True
+        document.processing_status = 'text_extracted'
+        document.extraction_error = None
+
+        # Commit changes
+        await self.db.commit()
+        await self.db.refresh(document)
+
+    async def _mark_extraction_failed(
+        self,
+        document: Document,
+        error_message: str
+    ) -> None:
+        """Mark document extraction as failed."""
+        document.text_extracted = False
+        document.processing_status = 'extraction_failed'
+        document.extraction_error = error_message
+        document.extraction_date = datetime.now(timezone.utc)
+
+        # Commit changes
+        await self.db.commit()
+        await self.db.refresh(document)
+
+    async def get_document_status(self, document_id: UUID) -> Optional[dict]:
+        """
+        Get processing status for a document.
+
+        Returns:
+            Dictionary with processing status information
+        """
+        query = select(Document).where(Document.id == document_id)
+        result = await self.db.execute(query)
+        document = result.scalar_one_or_none()
+
+        if not document:
+            return None
+
+        return {
+            'document_id': str(document.id),
+            'filename': document.filename,
+            'processing_status': document.processing_status,
+            'text_extracted': document.text_extracted,
+            'page_count': document.page_count,
+            'word_count': document.word_count,
+            'extraction_method': document.extraction_method,
+            'extraction_date': document.extraction_date.isoformat() if document.extraction_date else None,
+            'extraction_error': document.extraction_error
+        }
+
+
+# Singleton instance factory
+def get_document_processor(db: AsyncSession) -> DocumentProcessor:
+    """Get a DocumentProcessor instance with database session."""
+    return DocumentProcessor(db)

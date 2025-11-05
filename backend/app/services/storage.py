@@ -178,6 +178,10 @@ class StorageService:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Failed to retrieve file from storage: {error_code}"
                 )
+
+    async def download_file(self, storage_path: str) -> bytes:
+        """Alias for get_file - downloads file from S3"""
+        return await self.get_file(storage_path)
     
     async def delete_file(self, storage_path: str) -> bool:
         """Delete file from S3"""

@@ -253,6 +253,14 @@ class Document(Base):
     processing_status = Column(String(50), default="pending")
     text_extracted = Column(Boolean, default=False)
     indexed_for_search = Column(Boolean, default=False)
+
+    # Text Extraction (for RAG pipeline)
+    extracted_text = Column(Text, nullable=True)
+    page_count = Column(Integer, nullable=True)
+    word_count = Column(Integer, nullable=True)
+    extraction_method = Column(String(50), nullable=True)
+    extraction_date = Column(DateTime(timezone=True), nullable=True)
+    extraction_error = Column(Text, nullable=True)
     
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())

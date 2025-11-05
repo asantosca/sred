@@ -117,7 +117,7 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [x] **Enable PGvector extension** ✅ Complete with IVFFlat indexing
 - [x] **Design semantic chunking architecture** ✅ Complete (see RAG_ARCHITECTURE.md)
 - [x] **Configure vector dimensions** ✅ Complete (1536 default, configurable)
-- [ ] Implement document text extraction service (PDF, DOCX, TXT, Excel parsers)
+- [x] **Implement document text extraction service** ✅ Complete (PDF, DOCX, TXT with pdfplumber, python-docx)
 - [ ] Add OCR support for scanned documents (legal case files, historical documents)
 - [ ] Create **semantic chunking service** (not just fixed-size - use paragraph/section boundaries)
 - [ ] Integrate **legal-optimized embeddings** (Voyage AI voyage-law-2 or OpenAI text-embedding-3-large)
@@ -144,16 +144,18 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [ ] Build similar document detection for version suggestions
 - [ ] Create API endpoints for version management
 
-**Status**: 🟡 **Database foundation complete** (30% of Milestone 3)
+**Status**: 🟡 **Text extraction complete** (40% of Milestone 3)
 
 **Completed:**
 - ✅ PGvector extension enabled with IVFFlat indexing
 - ✅ 3 new database tables created and indexed
 - ✅ Vector embeddings schema (1536 dimensions, configurable)
 - ✅ Comprehensive architecture documented (RAG_ARCHITECTURE.md)
+- ✅ Text extraction service (PDF, DOCX, TXT with automatic processing)
+- ✅ Document metadata extraction (word count, page count)
+- ✅ Full-text search indexing (PostgreSQL GIN index)
 
 **In Progress:**
-- 🔨 Text extraction service (PDF, DOCX, TXT)
 - 🔨 Semantic chunking implementation
 - 🔨 Embedding generation service
 
@@ -474,7 +476,7 @@ Complete production-ready platform:
 
 ---
 
-**Last Updated**: 2025-11-05 (Milestone 3: Database foundation complete)
+**Last Updated**: 2025-11-05 (Milestone 3: Text extraction service complete - 40%)
 
 ---
 

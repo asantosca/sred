@@ -1,5 +1,6 @@
 # app/api/v1/endpoints/documents.py - Document upload and management endpoints
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
@@ -23,8 +24,10 @@ from app.api.deps import get_current_user
 from app.services.storage import storage_service
 from app.services.document_intelligence import document_intelligence_service
 from app.services.usage_tracker import UsageTracker
+from app.services.document_processor import get_document_processor
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Pre-upload Analysis Endpoint
 
@@ -554,6 +557,16 @@ async def _process_document_upload(
 
         # Increment usage tracking after successful upload
         await usage_tracker.increment_document_count(current_user.company_id, file_size)
+
+        # Trigger text extraction for RAG pipeline (async processing)
+        # For now, we'll do this synchronously. Later can be moved to Celery/background task
+        try:
+            processor = get_document_processor(db)
+            await processor.process_text_extraction(document.id)
+        except Exception as extraction_error:
+            # Log error but don't fail the upload
+            logger.error(f"Text extraction failed for document {document.id}: {str(extraction_error)}")
+            # Document is already saved, extraction can be retried later
 
         return DocumentUploadResponse(
             document_id=document.id,
