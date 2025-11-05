@@ -22,6 +22,7 @@ from app.models.models import Document as DocumentModel, Matter, MatterAccess, U
 from app.api.deps import get_current_user
 from app.services.storage import storage_service
 from app.services.document_intelligence import document_intelligence_service
+from app.services.usage_tracker import UsageTracker
 
 router = APIRouter()
 
@@ -286,20 +287,60 @@ async def _process_document_upload(
     try:
         file_content = await file.read()
         file_size = len(file_content)
-        
+
         if file_size == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Empty file uploaded"
             )
-        
+
+        # Initialize usage tracker
+        usage_tracker = UsageTracker(db)
+
+        # Check document count limit
+        if not await usage_tracker.check_document_limit(current_user.company_id):
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "error": "Document limit reached",
+                    "message": "Your plan's document limit has been reached. Please contact your administrator to upgrade.",
+                    "limit_type": "documents"
+                }
+            )
+
+        # Check document size limit
+        if not await usage_tracker.check_document_size_limit(current_user.company_id, file_size):
+            stats = await usage_tracker.get_plan_limits(current_user.company_id)
+            max_mb = stats.get('max_document_size_mb', 10) if stats else 10
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail={
+                    "error": "Document too large",
+                    "message": f"Document size ({file_size / (1024*1024):.1f} MB) exceeds plan limit ({max_mb} MB).",
+                    "limit_type": "document_size",
+                    "file_size_mb": round(file_size / (1024*1024), 2),
+                    "max_size_mb": max_mb
+                }
+            )
+
+        # Check storage limit
+        if not await usage_tracker.check_storage_limit(current_user.company_id, file_size):
+            raise HTTPException(
+                status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
+                detail={
+                    "error": "Storage limit reached",
+                    "message": "Your plan's storage limit has been reached. Delete old documents or contact your administrator.",
+                    "limit_type": "storage"
+                }
+            )
+
         # Validate file
         validation_result = storage_service.validate_file(
             filename=file.filename,
             file_size=file_size,
             file_content=file_content
         )
-        
+
         if not validation_result['valid']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -510,7 +551,10 @@ async def _process_document_upload(
         db.add(document)
         await db.commit()
         await db.refresh(document)
-        
+
+        # Increment usage tracking after successful upload
+        await usage_tracker.increment_document_count(current_user.company_id, file_size)
+
         return DocumentUploadResponse(
             document_id=document.id,
             filename=document.filename,
