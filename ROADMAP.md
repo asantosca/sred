@@ -113,11 +113,14 @@ AI-powered document intelligence with embeddings, vector search, and version man
 
 **Core RAG Pipeline:**
 
+- [x] **Create database tables for RAG pipeline** ✅ Complete (document_chunks, document_relationships, document_processing_queue)
+- [x] **Enable PGvector extension** ✅ Complete with IVFFlat indexing
+- [x] **Design semantic chunking architecture** ✅ Complete (see RAG_ARCHITECTURE.md)
+- [x] **Configure vector dimensions** ✅ Complete (1536 default, configurable)
 - [ ] Implement document text extraction service (PDF, DOCX, TXT, Excel parsers)
 - [ ] Add OCR support for scanned documents (legal case files, historical documents)
 - [ ] Create **semantic chunking service** (not just fixed-size - use paragraph/section boundaries)
 - [ ] Integrate **legal-optimized embeddings** (Voyage AI voyage-law-2 or OpenAI text-embedding-3-large)
-- [ ] Update database schema for configurable vector dimensions (currently hardcoded to 1536)
 - [ ] Build background task queue for document processing (using Celery/Redis)
 - [ ] Implement vector similarity search with PGvector
 
@@ -133,16 +136,30 @@ AI-powered document intelligence with embeddings, vector search, and version man
 
 **Version Control System:**
 
-- [ ] Create document version tracking (parent/child relationships, version numbers)
-- [ ] Implement document superseding (mark previous versions as superseded)
+- [x] **Create document_relationships table** ✅ Complete (amendments, exhibits, responses, supersedes)
+- [x] **Add document processing queue table** ✅ Complete for async operations
+- [x] **Design version tracking architecture** ✅ Complete (parent/child relationships, version numbers)
+- [ ] Implement document superseding logic (mark previous versions as superseded)
 - [ ] Add version comparison and change summaries
-- [ ] Create document relationships table (amendments, exhibits, responses)
 - [ ] Build similar document detection for version suggestions
-- [ ] Add document processing queue table for async operations
+- [ ] Create API endpoints for version management
 
-**Status**: PGvector enabled, RAG pipeline not implemented
+**Status**: 🟡 **Database foundation complete** (30% of Milestone 3)
 
-**New Tables**: document_relationships, document_processing_queue
+**Completed:**
+- ✅ PGvector extension enabled with IVFFlat indexing
+- ✅ 3 new database tables created and indexed
+- ✅ Vector embeddings schema (1536 dimensions, configurable)
+- ✅ Comprehensive architecture documented (RAG_ARCHITECTURE.md)
+
+**In Progress:**
+- 🔨 Text extraction service (PDF, DOCX, TXT)
+- 🔨 Semantic chunking implementation
+- 🔨 Embedding generation service
+
+**New Tables**: document_chunks, document_relationships, document_processing_queue
+
+**Key Documentation**: See `RAG_ARCHITECTURE.md` for complete pipeline design
 
 **Embedding Model Decision**:
 
@@ -457,7 +474,7 @@ Complete production-ready platform:
 
 ---
 
-**Last Updated**: 2025-11-04
+**Last Updated**: 2025-11-05 (Milestone 3: Database foundation complete)
 
 ---
 
