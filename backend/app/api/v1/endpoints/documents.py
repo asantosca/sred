@@ -514,7 +514,7 @@ async def _process_document_upload(
             document_type=upload_data.document_type,
             document_title=upload_data.document_title,
             document_date=upload_data.document_date,
-            document_status=upload_data.document_status,
+            document_status=getattr(upload_data, 'document_status', 'draft'),
             confidentiality_level=upload_data.confidentiality_level,
             is_privileged=is_privileged,
             processing_status='pending',

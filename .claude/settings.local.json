@@ -25,7 +25,8 @@
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "SlashCommand(/start-dev)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(test_doc.txt)"
     ],
     "deny": [],
     "ask": []
