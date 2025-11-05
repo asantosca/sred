@@ -37,17 +37,17 @@ Basic document upload with matter association and security controls.
 
 ### Tasks
 
-- [ ] Create matters table and API endpoints (CRUD operations)
-- [ ] Implement matter access control (who can upload to which matters)
-- [ ] Create core document upload API endpoint with S3 integration
-- [ ] Build document classification system (Contract, Pleading, Correspondence, Discovery, Exhibit)
-- [ ] Implement security controls (confidentiality levels, privilege designation)
-- [ ] Add basic document metadata (title, date, status, type-specific fields)
-- [ ] Create document listing with matter-based filtering
-- [ ] Add document download endpoints with signed URLs
-- [ ] Implement basic document deletion with S3 cleanup
+- [x] **Create matters table and API endpoints (CRUD operations)** ✅ Complete with full access control
+- [x] **Implement matter access control (who can upload to which matters)** ✅ Role-based permissions implemented
+- [x] **Add basic document metadata (title, date, status, type-specific fields)** ✅ Full schema created in database
+- [x] **Implement security controls (confidentiality levels, privilege designation)** ✅ Schema includes all security fields
+- [x] **Create core document upload API endpoint with S3 integration** ✅ Complete with multiple upload modes
+- [x] **Build document classification system (Contract, Pleading, Correspondence, Discovery, Exhibit)** ✅ Type-specific upload schemas implemented
+- [x] **Create document listing with matter-based filtering** ✅ Complete with pagination and search
+- [x] **Add document download endpoints with signed URLs** ✅ Secure presigned URL generation
+- [x] **Implement basic document deletion with S3 cleanup** ✅ Complete with storage cleanup
 
-**Status**: Schema exists, implementation needed
+**Status**: 🟢 **MILESTONE 2 COMPLETE!** ✅ All document upload and management features implemented
 
 **Upload Modes**: Quick Upload (5 required fields, ~60 seconds)
 
@@ -63,23 +63,43 @@ Type-specific metadata and improved upload experience.
 
 ### Tasks
 
-- [ ] Implement type-specific field sets for each document category:
+- [x] **Implement type-specific field sets for each document category** ✅ Complete with specialized upload schemas:
   - Contract fields (type, value, effective/expiration dates, governing law)
   - Pleading fields (court, case number, opposing party, filing date)
   - Correspondence fields (author, recipient, cc, subject)
   - Discovery fields (type, parties, numbers, due dates)
   - Exhibit fields (exhibit number, related documents)
-- [ ] Add document status tracking (Draft, Final, Executed, Filed)
+- [x] **Add document status tracking (Draft, Final, Executed, Filed)** ✅ Complete with:
+  - Status update endpoint with audit logging
+  - Status history tracking in internal notes
+  - Valid status workflow definitions
+- [x] **Create auto-detection features (filename patterns, basic OCR for dates)** ✅ Complete with:
+  - Pre-upload file analysis endpoint for metadata suggestions
+  - Auto-detection integration in all upload endpoints
+  - Pattern matching for legal document types and metadata
+- [x] **Add document search within matters** ✅ Complete with:
+  - Enhanced basic search across all document fields
+  - Advanced search endpoint with multiple filters and criteria
+  - Search by content, metadata, dates, authors, case numbers
+- [x] **Implement basic duplicate detection (file hash comparison)** ✅ Complete with:
+  - Pre-upload duplicate checking endpoint
+  - Automatic duplicate prevention in upload process
+  - Company-wide and matter-specific duplicate detection
 - [ ] Implement Standard Upload mode (12-15 fields, 2-3 minutes)
-- [ ] Create auto-detection features (filename patterns, basic OCR for dates)
-- [ ] Add document search within matters
-- [ ] Implement basic duplicate detection (file hash comparison)
 
-**Status**: Not started
+**Status**: 🟢 **MILESTONE 2.5 NEARLY COMPLETE!** ✅ 5/6 tasks completed (83% complete)
 
-**Upload Modes**: Quick + Standard Upload
+**Upload Modes**: Quick Upload (with auto-detection)
 
-**Enhanced Features**: Type-specific metadata, auto-detection, search
+**Enhanced Features**: ✅ Type-specific metadata, ✅ Auto-detection, ✅ Advanced search, ✅ Duplicate detection, ✅ Status tracking
+
+**Key New Endpoints**:
+- `POST /api/v1/documents/analyze` - Pre-upload file analysis
+- `POST /api/v1/documents/search` - Advanced document search  
+- `POST /api/v1/documents/check-duplicates` - Duplicate detection
+- `PATCH /api/v1/documents/{id}/status` - Status tracking
+- `GET /api/v1/documents/statuses` - Status definitions
+- `GET /api/v1/documents/{id}/status-history` - Status history
 
 ---
 
@@ -354,7 +374,7 @@ Prepare for market and onboard first customers.
 Focus on core functionality first:
 
 1. **Milestone 1**: Auth (Complete ✅)
-2. **Milestone 2**: Core Document Upload (Quick mode, matter-based organization)
+2. **Milestone 2**: Core Document Upload (Complete ✅) - Full upload, classification, and management system
 3. **Milestone 2.5**: Enhanced Classification (Standard mode, type-specific fields)
 4. **Milestone 3**: Basic RAG pipeline + Version Control
 5. **Milestone 4**: Simple chat interface + Basic Workflow
