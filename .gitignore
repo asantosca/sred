@@ -31,6 +31,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Alembic
 alembic/versions/*.pyc

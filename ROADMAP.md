@@ -85,11 +85,11 @@ Type-specific metadata and improved upload experience.
   - Pre-upload duplicate checking endpoint
   - Automatic duplicate prevention in upload process
   - Company-wide and matter-specific duplicate detection
-- [ ] Implement Standard Upload mode (12-15 fields, 2-3 minutes)
+- [x] Implement Standard Upload mode (12-15 fields, 2-3 minutes) ✅ Complete with 17 fields total
 
-**Status**: 🟢 **MILESTONE 2.5 NEARLY COMPLETE!** ✅ 5/6 tasks completed (83% complete)
+**Status**: ✅ **MILESTONE 2.5 COMPLETE!** All enhanced classification features implemented
 
-**Upload Modes**: Quick Upload (with auto-detection)
+**Upload Modes**: Quick Upload + Standard Upload (both with auto-detection)
 
 **Enhanced Features**: ✅ Type-specific metadata, ✅ Auto-detection, ✅ Advanced search, ✅ Duplicate detection, ✅ Status tracking
 
@@ -375,8 +375,8 @@ Focus on core functionality first:
 
 1. **Milestone 1**: Auth (Complete ✅)
 2. **Milestone 2**: Core Document Upload (Complete ✅) - Full upload, classification, and management system
-3. **Milestone 2.5**: Enhanced Classification (Standard mode, type-specific fields)
-4. **Milestone 3**: Basic RAG pipeline + Version Control
+3. **Milestone 2.5**: Enhanced Classification (Complete ✅) - Standard mode, type-specific fields, auto-detection
+4. **Milestone 3**: Basic RAG pipeline + Version Control (NEXT)
 5. **Milestone 4**: Simple chat interface + Basic Workflow
 6. **Milestone 5**: Essential frontend pages + Advanced Upload
 
@@ -474,7 +474,7 @@ Based on comprehensive fileupload.md specification:
 - Single file upload only
 - Basic matter association and security
 
-**Milestone 2.5**: Standard Upload mode
+**Milestone 2.5**: Standard Upload mode ✅ Complete
 
 - 12-15 fields including type-specific metadata
 - ~2-3 minutes to complete

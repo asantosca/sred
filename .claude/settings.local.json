@@ -20,7 +20,12 @@
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
       "Bash(venv/Scripts/activate:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "SlashCommand(/start-dev)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []
