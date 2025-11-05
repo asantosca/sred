@@ -451,4 +451,4 @@ class DocumentIntelligenceService:
         return list(set(tags))
 
 # Create global service instance
-document_intelligence = DocumentIntelligenceService()
+document_intelligence_service = DocumentIntelligenceService()

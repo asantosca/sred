@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 import os
 import json
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from app.db.session import get_db
 from app.schemas.documents import (
