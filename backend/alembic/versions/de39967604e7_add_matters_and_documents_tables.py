@@ -1,7 +1,7 @@
 """Add matters and documents tables
 
 Revision ID: de39967604e7
-Revises: 
+Revises:
 Create Date: 2025-11-04 18:15:04.973188
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'de39967604e7'
-down_revision = '002_password_reset'
+down_revision = None
 branch_labels = None
 depends_on = None
 
