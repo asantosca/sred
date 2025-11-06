@@ -171,12 +171,15 @@ class DocumentProcessor:
                 return False
 
             # Check if already chunked (has existing chunks)
-            existing_chunks_query = select(DocumentChunk).where(
+            # Use COUNT to avoid loading vector columns that might cause type errors
+            from sqlalchemy import func as sql_func, exists
+            existing_chunks_query = select(sql_func.count()).select_from(DocumentChunk).where(
                 DocumentChunk.document_id == document_id
-            ).limit(1)
+            )
             existing_result = await self.db.execute(existing_chunks_query)
-            if existing_result.scalar_one_or_none():
-                logger.info(f"Document {document_id} already has chunks, skipping")
+            chunk_count = existing_result.scalar()
+            if chunk_count and chunk_count > 0:
+                logger.info(f"Document {document_id} already has {chunk_count} chunks, skipping")
                 return True
 
             # Chunk the text

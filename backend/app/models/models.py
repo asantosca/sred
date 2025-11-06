@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL, Float
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql import func
 import uuid
 from pgvector.sqlalchemy import Vector
@@ -287,9 +287,10 @@ class DocumentChunk(Base):
     chunk_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     # Using pgvector's Vector type for proper vector(1536) support
-    embedding = Column(Vector(1536), nullable=True)
+    # Deferred loading to avoid type registration issues until needed
+    embedding = deferred(Column(Vector(1536), nullable=True))
     embedding_model = Column(String(100), nullable=True)
-    chunk_metadata = Column("metadata", JSON, nullable=True)  # Renamed to avoid SQLAlchemy reserved word
+    chunk_metadata = Column(JSON, nullable=True)
     token_count = Column(Integer, nullable=True)
     char_count = Column(Integer, nullable=False)
     start_char = Column(Integer, nullable=True)

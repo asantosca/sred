@@ -2,33 +2,41 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import event
 from typing import AsyncGenerator
-import asyncpg
-from pgvector.asyncpg import register_vector
+import logging
 
 from app.core.config import settings
 
-async def get_asyncpg_conn():
-    """Create asyncpg connection with pgvector support."""
-    # Remove the driver portion from the URL for asyncpg
-    db_url = settings.DATABASE_URL
-    if "+" in db_url:
-        db_url = db_url.split("+")[0] + "://" + db_url.split("://")[1]
+logger = logging.getLogger(__name__)
 
-    conn = await asyncpg.connect(db_url)
-    await register_vector(conn)
-    return conn
-
-# Create async engine with custom connection factory
+# Create async engine
 engine = create_async_engine(
     settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
     echo=settings.DEBUG,
     pool_size=10,
     max_overflow=0,
     pool_pre_ping=True,
-    # Use async_creator to register pgvector on each connection
-    async_creator=get_asyncpg_conn
 )
+
+# Register pgvector type on each new connection
+@event.listens_for(engine.sync_engine, "connect")
+def register_vector_type(dbapi_conn, connection_record):
+    """Register pgvector type on each new database connection."""
+    from pgvector.asyncpg import register_vector
+    import asyncio
+
+    # Run the async registration synchronously
+    try:
+        # Create a new event loop for this registration
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(register_vector(dbapi_conn))
+            logger.debug("Registered pgvector type on new connection")
+        finally:
+            loop.close()
+    except Exception as e:
+        logger.error(f"Failed to register pgvector type: {str(e)}", exc_info=True)
 
 # Create session factory
 async_session_factory = async_sessionmaker(
@@ -41,7 +49,7 @@ async_session_factory = async_sessionmaker(
 Base = declarative_base()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Get database session"""
+    """Get database session."""
     async with async_session_factory() as session:
         try:
             yield session
