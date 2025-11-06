@@ -1,6 +1,6 @@
 # app/models/models.py - Fixed database models for BC Legal Tech
 
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL, Float
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -275,3 +275,24 @@ class Document(Base):
     assigned_to_user = relationship("User", foreign_keys=[assigned_to])
     created_by_user = relationship("User", foreign_keys=[created_by])
     updated_by_user = relationship("User", foreign_keys=[updated_by])
+    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+
+class DocumentChunk(Base):
+    """Document chunks for RAG vector search"""
+    __tablename__ = "document_chunks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    chunk_index = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    # embedding column omitted - will add when implementing embeddings (type is vector(1536) in DB)
+    # embedding_model omitted - will add when implementing embeddings
+    chunk_metadata = Column("metadata", JSON, nullable=True)  # Renamed to avoid SQLAlchemy reserved word
+    token_count = Column(Integer, nullable=True)
+    char_count = Column(Integer, nullable=False)
+    start_char = Column(Integer, nullable=True)
+    end_char = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    document = relationship("Document", back_populates="chunks")

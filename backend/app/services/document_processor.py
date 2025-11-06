@@ -13,9 +13,10 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Document
+from app.models.models import Document, DocumentChunk
 from app.services.text_extraction import text_extraction_service
 from app.services.storage import storage_service
+from app.services.chunking import chunking_service
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,14 @@ class DocumentProcessor:
         await self.db.commit()
         await self.db.refresh(document)
 
+        # Automatically trigger chunking after successful extraction
+        try:
+            await self.process_chunking(document.id)
+        except Exception as e:
+            logger.error(f"Chunking failed for document {document.id} after extraction: {str(e)}")
+            # Don't fail the extraction if chunking fails
+            pass
+
     async def _mark_extraction_failed(
         self,
         document: Document,
@@ -134,6 +143,83 @@ class DocumentProcessor:
         # Commit changes
         await self.db.commit()
         await self.db.refresh(document)
+
+    async def process_chunking(self, document_id: UUID) -> bool:
+        """
+        Create semantic chunks from document text.
+
+        Args:
+            document_id: UUID of the document to chunk
+
+        Returns:
+            True if chunking succeeded, False otherwise
+        """
+        try:
+            # Get document from database
+            query = select(Document).where(Document.id == document_id)
+            result = await self.db.execute(query)
+            document = result.scalar_one_or_none()
+
+            if not document:
+                logger.error(f"Document {document_id} not found")
+                return False
+
+            # Check if text has been extracted
+            if not document.text_extracted or not document.extracted_text:
+                logger.error(f"Document {document_id} has no extracted text")
+                return False
+
+            # Check if already chunked (has existing chunks)
+            existing_chunks_query = select(DocumentChunk).where(
+                DocumentChunk.document_id == document_id
+            ).limit(1)
+            existing_result = await self.db.execute(existing_chunks_query)
+            if existing_result.scalar_one_or_none():
+                logger.info(f"Document {document_id} already has chunks, skipping")
+                return True
+
+            # Chunk the text
+            logger.info(f"Chunking document {document_id} ({document.filename})")
+            chunks = chunking_service.chunk_text(
+                text=document.extracted_text,
+                document_id=str(document_id)
+            )
+
+            if not chunks:
+                logger.warning(f"No chunks created for document {document_id}")
+                return False
+
+            # Save chunks to database
+            for chunk in chunks:
+                db_chunk = DocumentChunk(
+                    document_id=document_id,
+                    chunk_index=chunk.chunk_index,
+                    content=chunk.content,
+                    chunk_metadata=chunk.metadata,
+                    token_count=chunk.token_count,
+                    char_count=chunk.char_count,
+                    start_char=chunk.start_char,
+                    end_char=chunk.end_char
+                    # embedding and embedding_model will be added when implementing embeddings
+                )
+                self.db.add(db_chunk)
+
+            # Update document status
+            document.processing_status = 'chunked'
+            document.indexed_for_search = False  # Not yet embedded
+
+            await self.db.commit()
+
+            logger.info(
+                f"Successfully chunked document {document_id}: "
+                f"{len(chunks)} chunks created"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Error chunking document {document_id}: {str(e)}", exc_info=True)
+            await self.db.rollback()
+            return False
 
     async def get_document_status(self, document_id: UUID) -> Optional[dict]:
         """
@@ -166,3 +252,4 @@ class DocumentProcessor:
 def get_document_processor(db: AsyncSession) -> DocumentProcessor:
     """Get a DocumentProcessor instance with database session."""
     return DocumentProcessor(db)
+
