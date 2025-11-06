@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
+from pgvector.sqlalchemy import Vector
 
 from app.db.session import Base
 
@@ -285,8 +286,9 @@ class DocumentChunk(Base):
     document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     chunk_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
-    # embedding column omitted - will add when implementing embeddings (type is vector(1536) in DB)
-    # embedding_model omitted - will add when implementing embeddings
+    # Using pgvector's Vector type for proper vector(1536) support
+    embedding = Column(Vector(1536), nullable=True)
+    embedding_model = Column(String(100), nullable=True)
     chunk_metadata = Column("metadata", JSON, nullable=True)  # Renamed to avoid SQLAlchemy reserved word
     token_count = Column(Integer, nullable=True)
     char_count = Column(Integer, nullable=False)

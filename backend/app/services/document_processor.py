@@ -17,6 +17,7 @@ from app.models.models import Document, DocumentChunk
 from app.services.text_extraction import text_extraction_service
 from app.services.storage import storage_service
 from app.services.chunking import chunking_service
+from app.services.embeddings import embedding_service
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +201,7 @@ class DocumentProcessor:
                     char_count=chunk.char_count,
                     start_char=chunk.start_char,
                     end_char=chunk.end_char
-                    # embedding and embedding_model will be added when implementing embeddings
+                    # Embeddings will be added in the next pipeline step
                 )
                 self.db.add(db_chunk)
 
@@ -214,10 +215,101 @@ class DocumentProcessor:
                 f"Successfully chunked document {document_id}: "
                 f"{len(chunks)} chunks created"
             )
+
+            # Automatically trigger embedding generation after successful chunking
+            try:
+                await self.process_embeddings(document.id)
+            except Exception as e:
+                logger.error(f"Embedding generation failed for document {document.id} after chunking: {str(e)}")
+                # Don't fail the chunking if embedding generation fails
+                pass
+
             return True
 
         except Exception as e:
             logger.error(f"Error chunking document {document_id}: {str(e)}", exc_info=True)
+            await self.db.rollback()
+            return False
+
+    async def process_embeddings(self, document_id: UUID) -> bool:
+        """
+        Generate embeddings for all chunks of a document.
+
+        Args:
+            document_id: UUID of the document to generate embeddings for
+
+        Returns:
+            True if embedding generation succeeded, False otherwise
+        """
+        try:
+            # Get document from database
+            query = select(Document).where(Document.id == document_id)
+            result = await self.db.execute(query)
+            document = result.scalar_one_or_none()
+
+            if not document:
+                logger.error(f"Document {document_id} not found")
+                return False
+
+            # Check if document has been chunked
+            if document.processing_status not in ['chunked', 'embedded']:
+                logger.error(
+                    f"Document {document_id} must be chunked before generating embeddings "
+                    f"(current status: {document.processing_status})"
+                )
+                return False
+
+            # Get all chunks for this document
+            chunks_query = select(DocumentChunk).where(
+                DocumentChunk.document_id == document_id
+            ).order_by(DocumentChunk.chunk_index)
+            chunks_result = await self.db.execute(chunks_query)
+            chunks = chunks_result.scalars().all()
+
+            if not chunks:
+                logger.warning(f"No chunks found for document {document_id}")
+                return False
+
+            # Check if already embedded
+            if chunks[0].embedding is not None:
+                logger.info(f"Document {document_id} chunks already have embeddings, skipping")
+                return True
+
+            # Extract text content from chunks
+            chunk_texts = [chunk.content for chunk in chunks]
+
+            # Generate embeddings in batch
+            logger.info(
+                f"Generating embeddings for {len(chunks)} chunks of document {document_id}"
+            )
+            embeddings = embedding_service.generate_embeddings_batch(chunk_texts)
+
+            # Get embedding metadata
+            embedding_metadata = embedding_service.get_embedding_metadata()
+            embedding_model = embedding_metadata['model']
+
+            # Update chunks with embeddings
+            for chunk, embedding in zip(chunks, embeddings):
+                chunk.embedding = embedding
+                chunk.embedding_model = embedding_model
+
+            # Update document status
+            document.processing_status = 'embedded'
+            document.indexed_for_search = True
+
+            await self.db.commit()
+
+            logger.info(
+                f"Successfully generated embeddings for document {document_id}: "
+                f"{len(embeddings)} chunks embedded with model {embedding_model}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(
+                f"Error generating embeddings for document {document_id}: {str(e)}",
+                exc_info=True
+            )
             await self.db.rollback()
             return False
 

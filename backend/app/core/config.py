@@ -47,5 +47,11 @@ class Settings:
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@bclegaltech.com")
     EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "BC Legal Tech")
 
+    # OpenAI settings (for embeddings and future chat)
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_EMBEDDING_MODEL: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+    OPENAI_EMBEDDING_DIMENSIONS: int = int(os.getenv("OPENAI_EMBEDDING_DIMENSIONS", "1536"))
+    OPENAI_CHAT_MODEL: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4-turbo-preview")  # For future use
+
 # Create global settings instance
 settings = Settings()
