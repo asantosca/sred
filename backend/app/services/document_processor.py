@@ -18,6 +18,7 @@ from app.services.text_extraction import text_extraction_service
 from app.services.storage import storage_service
 from app.services.chunking import chunking_service
 from app.services.embeddings import embedding_service
+from app.services.vector_storage import vector_storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -171,16 +172,19 @@ class DocumentProcessor:
                 return False
 
             # Check if already chunked (has existing chunks)
-            # Use COUNT to avoid loading vector columns that might cause type errors
-            from sqlalchemy import func as sql_func, exists
-            existing_chunks_query = select(sql_func.count()).select_from(DocumentChunk).where(
-                DocumentChunk.document_id == document_id
-            )
-            existing_result = await self.db.execute(existing_chunks_query)
-            chunk_count = existing_result.scalar()
-            if chunk_count and chunk_count > 0:
-                logger.info(f"Document {document_id} already has {chunk_count} chunks, skipping")
-                return True
+            # Use raw SQL to avoid loading vector columns that cause type errors
+            try:
+                pool = await vector_storage_service.get_pool()
+                async with pool.acquire() as conn:
+                    chunk_count_result = await conn.fetchval(
+                        "SELECT COUNT(*) FROM document_chunks WHERE document_id = $1",
+                        document_id
+                    )
+                    if chunk_count_result and chunk_count_result > 0:
+                        logger.info(f"Document {document_id} already has {chunk_count_result} chunks, skipping")
+                        return True
+            except Exception as check_error:
+                logger.warning(f"Could not check existing chunks: {str(check_error)}")
 
             # Chunk the text
             logger.info(f"Chunking document {document_id} ({document.filename})")
@@ -238,6 +242,8 @@ class DocumentProcessor:
         """
         Generate embeddings for all chunks of a document.
 
+        Uses ORM for document/chunk retrieval and raw SQL for vector storage.
+
         Args:
             document_id: UUID of the document to generate embeddings for
 
@@ -245,7 +251,7 @@ class DocumentProcessor:
             True if embedding generation succeeded, False otherwise
         """
         try:
-            # Get document from database
+            # Get document from database (ORM)
             query = select(Document).where(Document.id == document_id)
             result = await self.db.execute(query)
             document = result.scalar_one_or_none()
@@ -262,24 +268,38 @@ class DocumentProcessor:
                 )
                 return False
 
-            # Get all chunks for this document
-            chunks_query = select(DocumentChunk).where(
+            # Get all chunks for this document (ORM - but don't load embedding column)
+            chunks_query = select(
+                DocumentChunk.id,
+                DocumentChunk.content,
+                DocumentChunk.chunk_index
+            ).where(
                 DocumentChunk.document_id == document_id
             ).order_by(DocumentChunk.chunk_index)
             chunks_result = await self.db.execute(chunks_query)
-            chunks = chunks_result.scalars().all()
+            chunks = chunks_result.all()
 
             if not chunks:
                 logger.warning(f"No chunks found for document {document_id}")
                 return False
 
-            # Check if already embedded
-            if chunks[0].embedding is not None:
-                logger.info(f"Document {document_id} chunks already have embeddings, skipping")
-                return True
+            # Check if already embedded (via raw SQL to avoid loading vector column)
+            try:
+                pool = await vector_storage_service.get_pool()
+                async with pool.acquire() as conn:
+                    first_chunk = await conn.fetchrow(
+                        "SELECT embedding FROM document_chunks WHERE id = $1",
+                        chunks[0].id
+                    )
+                    if first_chunk and first_chunk['embedding'] is not None:
+                        logger.info(f"Document {document_id} chunks already have embeddings, skipping")
+                        return True
+            except Exception as check_error:
+                logger.warning(f"Could not check existing embeddings: {str(check_error)}")
 
             # Extract text content from chunks
             chunk_texts = [chunk.content for chunk in chunks]
+            chunk_ids = [chunk.id for chunk in chunks]
 
             # Generate embeddings in batch
             logger.info(
@@ -291,15 +311,16 @@ class DocumentProcessor:
             embedding_metadata = embedding_service.get_embedding_metadata()
             embedding_model = embedding_metadata['model']
 
-            # Update chunks with embeddings
-            for chunk, embedding in zip(chunks, embeddings):
-                chunk.embedding = embedding
-                chunk.embedding_model = embedding_model
+            # Store embeddings using raw SQL (bypasses ORM vector type issues)
+            await vector_storage_service.store_embeddings(
+                chunk_ids=chunk_ids,
+                embeddings=embeddings,
+                model=embedding_model
+            )
 
-            # Update document status
+            # Update document status (ORM)
             document.processing_status = 'embedded'
             document.indexed_for_search = True
-
             await self.db.commit()
 
             logger.info(
