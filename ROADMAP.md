@@ -121,8 +121,8 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [ ] Add OCR support for scanned documents (legal case files, historical documents)
 - [x] **Create semantic chunking service** ✅ Complete (paragraph/section boundaries, legal document structure detection, page tracking)
 - [x] **Integrate embedding generation** ✅ Complete (OpenAI text-embedding-3-small, 1536 dimensions)
+- [x] **Implement vector similarity search with PGvector** ✅ Complete (semantic search API endpoint)
 - [ ] Build background task queue for document processing (using Celery/Redis)
-- [ ] Implement vector similarity search with PGvector
 
 **Anti-Hallucination Features:**
 
@@ -144,7 +144,7 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [ ] Build similar document detection for version suggestions
 - [ ] Create API endpoints for version management
 
-**Status**: 🟢 **Embedding generation complete!** (70% of Milestone 3)
+**Status**: 🟢 **Semantic search complete!** (80% of Milestone 3)
 
 **Completed:**
 - ✅ PGvector extension enabled with IVFFlat indexing
@@ -159,10 +159,13 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - ✅ **Embedding generation service** (OpenAI text-embedding-3-small integration)
 - ✅ **Hybrid database architecture** (SQLAlchemy ORM + raw asyncpg for vectors)
 - ✅ **Vector storage service** (pgvector with proper type registration)
+- ✅ **Semantic search API** (POST /api/v1/search/semantic with natural language queries)
+- ✅ **Search result enrichment** (document metadata, page numbers, similarity scores)
 
 **Next Up:**
-- 🎯 Vector similarity search implementation
 - 🎯 Background task queue (Celery/Redis) for automatic processing
+- 🎯 Hybrid search (semantic + keyword matching)
+- 🎯 Anti-hallucination features (confidence scoring, citations)
 
 **New Tables**: document_chunks, document_relationships, document_processing_queue
 
@@ -481,7 +484,7 @@ Complete production-ready platform:
 
 ---
 
-**Last Updated**: 2025-11-06 (Milestone 3: Embedding generation complete - 70%)
+**Last Updated**: 2025-11-06 (Milestone 3: Semantic search complete - 80%)
 
 ---
 
