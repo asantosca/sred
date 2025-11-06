@@ -123,13 +123,9 @@ class DocumentProcessor:
         await self.db.commit()
         await self.db.refresh(document)
 
-        # Automatically trigger chunking after successful extraction
-        try:
-            await self.process_chunking(document.id)
-        except Exception as e:
-            logger.error(f"Chunking failed for document {document.id} after extraction: {str(e)}")
-            # Don't fail the extraction if chunking fails
-            pass
+        # NOTE: Automatic chunking removed due to greenlet context issues
+        # Chunking will be triggered separately via background task queue
+        # or manual trigger to avoid SQLAlchemy transaction conflicts
 
     async def _mark_extraction_failed(
         self,
@@ -171,20 +167,11 @@ class DocumentProcessor:
                 logger.error(f"Document {document_id} has no extracted text")
                 return False
 
-            # Check if already chunked (has existing chunks)
-            # Use raw SQL to avoid loading vector columns that cause type errors
-            try:
-                pool = await vector_storage_service.get_pool()
-                async with pool.acquire() as conn:
-                    chunk_count_result = await conn.fetchval(
-                        "SELECT COUNT(*) FROM document_chunks WHERE document_id = $1",
-                        document_id
-                    )
-                    if chunk_count_result and chunk_count_result > 0:
-                        logger.info(f"Document {document_id} already has {chunk_count_result} chunks, skipping")
-                        return True
-            except Exception as check_error:
-                logger.warning(f"Could not check existing chunks: {str(check_error)}")
+            # Check if already chunked by checking processing status
+            # (Avoid async DB calls here to prevent greenlet context issues)
+            if document.processing_status in ['chunked', 'embedded']:
+                logger.info(f"Document {document_id} already chunked (status: {document.processing_status}), skipping")
+                return True
 
             # Chunk the text
             logger.info(f"Chunking document {document_id} ({document.filename})")
@@ -223,13 +210,9 @@ class DocumentProcessor:
                 f"{len(chunks)} chunks created"
             )
 
-            # Automatically trigger embedding generation after successful chunking
-            try:
-                await self.process_embeddings(document.id)
-            except Exception as e:
-                logger.error(f"Embedding generation failed for document {document.id} after chunking: {str(e)}")
-                # Don't fail the chunking if embedding generation fails
-                pass
+            # NOTE: Automatic embedding generation removed due to greenlet context issues
+            # Embedding generation will be triggered separately via background task queue
+            # or manual trigger to avoid SQLAlchemy transaction conflicts
 
             return True
 

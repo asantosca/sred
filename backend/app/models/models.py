@@ -290,7 +290,7 @@ class DocumentChunk(Base):
     # Deferred loading to avoid type registration issues until needed
     embedding = deferred(Column(Vector(1536), nullable=True))
     embedding_model = Column(String(100), nullable=True)
-    chunk_metadata = Column(JSON, nullable=True)
+    chunk_metadata = Column("metadata", JSON, nullable=True)
     token_count = Column(Integer, nullable=True)
     char_count = Column(Integer, nullable=False)
     start_char = Column(Integer, nullable=True)

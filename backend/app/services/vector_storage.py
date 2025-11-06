@@ -27,8 +27,8 @@ class VectorStorageService:
     async def get_pool(self) -> asyncpg.Pool:
         """Get or create the asyncpg connection pool."""
         if self._pool is None:
-            # Parse DATABASE_URL to get connection parameters
-            db_url = settings.DATABASE_URL
+            # Strip +asyncpg dialect from DATABASE_URL for raw asyncpg connection
+            db_url = settings.DATABASE_URL.replace('postgresql+asyncpg://', 'postgresql://')
 
             # Create connection pool
             self._pool = await asyncpg.create_pool(
