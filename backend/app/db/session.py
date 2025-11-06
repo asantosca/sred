@@ -2,9 +2,10 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import event
+from sqlalchemy import event, pool
 from typing import AsyncGenerator
 import logging
+import asyncio
 
 from app.core.config import settings
 
@@ -19,24 +20,24 @@ engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-# Register pgvector type on each new connection
-@event.listens_for(engine.sync_engine, "connect")
-def register_vector_type(dbapi_conn, connection_record):
-    """Register pgvector type on each new database connection."""
+# Register pgvector type using pool event
+@event.listens_for(engine.sync_engine.pool, "connect")
+def register_vector_on_connect(dbapi_conn, connection_record):
+    """Register pgvector type on each new pool connection."""
     from pgvector.asyncpg import register_vector
-    import asyncio
 
-    # Run the async registration synchronously
     try:
-        # Create a new event loop for this registration
+        # Create event loop for async registration
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
             loop.run_until_complete(register_vector(dbapi_conn))
-            logger.debug("Registered pgvector type on new connection")
+            logger.info("Registered pgvector type on pool connection")
         finally:
             loop.close()
+            asyncio.set_event_loop(None)
     except Exception as e:
-        logger.error(f"Failed to register pgvector type: {str(e)}", exc_info=True)
+        logger.error(f"Failed to register pgvector on pool connect: {str(e)}", exc_info=True)
 
 # Create session factory
 async_session_factory = async_sessionmaker(
