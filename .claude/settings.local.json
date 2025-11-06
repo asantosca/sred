@@ -26,7 +26,10 @@
       "Bash(taskkill:*)",
       "SlashCommand(/start-dev)",
       "Bash(docker exec:*)",
-      "Bash(test_doc.txt)"
+      "Bash(test_doc.txt)",
+      "WebSearch",
+      "Bash(nul)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

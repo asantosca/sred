@@ -120,7 +120,7 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [x] **Implement document text extraction service** ✅ Complete (PDF, DOCX, TXT with pdfplumber, python-docx)
 - [ ] Add OCR support for scanned documents (legal case files, historical documents)
 - [x] **Create semantic chunking service** ✅ Complete (paragraph/section boundaries, legal document structure detection, page tracking)
-- [ ] Integrate **legal-optimized embeddings** (Voyage AI voyage-law-2 or OpenAI text-embedding-3-large)
+- [x] **Integrate embedding generation** ✅ Complete (OpenAI text-embedding-3-small, 1536 dimensions)
 - [ ] Build background task queue for document processing (using Celery/Redis)
 - [ ] Implement vector similarity search with PGvector
 
@@ -144,7 +144,7 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - [ ] Build similar document detection for version suggestions
 - [ ] Create API endpoints for version management
 
-**Status**: 🟡 **Semantic chunking complete** (60% of Milestone 3)
+**Status**: 🟢 **Embedding generation complete!** (70% of Milestone 3)
 
 **Completed:**
 - ✅ PGvector extension enabled with IVFFlat indexing
@@ -156,9 +156,13 @@ AI-powered document intelligence with embeddings, vector search, and version man
 - ✅ Full-text search indexing (PostgreSQL GIN index)
 - ✅ Semantic chunking service (legal document structure detection, page tracking, metadata preservation)
 - ✅ Automatic chunking pipeline integration (triggers after text extraction)
+- ✅ **Embedding generation service** (OpenAI text-embedding-3-small integration)
+- ✅ **Hybrid database architecture** (SQLAlchemy ORM + raw asyncpg for vectors)
+- ✅ **Vector storage service** (pgvector with proper type registration)
 
-**In Progress:**
-- 🔨 Embedding generation service
+**Next Up:**
+- 🎯 Vector similarity search implementation
+- 🎯 Background task queue (Celery/Redis) for automatic processing
 
 **New Tables**: document_chunks, document_relationships, document_processing_queue
 
@@ -477,7 +481,7 @@ Complete production-ready platform:
 
 ---
 
-**Last Updated**: 2025-11-05 (Milestone 3: Text extraction service complete - 40%)
+**Last Updated**: 2025-11-06 (Milestone 3: Embedding generation complete - 70%)
 
 ---
 
