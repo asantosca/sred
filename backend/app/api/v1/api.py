@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 # Import endpoint routers
-from app.api.v1.endpoints import auth, users, matters, documents, usage
+from app.api.v1.endpoints import auth, users, matters, documents, usage, search
 
 # Create main API router
 api_router = APIRouter()
@@ -19,6 +19,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["user-management"])
 api_router.include_router(matters.router, prefix="/matters", tags=["matter-management"])
 api_router.include_router(documents.router, prefix="/documents", tags=["document-management"])
+api_router.include_router(search.router, prefix="/search", tags=["semantic-search"])
 api_router.include_router(usage.router, prefix="/usage", tags=["usage-tracking"])
 
 # Temporary test endpoint
