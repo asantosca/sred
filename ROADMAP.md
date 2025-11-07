@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-06 (Post-semantic search implementation analysis)
+**Last Updated**: 2025-11-06 (Post-Phase 2: Chat API and background processing complete)
 
 ## Vision
 
@@ -15,9 +15,9 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ## Current Status
 
-**✅ Milestones 1, 2, 2.5 Complete** - Full auth, document management, and enhanced classification
-**🟢 Milestone 3: 80% Complete** - RAG pipeline with semantic search working
-**🎯 Next: Background task queue → AI Chat → Essential Frontend → Launch**
+**✅ Milestones 1, 2, 2.5, 3 Complete** - Full auth, document management, RAG pipeline, and background processing
+**🟢 Milestone 4A: 90% Complete** - Chat API with Claude integration working
+**🎯 Next: Frontend → Production Deploy → Beta Launch**
 
 ---
 
@@ -86,7 +86,7 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ## MILESTONE 3: RAG Pipeline & Vector Search
 
-**Status**: 🟢 **80% Complete** - Semantic search working, need production automation
+**Status**: ✅ **COMPLETE** - Semantic search and background processing implemented
 
 ### Completed ✅
 
@@ -108,71 +108,81 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → Semantic Search ✅
 ```
 
-### Remaining Tasks (20%)
+### Completed in Latest Update ✅
 
-**🔴 CRITICAL - Blocks Production:**
-1. [ ] **Background task queue** (Celery + Redis)
-   - Auto-process documents after upload
-   - Retry failed processing
-   - Status webhooks
-   - **Priority: HIGHEST**
+**Background Processing:**
+- [x] **Background task queue** (Celery + Redis) ✅
+- [x] Auto-process documents after upload ✅
+- [x] Retry failed processing ✅
+- [x] Task status tracking ✅
 
-**🟡 MEDIUM - Nice to Have:**
-2. [ ] Rate limiting on API endpoints (security)
-3. [ ] Input validation middleware (security)
-4. [ ] Document processing status dashboard
+**Security & Validation:**
+- [x] Rate limiting on API endpoints (security) ✅
+- [x] Input validation middleware (security) ✅
+
+### Remaining Tasks (Deferred to Post-MVP)
 
 **🟢 LOW - Post-MVP:**
-5. [ ] OCR support for scanned documents
-6. [ ] Hybrid search (semantic + BM25 keyword)
-7. [ ] Version control API endpoints
-8. [ ] Document superseding logic
-9. [ ] Similar document detection
+1. [ ] Document processing status dashboard
+2. [ ] OCR support for scanned documents
+3. [ ] Hybrid search (semantic + BM25 keyword)
+4. [ ] Version control API endpoints
+5. [ ] Document superseding logic
+6. [ ] Similar document detection
 
 ### What We Learned
 
 **Key Insights:**
 - Semantic search alone works well (hybrid search not critical for MVP)
 - Citation tracking already implemented (document metadata + page numbers in results)
-- Manual pipeline trigger works for testing, but background processing required for production
 - OpenAI text-embedding-3-small (1536 dims) performs well for legal documents
+- Celery + Redis provides robust background processing for document pipeline
 
-**Next Priority**: Background task queue, then move to chat.
+**Status**: Milestone 3 complete! Ready for production deployment.
 
 ---
 
 ## MILESTONE 4A: AI Chat System (MVP)
 
-**Priority**: 🎯 **Start after M3 background queue complete**
+**Status**: 🟢 **90% Complete** - Chat API implemented, frontend needed
 
 Build conversational interface with RAG-powered responses.
 
-### Tasks
+### Completed ✅
 
-**Core Chat Features:**
+**Core Chat Infrastructure:**
+- [x] Create conversations table and schemas ✅
+- [x] Messages table and schemas ✅
+- [x] Database migration for conversations/messages ✅
+- [x] Conversation CRUD endpoints (create, list, get, delete) ✅
+- [x] Message creation endpoint ✅
+- [x] Integrate Claude 3.5 Sonnet API ✅
+- [x] Implement RAG context retrieval (semantic search integration) ✅
+- [x] Build prompt engineering for legal context ✅
+- [x] Add streaming support (Server-Sent Events) ✅
+- [x] Implement conversation history management ✅
+- [x] **Always cite sources** (document name, page number, similarity scores) ✅
+- [x] Message rating system (thumbs up/down with feedback) ✅
 
-1. [ ] Create conversations table and schemas
-2. [ ] Conversation CRUD endpoints (create, list, get, delete)
-3. [ ] Messages table and schemas
-4. [ ] Message creation endpoint
-5. [ ] Integrate Claude 3.5 Sonnet API
-6. [ ] Implement RAG context retrieval (use existing semantic search API!)
-7. [ ] Build prompt engineering for legal context
-8. [ ] Add streaming support (Server-Sent Events)
-9. [ ] Implement conversation history management
-10. [ ] **Always cite sources** (document name, page number, clickable links)
-11. [ ] **Confidence indicators** (show when AI is uncertain)
-12. [ ] **"I don't know" responses** (when no relevant docs found)
-13. [ ] Message rating system (thumbs up/down with feedback)
-
-**What We Already Have:**
+**What We Have:**
+- ✅ Full chat backend API ([backend/app/api/v1/endpoints/chat.py](backend/app/api/v1/endpoints/chat.py))
+- ✅ Chat service with RAG pipeline ([backend/app/services/chat_service.py](backend/app/services/chat_service.py))
 - ✅ RAG context retrieval (semantic search API)
 - ✅ Document metadata and citations
 - ✅ Multi-tenant isolation (company_id filtering)
+- ✅ Streaming responses via SSE
 
-**New Tables**: conversations, messages
+**New Tables**: conversations, messages (implemented)
 
-**Estimated Time**: 2-3 weeks
+### Remaining Tasks (10% - Frontend Integration)
+
+1. [ ] **Chat UI components** (conversation list, message interface)
+2. [ ] **Streaming message display** in frontend
+3. [ ] **Source citations display** (clickable links to documents)
+4. [ ] **Confidence indicators** in UI (show when AI is uncertain)
+5. [ ] **"I don't know" response handling** in UI
+
+**Note**: Backend is complete. Only frontend UI components remain.
 
 ---
 
@@ -501,21 +511,23 @@ Based on what we've actually built:
 
 **Deliverable**: Documents auto-process after upload
 
-**Status**: ✅ **COMPLETE** - Ready for production deployment!
+**Status**: ✅ **COMPLETE**
 
 ---
 
-### Phase 2: AI Chat (2-3 weeks)
+### Phase 2: AI Chat (2-3 weeks) ✅ COMPLETE
 **Goal**: Conversational search with citations
 
-- [ ] Conversation & message tables
-- [ ] Chat CRUD endpoints
-- [ ] Claude 3.5 Sonnet integration
-- [ ] RAG context retrieval (use semantic search)
-- [ ] Cited sources in responses
-- [ ] Streaming support
+- [x] Conversation & message tables ✅
+- [x] Chat CRUD endpoints ✅
+- [x] Claude 3.5 Sonnet integration ✅
+- [x] RAG context retrieval (use semantic search) ✅
+- [x] Cited sources in responses ✅
+- [x] Streaming support ✅
 
 **Deliverable**: Working chat interface (API only)
+
+**Status**: ✅ **COMPLETE** - Chat backend API fully implemented
 
 ---
 
@@ -616,7 +628,19 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed Since Last Update:**
+**Completed Since Last Update (November 6, 2025):**
+- ✅ Background task queue (Celery + Redis) for document processing
+- ✅ Rate limiting middleware for API protection
+- ✅ Input validation middleware for security
+- ✅ Chat API with full CRUD endpoints
+- ✅ Claude 3.5 Sonnet integration for AI assistance
+- ✅ Chat service with RAG pipeline integration
+- ✅ Conversation and message models with database migration
+- ✅ Streaming support via Server-Sent Events
+- ✅ Message rating system (thumbs up/down with feedback)
+- ✅ Comprehensive documentation (PHASE_2_PROGRESS.md, BACKGROUND_PROCESSING.md)
+
+**Previously Completed:**
 - ✅ Semantic search API with vector similarity
 - ✅ Citation tracking (document metadata + page numbers)
 - ✅ Search result enrichment
@@ -670,5 +694,5 @@ What makes BC Legal Tech unique:
 **End of Roadmap v2**
 
 This roadmap is based on actual implementation progress as of November 6, 2025.
-Current state: Milestone 3 at 80% with working semantic search.
-Next step: Background task queue for production automation.
+Current state: Milestones 1-3 complete, Milestone 4A at 90% (backend complete, frontend needed).
+Next step: Essential frontend implementation (Phase 3) to complete MVP.
