@@ -4,11 +4,9 @@ import logging
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.api.deps import get_current_user
@@ -19,17 +17,18 @@ from app.schemas.chat import (
     ConversationListResponse, MessageFeedback
 )
 from app.services.chat_service import ChatService
+from app.core.rate_limit import limiter, get_rate_limit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/message", response_model=ChatResponse)
-@limiter.limit("60/minute")
+@limiter.limit(get_rate_limit("chat_message"))
 async def send_message(
-    request: ChatRequest,
+    request: Request,
+    chat_request: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -46,7 +45,7 @@ async def send_message(
     """
     try:
         chat_service = ChatService(db)
-        response = await chat_service.send_message(request, current_user)
+        response = await chat_service.send_message(chat_request, current_user)
         return response
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -56,9 +55,10 @@ async def send_message(
 
 
 @router.post("/stream")
-@limiter.limit("60/minute")
+@limiter.limit(get_rate_limit("chat_stream"))
 async def send_message_stream(
-    request: ChatRequest,
+    request: Request,
+    chat_request: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -91,7 +91,7 @@ async def send_message_stream(
     try:
         chat_service = ChatService(db)
         return StreamingResponse(
-            chat_service.send_message_stream(request, current_user),
+            chat_service.send_message_stream(chat_request, current_user),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
@@ -107,8 +107,9 @@ async def send_message_stream(
 
 
 @router.get("/conversations", response_model=ConversationListResponse)
-@limiter.limit("120/minute")
+@limiter.limit(get_rate_limit("chat_list"))
 async def list_conversations(
+    request: Request,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     include_archived: bool = Query(False, description="Include archived conversations"),
@@ -139,8 +140,9 @@ async def list_conversations(
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationWithMessages)
-@limiter.limit("120/minute")
+@limiter.limit(get_rate_limit("chat_get"))
 async def get_conversation(
+    request: Request,
     conversation_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -165,8 +167,9 @@ async def get_conversation(
 
 
 @router.patch("/conversations/{conversation_id}", response_model=ConversationResponse)
-@limiter.limit("120/minute")
+@limiter.limit(get_rate_limit("chat_update"))
 async def update_conversation(
+    request: Request,
     conversation_id: UUID,
     updates: ConversationUpdate,
     current_user: User = Depends(get_current_user),
@@ -193,8 +196,9 @@ async def update_conversation(
 
 
 @router.delete("/conversations/{conversation_id}", status_code=204)
-@limiter.limit("120/minute")
+@limiter.limit(get_rate_limit("chat_delete"))
 async def delete_conversation(
+    request: Request,
     conversation_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -221,8 +225,9 @@ async def delete_conversation(
 
 
 @router.post("/messages/{message_id}/feedback", response_model=None)
-@limiter.limit("120/minute")
+@limiter.limit(get_rate_limit("chat_feedback"))
 async def submit_message_feedback(
+    request: Request,
     message_id: UUID,
     feedback: MessageFeedback,
     current_user: User = Depends(get_current_user),

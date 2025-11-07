@@ -31,6 +31,15 @@ RATE_LIMITS = {
     "api_read": "300/minute",  # 300 read operations per minute
     "api_write": "100/minute",  # 100 write operations per minute
 
+    # Chat endpoints
+    "chat_message": "60/minute",  # 60 chat messages per minute
+    "chat_stream": "60/minute",  # 60 streaming chat requests per minute
+    "chat_list": "120/minute",  # 120 conversation list requests per minute
+    "chat_get": "120/minute",  # 120 get conversation requests per minute
+    "chat_update": "120/minute",  # 120 conversation update requests per minute
+    "chat_delete": "120/minute",  # 120 conversation delete requests per minute
+    "chat_feedback": "120/minute",  # 120 feedback submissions per minute
+
     # Admin endpoints (stricter limits)
     "admin": "30/minute",  # 30 admin operations per minute
 }
