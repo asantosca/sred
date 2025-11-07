@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, date
 
 from app.db.session import get_db
 from app.schemas.documents import (
-    Document, DocumentUploadResponse, DocumentListResponse,
+    Document, DocumentWithMatter, DocumentUploadResponse, DocumentListResponse,
     QuickDocumentUpload, StandardDocumentUpload, ContractUpload,
     PleadingUpload, CorrespondenceUpload, DiscoveryUpload, ExhibitUpload,
     DocumentDownloadResponse, FileValidationResult
@@ -651,8 +651,14 @@ async def list_documents(
     Users can only see documents from matters they have access to.
     """
     # Build base query - documents from matters user has access to
+    # Select both document and matter fields for DocumentWithMatter response
     query = (
-        select(DocumentModel)
+        select(
+            DocumentModel,
+            Matter.matter_number,
+            Matter.client_name,
+            Matter.matter_status
+        )
         .join(Matter, DocumentModel.matter_id == Matter.id)
         .join(MatterAccess, Matter.id == MatterAccess.matter_id)
         .where(
@@ -698,16 +704,26 @@ async def list_documents(
     # Apply pagination and ordering
     offset = (page - 1) * size
     query = query.offset(offset).limit(size).order_by(DocumentModel.created_at.desc())
-    
+
     # Execute query
     result = await db.execute(query)
-    documents = result.scalars().all()
-    
+    rows = result.all()
+
+    # Build DocumentWithMatter objects from query results
+    documents_with_matter = []
+    for row in rows:
+        doc, matter_number, client_name, matter_status = row
+        doc_dict = Document.model_validate(doc).model_dump()
+        doc_dict['matter_number'] = matter_number
+        doc_dict['client_name'] = client_name
+        doc_dict['matter_status'] = matter_status
+        documents_with_matter.append(DocumentWithMatter(**doc_dict))
+
     # Calculate pagination info
     pages = math.ceil(total / size) if total > 0 else 1
-    
+
     return DocumentListResponse(
-        documents=[Document.model_validate(doc) for doc in documents],
+        documents=documents_with_matter,
         total=total,
         page=page,
         size=size,

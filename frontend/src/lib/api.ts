@@ -196,7 +196,7 @@ export const documentsApi = {
       }
     })
 
-    return api.post('/documents/upload', formData, {
+    return api.post('/documents/upload/quick', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
