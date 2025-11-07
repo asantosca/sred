@@ -8,9 +8,16 @@ from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.db.session import async_session_factory
 from app.services.document_processor import DocumentProcessor
-from app.models.models import Document, DocumentProcessingStatus
+from app.models.models import Document
 
 logger = logging.getLogger(__name__)
+
+# Document processing status constants
+STATUS_PENDING = "pending"
+STATUS_PROCESSING = "processing"
+STATUS_CHUNKED = "chunked"
+STATUS_EMBEDDED = "embedded"
+STATUS_FAILED = "failed"
 
 
 @celery_app.task(name="process_document_pipeline", bind=True, max_retries=3)
@@ -44,7 +51,7 @@ def process_document_pipeline(self, document_id: str) -> dict:
 
         # Update document status to failed
         try:
-            asyncio.run(_update_document_status(document_id, DocumentProcessingStatus.FAILED))
+            asyncio.run(_update_document_status(document_id, STATUS_FAILED))
         except Exception as update_error:
             logger.error(f"Failed to update document status: {str(update_error)}")
 
@@ -68,7 +75,7 @@ async def _process_document_async(document_id: str) -> dict:
         processor = DocumentProcessor(session)
 
         # Update status to processing
-        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.PROCESSING)
+        await _update_document_status_in_session(session, doc_uuid, STATUS_PROCESSING)
 
         # Step 1: Process chunking
         logger.info(f"Processing chunking for document {document_id}")
@@ -76,7 +83,7 @@ async def _process_document_async(document_id: str) -> dict:
 
         if not chunking_success:
             logger.error(f"Chunking failed for document {document_id}")
-            await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.FAILED)
+            await _update_document_status_in_session(session, doc_uuid, STATUS_FAILED)
             return {
                 "status": "failed",
                 "stage": "chunking",
@@ -84,7 +91,7 @@ async def _process_document_async(document_id: str) -> dict:
             }
 
         # Update status to chunked
-        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.CHUNKED)
+        await _update_document_status_in_session(session, doc_uuid, STATUS_CHUNKED)
 
         # Step 2: Generate embeddings
         logger.info(f"Generating embeddings for document {document_id}")
@@ -92,7 +99,7 @@ async def _process_document_async(document_id: str) -> dict:
 
         if not embedding_success:
             logger.error(f"Embedding generation failed for document {document_id}")
-            await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.FAILED)
+            await _update_document_status_in_session(session, doc_uuid, STATUS_FAILED)
             return {
                 "status": "failed",
                 "stage": "embedding",
@@ -100,7 +107,7 @@ async def _process_document_async(document_id: str) -> dict:
             }
 
         # Update status to embedded (ready for search)
-        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.EMBEDDED)
+        await _update_document_status_in_session(session, doc_uuid, STATUS_EMBEDDED)
 
         logger.info(f"Document {document_id} fully processed and ready for search")
 
@@ -111,7 +118,7 @@ async def _process_document_async(document_id: str) -> dict:
         }
 
 
-async def _update_document_status(document_id: str, status: DocumentProcessingStatus):
+async def _update_document_status(document_id: str, status: str):
     """
     Update document processing status (creates new session).
 
@@ -126,7 +133,7 @@ async def _update_document_status(document_id: str, status: DocumentProcessingSt
 async def _update_document_status_in_session(
     session,
     document_id: UUID,
-    status: DocumentProcessingStatus
+    status: str
 ):
     """
     Update document processing status (uses existing session).
@@ -179,7 +186,7 @@ def process_document_chunking(self, document_id: str) -> dict:
 
                 if success:
                     await _update_document_status_in_session(
-                        session, doc_uuid, DocumentProcessingStatus.CHUNKED
+                        session, doc_uuid, STATUS_CHUNKED
                     )
 
                 return success
@@ -224,7 +231,7 @@ def process_document_embeddings(self, document_id: str) -> dict:
 
                 if success:
                     await _update_document_status_in_session(
-                        session, doc_uuid, DocumentProcessingStatus.EMBEDDED
+                        session, doc_uuid, STATUS_EMBEDDED
                     )
 
                 return success

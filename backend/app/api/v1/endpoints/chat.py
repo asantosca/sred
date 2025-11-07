@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.core.database import get_db
-from app.core.security import get_current_active_user
+from app.db.session import get_db
+from app.api.deps import get_current_user
 from app.models.models import User
 from app.schemas.chat import (
     ChatRequest, ChatResponse,
@@ -30,7 +30,7 @@ limiter = Limiter(key_func=get_remote_address)
 @limiter.limit("60/minute")
 async def send_message(
     request: ChatRequest,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -59,7 +59,7 @@ async def send_message(
 @limiter.limit("60/minute")
 async def send_message_stream(
     request: ChatRequest,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -112,7 +112,7 @@ async def list_conversations(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     include_archived: bool = Query(False, description="Include archived conversations"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -142,7 +142,7 @@ async def list_conversations(
 @limiter.limit("120/minute")
 async def get_conversation(
     conversation_id: UUID,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -169,7 +169,7 @@ async def get_conversation(
 async def update_conversation(
     conversation_id: UUID,
     updates: ConversationUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -196,7 +196,7 @@ async def update_conversation(
 @limiter.limit("120/minute")
 async def delete_conversation(
     conversation_id: UUID,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -225,7 +225,7 @@ async def delete_conversation(
 async def submit_message_feedback(
     message_id: UUID,
     feedback: MessageFeedback,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """

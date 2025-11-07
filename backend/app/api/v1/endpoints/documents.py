@@ -1,7 +1,7 @@
 # app/api/v1/endpoints/documents.py - Document upload and management endpoints
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Query, status
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Query, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
