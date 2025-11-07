@@ -25,7 +25,7 @@ async def list_matters(
     size: int = Query(50, ge=1, le=100, description="Page size"),
     search: Optional[str] = Query(None, description="Search in matter number, client name, or description"),
     status: Optional[str] = Query(None, description="Filter by matter status"),
-    case_type: Optional[str] = Query(None, description="Filter by case type"),
+    matter_type: Optional[str] = Query(None, description="Filter by matter type"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -58,9 +58,9 @@ async def list_matters(
     
     if status:
         query = query.where(MatterModel.matter_status == status)
-    
-    if case_type:
-        query = query.where(MatterModel.case_type == case_type)
+
+    if matter_type:
+        query = query.where(MatterModel.matter_type == matter_type)
     
     # Count total records
     count_query = select(func.count()).select_from(query.subquery())

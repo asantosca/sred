@@ -33,7 +33,10 @@
       "Bash(cat:*)",
       "Bash(redis-cli:*)",
       "Bash(pip freeze:*)",
-      "Bash(requirements.txt)"
+      "Bash(requirements.txt)",
+      "Bash(test:*)",
+      "Bash(./venv/Scripts/python.exe -m celery:*)",
+      "Bash(./venv/Scripts/python.exe -m uvicorn:*)"
     ],
     "deny": [],
     "ask": []

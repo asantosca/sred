@@ -115,7 +115,7 @@ class Matter(Base):
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     matter_number = Column(String(50), nullable=False)
     client_name = Column(String(255), nullable=False)
-    case_type = Column(String(100), nullable=False)
+    matter_type = Column(String(100), nullable=False)
     matter_status = Column(String(50), nullable=False, default="active")
     description = Column(Text, nullable=True)
     

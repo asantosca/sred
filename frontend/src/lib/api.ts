@@ -146,4 +146,74 @@ export const userApi = {
   },
 }
 
+// Matters API endpoints
+export const mattersApi = {
+  // List all matters
+  list: (params?: { status?: string; page?: number; size?: number }) =>
+    api.get('/matters/', { params }),
+
+  // Get matter by ID
+  get: (matterId: string) =>
+    api.get(`/matters/${matterId}`),
+
+  // Create new matter
+  create: (data: any) =>
+    api.post('/matters/', data),
+
+  // Update matter
+  update: (matterId: string, data: any) =>
+    api.patch(`/matters/${matterId}`, data),
+
+  // Delete matter
+  delete: (matterId: string) =>
+    api.delete(`/matters/${matterId}`),
+}
+
+// Documents API endpoints
+export const documentsApi = {
+  // List documents (all or filtered by matter)
+  list: (params?: { matter_id?: string; page?: number; size?: number; document_type?: string }) =>
+    api.get('/documents/', { params }),
+
+  // Get document by ID
+  get: (documentId: string) =>
+    api.get(`/documents/${documentId}`),
+
+  // Upload document (Quick Upload mode)
+  upload: (file: File, metadata: any) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    // Append metadata as form fields
+    Object.keys(metadata).forEach(key => {
+      const value = metadata[key]
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value))
+        } else {
+          formData.append(key, value.toString())
+        }
+      }
+    })
+
+    return api.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  // Download document
+  download: (documentId: string) =>
+    api.get(`/documents/${documentId}/download`),
+
+  // Delete document
+  delete: (documentId: string) =>
+    api.delete(`/documents/${documentId}`),
+
+  // Update document metadata
+  update: (documentId: string, data: any) =>
+    api.patch(`/documents/${documentId}`, data),
+}
+
 export default api

@@ -9,7 +9,7 @@ class MatterBase(BaseModel):
     """Base matter schema with common fields"""
     matter_number: str = Field(..., min_length=1, max_length=50, description="Unique matter number")
     client_name: str = Field(..., min_length=1, max_length=255, description="Client name")
-    case_type: str = Field(..., min_length=1, max_length=100, description="Type of legal case")
+    matter_type: str = Field(..., min_length=1, max_length=100, description="Type of matter/case")
     matter_status: str = Field(default="active", max_length=50, description="Matter status")
     description: Optional[str] = Field(None, description="Matter description")
     opened_date: date = Field(..., description="Date matter was opened")
@@ -24,7 +24,7 @@ class MatterUpdate(BaseModel):
     """Schema for updating a matter"""
     matter_number: Optional[str] = Field(None, min_length=1, max_length=50)
     client_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    case_type: Optional[str] = Field(None, min_length=1, max_length=100)
+    matter_type: Optional[str] = Field(None, min_length=1, max_length=100)
     matter_status: Optional[str] = Field(None, max_length=50)
     description: Optional[str] = None
     opened_date: Optional[date] = None
