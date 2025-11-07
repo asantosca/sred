@@ -299,3 +299,51 @@ class DocumentChunk(Base):
 
     # Relationships
     document = relationship("Document", back_populates="chunks")
+class Conversation(Base):
+    """Conversation model for AI chat"""
+    __tablename__ = "conversations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+    title = Column(String(500), nullable=True)  # Auto-generated from first message
+    is_pinned = Column(Boolean, default=False)
+    is_archived = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    matter = relationship("Matter")
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at")
+
+
+class Message(Base):
+    """Message model for AI chat"""
+    __tablename__ = "messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(50), nullable=False)  # 'user' or 'assistant'
+    content = Column(Text, nullable=False)
+    
+    # Citations/sources (for assistant messages)
+    sources = Column(JSON, nullable=True)  # List of {document_id, chunk_id, title, page, similarity}
+    
+    # Context used (for debugging/audit)
+    context_chunks = Column(JSON, nullable=True)  # Chunks used to generate response
+    
+    # Message metadata
+    token_count = Column(Integer, nullable=True)
+    model_name = Column(String(100), nullable=True)  # e.g., "claude-3-5-sonnet-20241022"
+    finish_reason = Column(String(50), nullable=True)  # e.g., "end_turn", "max_tokens"
+    
+    # User feedback
+    rating = Column(Integer, nullable=True)  # 1-5 stars, or -1/1 for thumbs down/up
+    feedback_text = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    conversation = relationship("Conversation", back_populates="messages")

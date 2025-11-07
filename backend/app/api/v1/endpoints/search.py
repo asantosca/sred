@@ -18,6 +18,7 @@ from app.schemas.search import (
 )
 from app.services.embeddings import embedding_service
 from app.services.vector_storage import vector_storage_service
+from app.core.rate_limit import limiter, get_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ router = APIRouter()
 
 
 @router.post("/semantic", response_model=SemanticSearchResponse)
+@limiter.limit(get_rate_limit("search_semantic"))
 async def semantic_search(
+    req: Request,
     request: SemanticSearchRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)

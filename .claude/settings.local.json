@@ -29,7 +29,11 @@
       "Bash(test_doc.txt)",
       "WebSearch",
       "Bash(nul)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(redis-cli:*)",
+      "Bash(pip freeze:*)",
+      "Bash(requirements.txt)"
     ],
     "deny": [],
     "ask": []

@@ -51,11 +51,27 @@ class Settings:
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@bclegaltech.com")
     EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "BC Legal Tech")
 
-    # OpenAI settings (for embeddings and future chat)
+    # OpenAI settings (for embeddings)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_EMBEDDING_MODEL: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
     OPENAI_EMBEDDING_DIMENSIONS: int = int(os.getenv("OPENAI_EMBEDDING_DIMENSIONS", "1536"))
-    OPENAI_CHAT_MODEL: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4-turbo-preview")  # For future use
+
+    # Anthropic/Claude settings (for chat)
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+    ANTHROPIC_MAX_TOKENS: int = int(os.getenv("ANTHROPIC_MAX_TOKENS", "4096"))
+
+    # Redis settings (for Celery broker and result backend)
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+    # Celery settings
+    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", REDIS_URL)
+    CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", REDIS_URL)
+    CELERY_TASK_SERIALIZER: str = "json"
+    CELERY_RESULT_SERIALIZER: str = "json"
+    CELERY_ACCEPT_CONTENT: List[str] = ["json"]
+    CELERY_TIMEZONE: str = "America/Vancouver"  # BC timezone
+    CELERY_ENABLE_UTC: bool = True
 
 # Create global settings instance
 settings = Settings()

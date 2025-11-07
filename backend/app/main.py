@@ -1,11 +1,16 @@
 # app/main.py - BC Legal Tech FastAPI Application
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import logging
 
 from app.api.v1.api import api_router
 from app.middleware.auth import JWTAuthMiddleware
+from app.middleware.validation import InputValidationMiddleware
+from app.core.rate_limit import limiter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +25,12 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Add rate limiter state
+app.state.limiter = limiter
+
+# Add rate limit exceeded handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Add CORS middleware (must be first)
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Input Validation middleware (before auth to catch malicious requests early)
+app.add_middleware(InputValidationMiddleware)
 
 # Add JWT Authentication middleware
 app.add_middleware(JWTAuthMiddleware)

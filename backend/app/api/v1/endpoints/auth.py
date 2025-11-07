@@ -16,13 +16,16 @@ from app.schemas.auth import (
 )
 from app.models.models import User, PasswordResetToken
 from app.core.config import settings
+from app.core.rate_limit import limiter, get_rate_limit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @router.post("/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(get_rate_limit("auth_register"))
 async def register_company(
+    request: Request,
     registration: CompanyRegistration,
     db: AsyncSession = Depends(get_db)
 ):
@@ -73,7 +76,9 @@ async def register_company(
     )
 
 @router.post("/login", response_model=AuthResponse)
+@limiter.limit(get_rate_limit("auth_login"))
 async def login(
+    request: Request,
     login_data: UserLogin,
     db: AsyncSession = Depends(get_db)
 ):

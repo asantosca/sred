@@ -1,6 +1,8 @@
-# BC Legal Tech - Implementation Roadmap
+# BC Legal Tech - Implementation Roadmap v2
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
+
+**Last Updated**: 2025-11-06 (Post-semantic search implementation analysis)
 
 ## Vision
 
@@ -11,531 +13,662 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ---
 
-## MILESTONE 1: Core Authentication & User Management
+## Current Status
 
-Complete basic auth flow and user management for multi-tenant system.
-
-### Tasks (Priority Order)
-
-1. [x] **Add JWT middleware for protected routes with token validation** ⭐ (Required for all other features)
-2. [x] **Implement `/api/v1/auth/me` endpoint** to get current user from JWT token (Required by frontend)
-3. [x] Implement refresh token endpoint in `/api/v1/auth/refresh`
-4. [x] Implement password reset flow (request reset, verify token, reset password)
-5. [x] Add email service integration for user invitations and password resets
-6. [x] Create user profile update endpoint (allow users to update their own profile)
-7. [x] Add user avatar upload functionality
-
-**Status**: ✅ **MILESTONE 1 COMPLETE** - All core authentication features implemented
-
-**Note**: Tasks ordered by dependency - JWT middleware unlocks all protected endpoints.
+**✅ Milestones 1, 2, 2.5 Complete** - Full auth, document management, and enhanced classification
+**🟢 Milestone 3: 80% Complete** - RAG pipeline with semantic search working
+**🎯 Next: Background task queue → AI Chat → Essential Frontend → Launch**
 
 ---
 
-## MILESTONE 2: Core Document Upload (MVP)
+## MILESTONE 1: Core Authentication & User Management ✅
 
-Basic document upload with matter association and security controls.
+**Status**: ✅ **COMPLETE** - All core authentication features implemented
 
-### Tasks
+<details>
+<summary>View completed tasks</summary>
 
-- [x] **Create matters table and API endpoints (CRUD operations)** ✅ Complete with full access control
-- [x] **Implement matter access control (who can upload to which matters)** ✅ Role-based permissions implemented
-- [x] **Add basic document metadata (title, date, status, type-specific fields)** ✅ Full schema created in database
-- [x] **Implement security controls (confidentiality levels, privilege designation)** ✅ Schema includes all security fields
-- [x] **Create core document upload API endpoint with S3 integration** ✅ Complete with multiple upload modes
-- [x] **Build document classification system (Contract, Pleading, Correspondence, Discovery, Exhibit)** ✅ Type-specific upload schemas implemented
-- [x] **Create document listing with matter-based filtering** ✅ Complete with pagination and search
-- [x] **Add document download endpoints with signed URLs** ✅ Secure presigned URL generation
-- [x] **Implement basic document deletion with S3 cleanup** ✅ Complete with storage cleanup
+- [x] JWT middleware for protected routes
+- [x] `/api/v1/auth/me` endpoint
+- [x] Refresh token endpoint
+- [x] Password reset flow
+- [x] Email service integration
+- [x] User profile update
+- [x] User avatar upload
 
-**Status**: 🟢 **MILESTONE 2 COMPLETE!** ✅ All document upload and management features implemented
+</details>
 
-**Upload Modes**: Quick Upload (5 required fields, ~60 seconds)
+---
 
-**Core Tables**: matters, documents, users, matter_access
+## MILESTONE 2: Core Document Upload ✅
 
+**Status**: ✅ **COMPLETE** - Full document management with Quick Upload mode
+
+<details>
+<summary>View completed tasks</summary>
+
+- [x] Matters table and CRUD API
+- [x] Matter access control (role-based permissions)
+- [x] Document metadata with type-specific fields
+- [x] Security controls (confidentiality, privilege)
+- [x] Document upload with S3 integration
+- [x] Document classification (Contract, Pleading, Correspondence, Discovery, Exhibit)
+- [x] Document listing with matter filtering
+- [x] Document download with signed URLs
+- [x] Document deletion with S3 cleanup
+
+**Key Tables**: matters, documents, users, matter_access
 **Supported Formats**: PDF, DOCX, DOC, TXT, MSG, EML (max 50MB)
 
+</details>
+
 ---
 
-## MILESTONE 2.5: Enhanced Document Classification
+## MILESTONE 2.5: Enhanced Document Classification ✅
 
-Type-specific metadata and improved upload experience.
+**Status**: ✅ **COMPLETE** - Standard Upload mode with auto-detection
+
+<details>
+<summary>View completed tasks</summary>
+
+- [x] Type-specific field sets for all document categories
+- [x] Document status tracking (Draft, Final, Executed, Filed)
+- [x] Auto-detection (filename patterns, metadata extraction)
+- [x] Advanced document search within matters
+- [x] Duplicate detection (file hash comparison)
+- [x] Standard Upload mode (17 fields)
+
+**Upload Modes**: Quick Upload (5 fields, 60s) + Standard Upload (17 fields, 2-3min)
+
+</details>
+
+---
+
+## MILESTONE 3: RAG Pipeline & Vector Search
+
+**Status**: 🟢 **80% Complete** - Semantic search working, need production automation
+
+### Completed ✅
+
+**Core RAG Infrastructure:**
+- [x] Database tables (document_chunks, document_relationships, document_processing_queue)
+- [x] PGvector extension with IVFFlat indexing
+- [x] Semantic chunking architecture (see RAG_ARCHITECTURE.md)
+- [x] Vector dimensions configured (1536)
+- [x] Text extraction service (PDF, DOCX, TXT)
+- [x] Semantic chunking with legal document structure detection
+- [x] Embedding generation (OpenAI text-embedding-3-small)
+- [x] Hybrid database architecture (SQLAlchemy ORM + raw asyncpg for vectors)
+- [x] Vector storage service (pgvector with type registration)
+- [x] **Semantic search API** (`POST /api/v1/search/semantic`)
+- [x] **Citation tracking** (document metadata, page numbers, similarity scores)
+
+**What Works:**
+```
+Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → Semantic Search ✅
+```
+
+### Remaining Tasks (20%)
+
+**🔴 CRITICAL - Blocks Production:**
+1. [ ] **Background task queue** (Celery + Redis)
+   - Auto-process documents after upload
+   - Retry failed processing
+   - Status webhooks
+   - **Priority: HIGHEST**
+
+**🟡 MEDIUM - Nice to Have:**
+2. [ ] Rate limiting on API endpoints (security)
+3. [ ] Input validation middleware (security)
+4. [ ] Document processing status dashboard
+
+**🟢 LOW - Post-MVP:**
+5. [ ] OCR support for scanned documents
+6. [ ] Hybrid search (semantic + BM25 keyword)
+7. [ ] Version control API endpoints
+8. [ ] Document superseding logic
+9. [ ] Similar document detection
+
+### What We Learned
+
+**Key Insights:**
+- Semantic search alone works well (hybrid search not critical for MVP)
+- Citation tracking already implemented (document metadata + page numbers in results)
+- Manual pipeline trigger works for testing, but background processing required for production
+- OpenAI text-embedding-3-small (1536 dims) performs well for legal documents
+
+**Next Priority**: Background task queue, then move to chat.
+
+---
+
+## MILESTONE 4A: AI Chat System (MVP)
+
+**Priority**: 🎯 **Start after M3 background queue complete**
+
+Build conversational interface with RAG-powered responses.
 
 ### Tasks
 
-- [x] **Implement type-specific field sets for each document category** ✅ Complete with specialized upload schemas:
-  - Contract fields (type, value, effective/expiration dates, governing law)
-  - Pleading fields (court, case number, opposing party, filing date)
-  - Correspondence fields (author, recipient, cc, subject)
-  - Discovery fields (type, parties, numbers, due dates)
-  - Exhibit fields (exhibit number, related documents)
-- [x] **Add document status tracking (Draft, Final, Executed, Filed)** ✅ Complete with:
-  - Status update endpoint with audit logging
-  - Status history tracking in internal notes
-  - Valid status workflow definitions
-- [x] **Create auto-detection features (filename patterns, basic OCR for dates)** ✅ Complete with:
-  - Pre-upload file analysis endpoint for metadata suggestions
-  - Auto-detection integration in all upload endpoints
-  - Pattern matching for legal document types and metadata
-- [x] **Add document search within matters** ✅ Complete with:
-  - Enhanced basic search across all document fields
-  - Advanced search endpoint with multiple filters and criteria
-  - Search by content, metadata, dates, authors, case numbers
-- [x] **Implement basic duplicate detection (file hash comparison)** ✅ Complete with:
-  - Pre-upload duplicate checking endpoint
-  - Automatic duplicate prevention in upload process
-  - Company-wide and matter-specific duplicate detection
-- [x] Implement Standard Upload mode (12-15 fields, 2-3 minutes) ✅ Complete with 17 fields total
+**Core Chat Features:**
 
-**Status**: ✅ **MILESTONE 2.5 COMPLETE!** All enhanced classification features implemented
+1. [ ] Create conversations table and schemas
+2. [ ] Conversation CRUD endpoints (create, list, get, delete)
+3. [ ] Messages table and schemas
+4. [ ] Message creation endpoint
+5. [ ] Integrate Claude 3.5 Sonnet API
+6. [ ] Implement RAG context retrieval (use existing semantic search API!)
+7. [ ] Build prompt engineering for legal context
+8. [ ] Add streaming support (Server-Sent Events)
+9. [ ] Implement conversation history management
+10. [ ] **Always cite sources** (document name, page number, clickable links)
+11. [ ] **Confidence indicators** (show when AI is uncertain)
+12. [ ] **"I don't know" responses** (when no relevant docs found)
+13. [ ] Message rating system (thumbs up/down with feedback)
 
-**Upload Modes**: Quick Upload + Standard Upload (both with auto-detection)
+**What We Already Have:**
+- ✅ RAG context retrieval (semantic search API)
+- ✅ Document metadata and citations
+- ✅ Multi-tenant isolation (company_id filtering)
 
-**Enhanced Features**: ✅ Type-specific metadata, ✅ Auto-detection, ✅ Advanced search, ✅ Duplicate detection, ✅ Status tracking
+**New Tables**: conversations, messages
 
-**Key New Endpoints**:
-- `POST /api/v1/documents/analyze` - Pre-upload file analysis
-- `POST /api/v1/documents/search` - Advanced document search  
-- `POST /api/v1/documents/check-duplicates` - Duplicate detection
-- `PATCH /api/v1/documents/{id}/status` - Status tracking
-- `GET /api/v1/documents/statuses` - Status definitions
-- `GET /api/v1/documents/{id}/status-history` - Status history
+**Estimated Time**: 2-3 weeks
 
 ---
 
-## MILESTONE 3: Document Processing & RAG Pipeline + Version Control
+## MILESTONE 4B: Document Workflow (Post-MVP)
 
-AI-powered document intelligence with embeddings, vector search, and version management.
+**Priority**: ⚪ **Defer to post-launch**
 
-**PRIORITY**: This is our key differentiator - build the best RAG system for legal documents.
+Advanced workflow management features.
 
-### Tasks
+<details>
+<summary>View deferred tasks</summary>
 
-**Core RAG Pipeline:**
+- [ ] Document review assignment system
+- [ ] Review status tracking
+- [ ] Priority levels (normal, high, urgent)
+- [ ] Workflow instructions and internal notes
+- [ ] Document access logging (table exists, not implemented)
+- [ ] Notification system for assignments
+- [ ] Review dashboard
 
-- [x] **Create database tables for RAG pipeline** ✅ Complete (document_chunks, document_relationships, document_processing_queue)
-- [x] **Enable PGvector extension** ✅ Complete with IVFFlat indexing
-- [x] **Design semantic chunking architecture** ✅ Complete (see RAG_ARCHITECTURE.md)
-- [x] **Configure vector dimensions** ✅ Complete (1536 default, configurable)
-- [x] **Implement document text extraction service** ✅ Complete (PDF, DOCX, TXT with pdfplumber, python-docx)
-- [ ] Add OCR support for scanned documents (legal case files, historical documents)
-- [x] **Create semantic chunking service** ✅ Complete (paragraph/section boundaries, legal document structure detection, page tracking)
-- [x] **Integrate embedding generation** ✅ Complete (OpenAI text-embedding-3-small, 1536 dimensions)
-- [x] **Implement vector similarity search with PGvector** ✅ Complete (semantic search API endpoint)
-- [ ] Build background task queue for document processing (using Celery/Redis)
+**Rationale**: Chat is core value prop. Workflow is nice-to-have that can wait.
 
-**Anti-Hallucination Features:**
-
-- [ ] Implement **hybrid search** (vector similarity + keyword/BM25 for exact term matching)
-- [ ] Add **re-ranking** of retrieved chunks for relevance
-- [ ] Implement **confidence scoring** for answers
-- [ ] Add **citation tracking** with document name, page number, and chunk location
-- [ ] Build "I don't know" responses when confidence is low or no relevant docs found
-- [ ] Create document processing status tracking and webhooks
-- [ ] Implement reprocessing failed documents
-
-**Version Control System:**
-
-- [x] **Create document_relationships table** ✅ Complete (amendments, exhibits, responses, supersedes)
-- [x] **Add document processing queue table** ✅ Complete for async operations
-- [x] **Design version tracking architecture** ✅ Complete (parent/child relationships, version numbers)
-- [ ] Implement document superseding logic (mark previous versions as superseded)
-- [ ] Add version comparison and change summaries
-- [ ] Build similar document detection for version suggestions
-- [ ] Create API endpoints for version management
-
-**Status**: 🟢 **Semantic search complete!** (80% of Milestone 3)
-
-**Completed:**
-- ✅ PGvector extension enabled with IVFFlat indexing
-- ✅ 3 new database tables created and indexed
-- ✅ Vector embeddings schema (1536 dimensions, configurable)
-- ✅ Comprehensive architecture documented (RAG_ARCHITECTURE.md)
-- ✅ Text extraction service (PDF, DOCX, TXT with automatic processing)
-- ✅ Document metadata extraction (word count, page count)
-- ✅ Full-text search indexing (PostgreSQL GIN index)
-- ✅ Semantic chunking service (legal document structure detection, page tracking, metadata preservation)
-- ✅ Automatic chunking pipeline integration (triggers after text extraction)
-- ✅ **Embedding generation service** (OpenAI text-embedding-3-small integration)
-- ✅ **Hybrid database architecture** (SQLAlchemy ORM + raw asyncpg for vectors)
-- ✅ **Vector storage service** (pgvector with proper type registration)
-- ✅ **Semantic search API** (POST /api/v1/search/semantic with natural language queries)
-- ✅ **Search result enrichment** (document metadata, page numbers, similarity scores)
-
-**Next Up:**
-- 🎯 Background task queue (Celery/Redis) for automatic processing
-- 🎯 Hybrid search (semantic + keyword matching)
-- 🎯 Anti-hallucination features (confidence scoring, citations)
-
-**New Tables**: document_chunks, document_relationships, document_processing_queue
-
-**Key Documentation**: See `RAG_ARCHITECTURE.md` for complete pipeline design
-
-**Embedding Model Decision**:
-
-- **Option A**: Voyage AI voyage-law-2 (1024 dims) - Legal-specific, trained on legal corpus
-- **Option B**: OpenAI text-embedding-3-large (3072 dims) - Proven, highly accurate
-- **Chat Model**: Claude 3.5 Sonnet (superior reasoning, less prone to hallucination)
+</details>
 
 ---
 
-## MILESTONE 4: AI Chat & Conversation System + Workflow Integration
+## MILESTONE 5A: Essential Frontend (MVP)
 
-Build conversational interface with RAG-powered responses and document workflow management.
+**Priority**: 🎯 **Start in parallel with M4A**
 
-### Tasks
+Minimum viable UI for lawyers to use the platform.
 
-**Core Chat System:**
+### Core Pages
 
-- [ ] Create conversation CRUD endpoints (create, list, get, delete)
-- [ ] Implement message creation with streaming support (SSE/WebSocket)
-- [ ] Build RAG context retrieval (hybrid search + re-ranking from Milestone 3)
-- [ ] Integrate **Claude 3.5 Sonnet API** for chat completions
-- [ ] Implement conversation history management and context window
-- [ ] **Add cited sources in AI responses** (document name, page number, clickable links to source)
-- [ ] **Implement confidence indicators** (show when AI is uncertain)
-- [ ] Add message rating system (thumbs up/down with feedback for improvement)
-- [ ] Create conversation export to PDF/DOCX
-- [ ] Implement conversation sharing between users
+**Authentication:**
+1. [ ] Login page
+2. [ ] Register page
+3. [ ] Password reset flow
 
-**Document Workflow Integration:**
+**Document Management:**
+4. [ ] Document library (list view with filters)
+5. [ ] Quick Upload form
+6. [ ] Standard Upload form
+7. [ ] Document viewer/preview
+8. [ ] Document search interface
 
-- [ ] Add document review assignment system (assign to users, set deadlines)
-- [ ] Implement review status tracking (needs review, under review, approved, etc.)
-- [ ] Create priority levels (normal, high, urgent) for document processing
-- [ ] Add workflow instructions and internal notes
-- [ ] Build document access logging for audit trails
-- [ ] Create notification system for review assignments and deadlines
-- [ ] Add review dashboard for assigned documents
+**Chat Interface:**
+9. [ ] Chat conversation list
+10. [ ] Chat message interface
+11. [ ] Streaming message display
+12. [ ] Source citations display (clickable links to documents)
 
-**Status**: Schema exists, chat system not implemented
+**Matter Management:**
+13. [ ] Matter list page
+14. [ ] Create/edit matter form
+15. [ ] Matter detail page with documents
 
-**New Tables**: document_access_log, enhanced workflow fields in documents table
+**Infrastructure:**
+16. [ ] Loading states and spinners
+17. [ ] Error boundaries and error handling
+18. [ ] Toast notifications
+19. [ ] Navigation layout
 
-**Anti-Hallucination in Responses**:
+**What We Skip for MVP:**
+- ❌ Dashboard with analytics
+- ❌ User management UI (admin features)
+- ❌ Settings pages
+- ❌ Dark mode
+- ❌ Mobile responsive (desktop-first for lawyers)
 
-- Always cite source documents with page numbers
-- Return "I don't have enough information" when confidence is low
-- Show retrieved chunks vs. generated answer for verification
-- Allow lawyers to verify by jumping to source document
+**Tech Stack**: React + TypeScript + Vite + TailwindCSS
 
----
-
-## MILESTONE 5: Frontend Application + Advanced Upload Features
-
-Build complete React UI with modern UX and advanced document upload capabilities.
-
-### Tasks
-
-**Core Frontend Components:**
-
-- [ ] Create authentication pages (Login, Register, Password Reset)
-- [ ] Build dashboard with overview stats and recent activity
-- [ ] Implement document library with upload, list, search, filter
-- [ ] Create document viewer with preview and download
-- [ ] Build chat interface with message history and streaming responses
-- [ ] Implement conversation sidebar with search and filters
-- [ ] Create user management UI (Admin: list, invite, edit, deactivate users)
-- [ ] Build matter management UI (create, edit, assign users to matters)
-- [ ] Create settings pages (Profile, Company, Billing, Integrations)
-- [ ] Implement responsive mobile layout
-- [ ] Add dark mode support
-- [ ] Create loading states, error boundaries, and toast notifications
-
-**Advanced Upload Features:**
-
-- [ ] Build comprehensive upload UI (8-screen flow from fileupload.md)
-- [ ] Implement Detailed Upload mode (version control, workflow, relationships)
-- [ ] Create bulk upload interface (multiple files with shared metadata)
-- [ ] Add Excel import functionality for bulk metadata
-- [ ] Implement auto-detection features (OCR for dates, parties, document patterns)
-- [ ] Build document relationship management UI
-- [ ] Create upload session management (save drafts, resume later)
-- [ ] Add smart recommendations based on user patterns
-
-**Status**: Frontend structure exists, components not built
-
-**Upload Modes**: Quick + Standard + Detailed + Bulk
-
-**New Features**: Advanced upload UI, bulk operations, auto-detection
+**Estimated Time**: 3-4 weeks
 
 ---
 
-## MILESTONE 6: Advanced Features
+## MILESTONE 5B: Enhanced Frontend (Post-MVP)
 
-Premium capabilities for scaling to larger firms.
+**Priority**: ⚪ **Defer to post-launch**
 
-### Tasks
+<details>
+<summary>View deferred features</summary>
 
-- [ ] **Add Google OAuth authentication** (Sign in with Google)
-- [ ] Add Microsoft OAuth authentication (Sign in with Microsoft/Office 365)
-- [ ] Implement account linking for OAuth providers
-- [ ] Implement usage tracking and billing metering (documents, storage, API calls)
-- [ ] Add subscription management with Stripe integration
-- [ ] Create plan enforcement and upgrade prompts
-- [ ] Build analytics dashboard (usage stats, popular documents, user activity)
-- [ ] Implement audit logging for security and compliance
-- [ ] Add matter/case organization system for documents and conversations
-- [ ] Create API key management for programmatic access
-- [ ] Implement webhooks for external integrations
-- [ ] Add custom branding (logo, colors) for Enterprise plans
-- [ ] Build admin panel for platform management (view all companies, stats)
+- [ ] Dashboard with overview stats
+- [ ] User management UI (admin)
+- [ ] Settings pages (Profile, Company, Billing)
+- [ ] Responsive mobile layout
+- [ ] Dark mode support
+- [ ] Advanced upload UI (8-screen detailed flow)
+- [ ] Bulk upload interface
+- [ ] Excel import for bulk metadata
+- [ ] Document relationship management UI
+- [ ] Upload session management (save drafts)
 
-**Status**: Not started
+**Rationale**: Quick + Standard upload is sufficient for MVP. The 8-screen detailed flow is over-engineered for initial launch.
 
-**Note**: OAuth providers added here after core MVP is stable to avoid early distraction.
+</details>
 
 ---
 
-## MILESTONE 7: Testing & Quality Assurance
+## MILESTONE 6: Production Infrastructure
 
-Ensure reliability and catch bugs early.
+**Priority**: 🎯 **Required before beta testing**
 
-### Tasks
+Deploy to production environment.
 
-- [ ] Write unit tests for authentication services
-- [ ] Write unit tests for document services
-- [ ] Write unit tests for RAG pipeline
-- [ ] Create integration tests for API endpoints
-- [ ] Add end-to-end tests for critical user flows
-- [ ] Implement load testing for scalability verification
-- [ ] Set up CI/CD pipeline with automated testing
+### Critical Infrastructure
 
-**Status**: Test structure exists, tests not written
+**Database & Storage:**
+1. [ ] Production PostgreSQL (AWS RDS with backups)
+2. [ ] Redis cluster for caching
+3. [ ] S3 buckets with IAM policies
 
----
+**Application Deployment:**
+4. [ ] Backend deployment (AWS ECS or Railway)
+5. [ ] Frontend deployment (Vercel or CloudFront)
+6. [ ] Environment configuration (production secrets)
+7. [ ] SSL certificates and domain setup
 
-## MILESTONE 8: Security & Compliance
+**Observability:**
+8. [ ] Monitoring and alerting (CloudWatch/DataDog)
+9. [ ] Log aggregation (CloudWatch Logs)
+10. [ ] Error tracking (Sentry)
 
-Production hardening for legal industry requirements.
+**Environments:**
+11. [ ] Staging environment
+12. [ ] Production environment
 
-### Tasks
-
-- [ ] Implement rate limiting on API endpoints
-- [ ] Add input validation and sanitization
-- [ ] Implement CSRF protection
-- [ ] Add SQL injection prevention audit
-- [ ] Implement data encryption at rest
-- [ ] Add TLS/SSL certificate management
-- [ ] Create security headers (HSTS, CSP, X-Frame-Options)
-- [ ] Implement data retention policies and GDPR compliance
-- [ ] Add security scanning and vulnerability assessment
-
-**Status**: Basic RLS implemented, security hardening needed
+**Estimated Time**: 1-2 weeks
 
 ---
 
-## MILESTONE 9: Infrastructure & Deployment
+## MILESTONE 7: Security Hardening
 
-Production-ready infrastructure with high availability.
+**Priority**: 🟡 **Some items immediate, others before launch**
 
-### Tasks
+### Immediate (Do During M3/M4)
 
-- [ ] Set up production PostgreSQL with read replicas
-- [ ] Configure Redis cluster for caching and sessions
-- [ ] Set up S3 buckets with proper IAM policies
-- [ ] Deploy backend with auto-scaling (ECS/Kubernetes)
-- [ ] Deploy frontend to CDN (CloudFront/Vercel)
-- [ ] Configure domain and DNS with SSL
-- [ ] Set up monitoring and alerting (CloudWatch/DataDog)
-- [ ] Implement log aggregation (CloudWatch Logs/ELK)
-- [ ] Create backup and disaster recovery procedures
-- [ ] Set up staging environment
+**Basic Security:**
+- [ ] Rate limiting on API endpoints ← DO NOW
+- [ ] Input validation and sanitization ← DO NOW
+- [ ] CORS configuration review
+- [ ] SQL injection audit (verify ORM usage)
 
-**Status**: Terraform structure exists, deployment not configured
+### Before Beta Launch
 
----
+**Production Security:**
+- [ ] CSRF protection (depends on frontend architecture)
+- [ ] Security headers (HSTS, CSP, X-Frame-Options)
+- [ ] TLS/SSL certificate management
+- [ ] Security scanning and vulnerability assessment
+- [ ] Penetration testing
 
-## MILESTONE 10: Documentation & Launch
+### Before Public Launch
 
-Prepare for market and onboard first customers.
+**Compliance:**
+- [ ] Data encryption at rest
+- [ ] Data retention policies
+- [ ] GDPR compliance documentation
+- [ ] Privacy policy and terms of service
+- [ ] Backup and disaster recovery procedures
 
-### Tasks
-
-- [ ] Write API documentation with examples
-- [ ] Create user guide and help center
-- [ ] Write admin documentation for setup and configuration
-- [ ] Create video tutorials for key features
-- [ ] Build onboarding flow for new users
-- [ ] Create marketing website/landing page
-- [ ] Set up support system (ticketing/chat)
-- [ ] Conduct beta testing with pilot law firms
-- [ ] Launch production and monitor initial users
-
-**Status**: Not started
+**What We Already Have:**
+- ✅ Row-level security (company_id isolation)
+- ✅ JWT authentication
+- ✅ Parameterized queries (SQLAlchemy ORM)
+- ✅ Gitignored secrets (.env file)
 
 ---
 
-## Current Architecture
+## MILESTONE 8: Testing & QA
 
-### Tech Stack
+**Priority**: 🟡 **Incremental, not a separate phase**
 
-- **Backend**: FastAPI (Python) with async support
-- **Frontend**: React + TypeScript + Vite + TailwindCSS
+### Approach: Test During Development
+
+**Unit Tests (Write alongside features):**
+- [ ] Authentication service tests
+- [ ] Document service tests
+- [ ] RAG pipeline tests
+- [ ] Search service tests
+- [ ] Chat service tests
+
+**Integration Tests (After each milestone):**
+- [ ] API endpoint tests
+- [ ] Database integration tests
+- [ ] S3 integration tests
+- [ ] OpenAI API integration tests
+
+**E2E Tests (Before launch):**
+- [ ] Critical user flows
+- [ ] Document upload → search → chat flow
+- [ ] Multi-user collaboration scenarios
+
+**Performance Testing (Before launch):**
+- [ ] Load testing (100+ concurrent users)
+- [ ] Database query optimization
+- [ ] API response time benchmarks
+- [ ] Frontend performance audit
+
+**Rationale**: Testing as a separate milestone means we're not testing during development. Better to test incrementally.
+
+---
+
+## MILESTONE 9: Beta Launch
+
+**Priority**: 🎯 **After M4A, M5A, M6, M7 essentials complete**
+
+Launch with 3-5 pilot law firms.
+
+### Pre-Launch
+
+**Documentation:**
+1. [ ] API documentation with examples
+2. [ ] User guide (how to use the platform)
+3. [ ] Video walkthrough (5-10 min)
+4. [ ] FAQ document
+
+**Onboarding:**
+5. [ ] New user onboarding flow
+6. [ ] In-app tutorials/tooltips
+7. [ ] Sample documents and matters
+
+**Support:**
+8. [ ] Support email setup
+9. [ ] Bug reporting system
+10. [ ] Feedback collection form
+
+### Beta Testing
+
+**Pilot Firms:**
+11. [ ] Recruit 3-5 small law firms in BC
+12. [ ] Onboard each firm (1-2 users per firm)
+13. [ ] Weekly check-ins and feedback sessions
+14. [ ] Monitor usage and errors
+15. [ ] Iterate based on feedback
+
+**Success Criteria:**
+- 80% of users successfully upload documents
+- 80% of users successfully search documents
+- 80% of users successfully use chat
+- Average response: "Would recommend to colleague"
+
+**Estimated Time**: 2-3 weeks
+
+---
+
+## MILESTONE 10: Monetization & Advanced Features
+
+**Priority**: ⚪ **Post-beta, pre-public launch**
+
+<details>
+<summary>View future features</summary>
+
+**Monetization:**
+- [ ] Usage tracking and billing metering
+- [ ] Subscription management (Stripe integration)
+- [ ] Plan enforcement and upgrade prompts
+- [ ] Billing dashboard
+
+**Advanced Features:**
+- [ ] Google OAuth authentication
+- [ ] Microsoft OAuth authentication (Office 365)
+- [ ] Analytics dashboard (usage stats)
+- [ ] Audit logging (document access tracking)
+- [ ] API key management for programmatic access
+- [ ] Webhooks for external integrations
+- [ ] Custom branding (Enterprise)
+- [ ] Admin panel for platform management
+
+**What We Already Have:**
+- ✅ Matter/case organization (matters table with full API)
+- ✅ Multi-tenant isolation (company-based)
+
+**Note**: Matter management already fully implemented. Remove from this milestone in future updates.
+
+</details>
+
+---
+
+## Tech Stack (Actual)
+
+Based on what we've actually built:
+
+### Backend
+- **Framework**: FastAPI (Python) with async support
 - **Database**: PostgreSQL 15 with PGvector extension
+- **ORM**: SQLAlchemy 2.0 (async)
 - **Cache**: Redis
 - **Storage**: AWS S3 (LocalStack for local dev)
-- **AI Embeddings**: Voyage AI voyage-law-2 (legal-optimized) OR OpenAI text-embedding-3-large
-- **AI Chat**: Claude 3.5 Sonnet (superior reasoning, less hallucination)
-- **Document Processing**: Celery + Redis for background tasks
-- **Infrastructure**: Terraform for IaC on AWS
+- **Background Jobs**: Celery + Redis (planned, not yet implemented)
+
+### AI/ML
+- **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
+- **Chat**: Claude 3.5 Sonnet (planned)
+- **Vector DB**: PostgreSQL + PGvector
+- **Search**: Semantic similarity (cosine distance)
+
+### Frontend (Planned)
+- **Framework**: React + TypeScript
+- **Build Tool**: Vite
+- **Styling**: TailwindCSS
+- **State Management**: React Query + Context API
+
+### Infrastructure
+- **Cloud**: AWS
+- **IaC**: Terraform (structure exists, not configured)
+- **Deployment**: ECS or Railway (backend), Vercel (frontend)
 
 ### Multi-Tenancy
-
-- Row-level security (RLS) for data isolation
-- Three tenancy models: `shared_rls`, `dedicated_schema`, `dedicated_instance`
-- Company-based isolation with JWT tokens
-
-### Subscription Tiers
-
-- **Starter**: Solo lawyers and small firms
-- **Professional**: Mid-sized firms
-- **Enterprise**: Large firms with custom needs
+- **Approach**: Row-level security (company_id filtering)
+- **Isolation**: Company-based with JWT tokens
+- **Models**: Currently shared database, can migrate to dedicated schemas later
 
 ---
 
-## Development Approach
+## MVP Path (10-15 Weeks to Beta Launch)
 
-### For MVP (Solo Lawyers)
+### Phase 1: Production RAG (1-2 weeks) ✅ COMPLETE
+**Goal**: Automatic document processing
 
-Focus on core functionality first:
+- [x] Background task queue (Celery + Redis) ✅
+- [x] Document processing status tracking ✅
+- [x] Rate limiting ✅
+- [x] Input validation ✅
 
-1. **Milestone 1**: Auth (Complete ✅)
-2. **Milestone 2**: Core Document Upload (Complete ✅) - Full upload, classification, and management system
-3. **Milestone 2.5**: Enhanced Classification (Complete ✅) - Standard mode, type-specific fields, auto-detection
-4. **Milestone 3**: Basic RAG pipeline + Version Control (NEXT)
-5. **Milestone 4**: Simple chat interface + Basic Workflow
-6. **Milestone 5**: Essential frontend pages + Advanced Upload
+**Deliverable**: Documents auto-process after upload
 
-**Timeline**: 3-4 months (with enhanced upload features)
-
-### For Full Launch (Multi-User Firms)
-
-Complete production-ready platform:
-
-1. **Milestones 1-5**: Complete all core features
-2. **Milestone 6**: Advanced features for differentiation
-3. **Milestones 7-8**: Testing and security hardening
-4. **Milestone 9**: Production infrastructure
-5. **Milestone 10**: Launch preparation
-
-**Timeline**: 6-9 months
+**Status**: ✅ **COMPLETE** - Ready for production deployment!
 
 ---
 
-## Key Differentiators
+### Phase 2: AI Chat (2-3 weeks)
+**Goal**: Conversational search with citations
 
-1. **Best-in-Class RAG**: Superior legal document intelligence with anti-hallucination measures
-   - Legal-optimized embeddings (Voyage AI voyage-law-2)
-   - Hybrid search (semantic + keyword)
-   - Always cited sources with page numbers
-   - Confidence scoring and "I don't know" responses
-2. **BC-Specific**: Tailored for British Columbia law firms
-3. **Multi-Tenancy**: Secure isolation between firms (solo to enterprise)
-4. **Role-Based Access**: Mirrors law firm hierarchy (Partners, Associates, Paralegals)
-5. **Matter Management**: Organize by cases/clients (Milestone 6)
-6. **Compliance-First**: Security, audit logging, GDPR-ready
-7. **Multiple File Formats**: PDF, Word, Excel, scanned documents with OCR
+- [ ] Conversation & message tables
+- [ ] Chat CRUD endpoints
+- [ ] Claude 3.5 Sonnet integration
+- [ ] RAG context retrieval (use semantic search)
+- [ ] Cited sources in responses
+- [ ] Streaming support
+
+**Deliverable**: Working chat interface (API only)
+
+---
+
+### Phase 3: Essential Frontend (3-4 weeks)
+**Goal**: Usable UI for lawyers
+
+- [ ] Auth pages (Login, Register, Password Reset)
+- [ ] Document library (upload, list, view)
+- [ ] Chat interface
+- [ ] Matter management
+- [ ] Error handling and loading states
+
+**Deliverable**: Complete end-user interface
+
+---
+
+### Phase 4: Production Ready (2-3 weeks)
+**Goal**: Deploy to production environment
+
+- [ ] Infrastructure setup (AWS/Railway + Vercel)
+- [ ] Security hardening (SSL, headers, rate limiting)
+- [ ] Monitoring and logging
+- [ ] Staging environment
+- [ ] Performance testing
+- [ ] Bug fixes
+
+**Deliverable**: Production deployment ready for beta
+
+---
+
+### Phase 5: Beta Launch (2-3 weeks)
+**Goal**: Launch with 3-5 pilot firms
+
+- [ ] Documentation (user guide, API docs, FAQ)
+- [ ] Onboarding flow
+- [ ] Support system
+- [ ] Recruit pilot firms (3-5 small BC law firms)
+- [ ] Weekly feedback sessions
+- [ ] Iterate based on feedback
+
+**Deliverable**: Validated MVP with real users
 
 ---
 
 ## Success Metrics
 
-- **MVP**: 10 solo lawyers using the platform
-- **Launch**: 50 firms with 500+ total users
-- **Scale**: Support for 1000+ firms with 10,000+ users
+**Beta (Phase 5):**
+- 3-5 pilot law firms
+- 10-20 active users
+- 80%+ task completion rate
+- Positive feedback ("would recommend")
+
+**Public Launch (Post-Beta):**
+- 10-20 paying law firms
+- 50-100 active users
+- $5K-10K MRR
+- 90%+ uptime
+
+**Scale (Year 1):**
+- 50-100 law firms
+- 500+ active users
+- $50K+ MRR
+- Multiple subscription tiers
 
 ---
 
-## Next Steps
+## Key Differentiators
 
-1. Review and prioritize roadmap items
-2. Set up development workflow and sprint cycles
-3. Begin Milestone 1 implementation
-4. Establish testing and deployment practices
-5. Create feedback loop with beta users
+What makes BC Legal Tech unique:
 
----
+1. **Legal-Specific RAG**
+   - Semantic chunking that understands legal document structure
+   - Always cited sources with page numbers
+   - Confidence indicators for AI responses
+   - "I don't know" when insufficient information
 
----
+2. **BC-Focused**
+   - Tailored for British Columbia law firms
+   - Understands BC legal terminology
+   - Future: BC case law integration
 
-## Technical Decisions Summary
+3. **Secure Multi-Tenancy**
+   - Complete data isolation between firms
+   - Role-based access control
+   - Audit logging for compliance
 
-### AI/ML Stack
+4. **Matter-Centric Organization**
+   - All documents organized by legal matters/cases
+   - Matter-based access control
+   - Easy case file management
 
-- **Embeddings**: Voyage AI voyage-law-2 (legal-specific, 1024 dims) recommended
-  - Alternative: OpenAI text-embedding-3-large (3072 dims)
-- **Chat Completions**: Claude 3.5 Sonnet (best reasoning, least hallucination)
-- **Vector DB**: PostgreSQL + PGvector extension
-- **Search Strategy**: Hybrid (vector similarity + BM25 keyword matching)
-
-### Document Support
-
-- **Text Extraction**: PDF, DOCX, TXT, Excel
-- **OCR**: Scanned documents and images
-- **Chunking**: Semantic (paragraph/section-aware), not fixed-size
-- **Processing**: Async with Celery + Redis
-
-### Deployment
-
-- **Cloud**: AWS
-- **Infrastructure**: Terraform
-- **Environments**: Local (Docker Compose) → Staging → Production
+5. **Production-Grade Architecture**
+   - Hybrid database approach (ORM + raw SQL for vectors)
+   - Async-first for performance
+   - Scalable to thousands of firms
 
 ---
 
-**Last Updated**: 2025-11-06 (Milestone 3: Semantic search complete - 80%)
+## What Changed From v1
 
----
+**Completed Since Last Update:**
+- ✅ Semantic search API with vector similarity
+- ✅ Citation tracking (document metadata + page numbers)
+- ✅ Search result enrichment
 
-## Document Upload Implementation Details
+**Reorganized:**
+- Split M4 → M4A (Chat - MVP) + M4B (Workflow - Post-MVP)
+- Split M5 → M5A (Essential UI - MVP) + M5B (Advanced Features - Post-MVP)
+- Moved infrastructure to M6 (before beta, not after)
+- Made testing incremental, not a separate phase
+- Moved critical security items earlier
 
-Based on comprehensive fileupload.md specification:
-
-### Upload Flow Evolution
-
-**Milestone 2 (MVP)**: Quick Upload mode
-
-- 5 required fields (Matter, Type, Title, Date, Confidentiality)
-- ~60 seconds to complete
-- Single file upload only
-- Basic matter association and security
-
-**Milestone 2.5**: Standard Upload mode ✅ Complete
-
-- 12-15 fields including type-specific metadata
-- ~2-3 minutes to complete
-- Auto-detection features (filename patterns, basic OCR)
-- Enhanced classification and validation
-
-**Milestone 5**: Detailed + Bulk Upload modes
-
-- Complete 8-screen upload flow
-- Version control, workflow assignment, document relationships
+**Deferred to Post-MVP:**
+- OCR support (many legal docs are digital)
+- Hybrid search (semantic works well alone)
+- Advanced upload UI (8-screen flow is over-engineered)
 - Bulk upload with Excel import
-- Advanced auto-detection and smart recommendations
-- ~5+ minutes for detailed mode
+- Version control features (less critical than chat)
+- OAuth providers (can launch without)
+- Dashboard analytics (can launch without)
 
-### Key Database Tables
+**Added Clarity:**
+- Clear MVP path (10-15 weeks)
+- Phase-by-phase deliverables
+- What we already have vs. what's needed
+- Actual tech stack (not planned/proposed)
 
-**Core Tables (Milestone 2)**:
+---
 
-- `matters` - Case/matter information
-- `documents` - Document metadata and file info
-- `users` - User accounts
-- `matter_access` - User permissions per matter
+## Questions to Consider
 
-**Enhanced Tables (Milestone 3+)**:
+**Before Starting Phase 1:**
+1. Do we want to use Railway (simpler) or AWS (more control) for backend hosting?
+2. Should we add rate limiting now or wait until after chat?
+3. What's our budget for OpenAI API costs? (embeddings + chat)
 
-- `document_relationships` - Version chains, amendments, exhibits
-- `document_access_log` - Audit trail
-- `upload_sessions` - Save draft uploads
-- `document_processing_queue` - Background processing
+**Before Starting Phase 2:**
+4. How do we want to handle conversation history limits? (token limits)
+5. Should chat be free or paid feature?
+6. Do we need conversation export (PDF/DOCX) for MVP?
 
-### Security & Compliance Features
+**Before Starting Phase 3:**
+7. Do we need mobile responsive for lawyers? (most work on desktop)
+8. Should we build our own UI components or use a library? (shadcn/ui, Chakra, etc.)
 
-- **Confidentiality Levels**: Standard, Highly Confidential, Attorney Eyes Only
-- **Privilege Protection**: Attorney-Client, Work Product, Settlement Communications
-- **Matter-Based Access Control**: Users only see documents for assigned matters
-- **Audit Logging**: Track all document access and modifications
-- **Version Control**: Full document history with superseding capabilities
+**Before Phase 5:**
+9. How do we recruit pilot firms? (personal network, cold outreach, ads?)
+10. What's our pricing strategy? (per user, per document, per firm?)
+
+---
+
+**End of Roadmap v2**
+
+This roadmap is based on actual implementation progress as of November 6, 2025.
+Current state: Milestone 3 at 80% with working semantic search.
+Next step: Background task queue for production automation.

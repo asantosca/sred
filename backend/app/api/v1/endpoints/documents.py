@@ -25,6 +25,8 @@ from app.services.storage import storage_service
 from app.services.document_intelligence import document_intelligence_service
 from app.services.usage_tracker import UsageTracker
 from app.services.document_processor import get_document_processor
+from app.tasks.document_processing import process_document_pipeline
+from app.core.rate_limit import limiter, get_rate_limit
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -32,7 +34,9 @@ logger = logging.getLogger(__name__)
 # Pre-upload Analysis Endpoint
 
 @router.post("/analyze", response_model=dict)
+@limiter.limit(get_rate_limit("document_analyze"))
 async def analyze_document(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
@@ -90,7 +94,9 @@ async def analyze_document(
 # Document Upload Endpoints
 
 @router.post("/upload/quick", response_model=DocumentUploadResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(get_rate_limit("document_upload"))
 async def quick_upload_document(
+    request: Request,
     file: UploadFile = File(...),
     matter_id: str = Form(...),
     document_type: str = Form(...),
@@ -558,15 +564,14 @@ async def _process_document_upload(
         # Increment usage tracking after successful upload
         await usage_tracker.increment_document_count(current_user.company_id, file_size)
 
-        # Trigger text extraction for RAG pipeline (async processing)
-        # For now, we'll do this synchronously. Later can be moved to Celery/background task
+        # Trigger background task for full RAG pipeline (text extraction → chunking → embedding)
         try:
-            processor = get_document_processor(db)
-            await processor.process_text_extraction(document.id)
-        except Exception as extraction_error:
-            # Log error but don't fail the upload
-            logger.error(f"Text extraction failed for document {document.id}: {str(extraction_error)}")
-            # Document is already saved, extraction can be retried later
+            task = process_document_pipeline.delay(str(document.id))
+            logger.info(f"Triggered background processing for document {document.id}, task ID: {task.id}")
+        except Exception as task_error:
+            # Log error but don't fail the upload - can be retried manually later
+            logger.error(f"Failed to trigger background task for document {document.id}: {str(task_error)}")
+            # Document is saved, task can be retried via admin endpoint later
 
         return DocumentUploadResponse(
             document_id=document.id,
@@ -1236,4 +1241,60 @@ async def delete_document(
     
     # Delete from database
     await db.delete(document)
-    await db.commit()
+    await db.commit()    
+    return {"message": "Document deleted successfully", "document_id": str(document_id)}
+
+
+# Document Processing Status Endpoint
+@router.get("/{document_id}/processing-status", response_model=dict)
+async def get_document_processing_status(
+    document_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get the current processing status of a document.
+    
+    Returns processing status, whether it's indexed for search, and any error information.
+    """
+    # Get document and verify access
+    document_query = select(DocumentModel).join(
+        MatterAccess, and_(
+            MatterAccess.matter_id == DocumentModel.matter_id,
+            MatterAccess.user_id == current_user.id,
+            MatterAccess.can_view == True
+        )
+    ).where(DocumentModel.id == document_id)
+    
+    document_result = await db.execute(document_query)
+    document = document_result.scalar()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or access denied"
+        )
+    
+    # Get chunk count  
+    from app.models.models import DocumentChunk
+    chunk_count_query = select(func.count()).where(DocumentChunk.document_id == document_id)
+    chunk_result = await db.execute(chunk_count_query)
+    chunk_count = chunk_result.scalar() or 0
+    
+    return {
+        "document_id": str(document.id),
+        "document_title": document.document_title,
+        "processing_status": document.processing_status,
+        "text_extracted": document.text_extracted,
+        "indexed_for_search": document.indexed_for_search,
+        "chunk_count": chunk_count,
+        "created_at": document.created_at.isoformat(),
+        "updated_at": document.updated_at.isoformat(),
+        "status_description": {
+            "pending": "Waiting to be processed",
+            "processing": "Currently being processed",
+            "chunked": "Text chunked, generating embeddings",
+            "embedded": "Ready for search",
+            "failed": "Processing failed, will retry"
+        }.get(document.processing_status, "Unknown status")
+    }

@@ -1,0 +1,241 @@
+# app/tasks/document_processing.py - Background tasks for document processing
+
+import logging
+from uuid import UUID
+from typing import Optional
+
+from app.core.celery_app import celery_app
+from app.core.config import settings
+from app.db.session import async_session_factory
+from app.services.document_processor import DocumentProcessor
+from app.models.models import Document, DocumentProcessingStatus
+
+logger = logging.getLogger(__name__)
+
+
+@celery_app.task(name="process_document_pipeline", bind=True, max_retries=3)
+def process_document_pipeline(self, document_id: str) -> dict:
+    """
+    Background task to process a document through the full RAG pipeline:
+    1. Text extraction
+    2. Chunking
+    3. Embedding generation
+
+    Args:
+        self: Celery task instance (for retry)
+        document_id: UUID of the document to process
+
+    Returns:
+        dict: Processing result with status and details
+    """
+    import asyncio
+
+    logger.info(f"Starting document processing pipeline for document {document_id}")
+
+    try:
+        # Run async processing in sync context
+        result = asyncio.run(_process_document_async(document_id))
+
+        logger.info(f"Document {document_id} processed successfully")
+        return result
+
+    except Exception as e:
+        logger.error(f"Document processing failed for {document_id}: {str(e)}", exc_info=True)
+
+        # Update document status to failed
+        try:
+            asyncio.run(_update_document_status(document_id, DocumentProcessingStatus.FAILED))
+        except Exception as update_error:
+            logger.error(f"Failed to update document status: {str(update_error)}")
+
+        # Retry with exponential backoff
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+async def _process_document_async(document_id: str) -> dict:
+    """
+    Async helper to process document through pipeline.
+
+    Args:
+        document_id: UUID of document to process
+
+    Returns:
+        dict: Processing result
+    """
+    doc_uuid = UUID(document_id)
+
+    async with async_session_factory() as session:
+        processor = DocumentProcessor(session)
+
+        # Update status to processing
+        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.PROCESSING)
+
+        # Step 1: Process chunking
+        logger.info(f"Processing chunking for document {document_id}")
+        chunking_success = await processor.process_chunking(doc_uuid)
+
+        if not chunking_success:
+            logger.error(f"Chunking failed for document {document_id}")
+            await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.FAILED)
+            return {
+                "status": "failed",
+                "stage": "chunking",
+                "document_id": document_id
+            }
+
+        # Update status to chunked
+        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.CHUNKED)
+
+        # Step 2: Generate embeddings
+        logger.info(f"Generating embeddings for document {document_id}")
+        embedding_success = await processor.process_embeddings(doc_uuid)
+
+        if not embedding_success:
+            logger.error(f"Embedding generation failed for document {document_id}")
+            await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.FAILED)
+            return {
+                "status": "failed",
+                "stage": "embedding",
+                "document_id": document_id
+            }
+
+        # Update status to embedded (ready for search)
+        await _update_document_status_in_session(session, doc_uuid, DocumentProcessingStatus.EMBEDDED)
+
+        logger.info(f"Document {document_id} fully processed and ready for search")
+
+        return {
+            "status": "success",
+            "document_id": document_id,
+            "indexed_for_search": True
+        }
+
+
+async def _update_document_status(document_id: str, status: DocumentProcessingStatus):
+    """
+    Update document processing status (creates new session).
+
+    Args:
+        document_id: Document UUID
+        status: New processing status
+    """
+    async with async_session_factory() as session:
+        await _update_document_status_in_session(session, UUID(document_id), status)
+
+
+async def _update_document_status_in_session(
+    session,
+    document_id: UUID,
+    status: DocumentProcessingStatus
+):
+    """
+    Update document processing status (uses existing session).
+
+    Args:
+        session: Database session
+        document_id: Document UUID
+        status: New processing status
+    """
+    from sqlalchemy import select, update
+
+    # Update document status
+    stmt = (
+        update(Document)
+        .where(Document.id == document_id)
+        .values(processing_status=status)
+    )
+
+    await session.execute(stmt)
+    await session.commit()
+
+    logger.info(f"Document {document_id} status updated to {status}")
+
+
+@celery_app.task(name="process_document_chunking", bind=True, max_retries=3)
+def process_document_chunking(self, document_id: str) -> dict:
+    """
+    Background task to process document chunking only.
+
+    This is a sub-task that can be called separately if needed.
+
+    Args:
+        self: Celery task instance
+        document_id: UUID of document to chunk
+
+    Returns:
+        dict: Chunking result
+    """
+    import asyncio
+
+    logger.info(f"Starting chunking for document {document_id}")
+
+    try:
+        doc_uuid = UUID(document_id)
+
+        async def _chunk():
+            async with async_session_factory() as session:
+                processor = DocumentProcessor(session)
+                success = await processor.process_chunking(doc_uuid)
+
+                if success:
+                    await _update_document_status_in_session(
+                        session, doc_uuid, DocumentProcessingStatus.CHUNKED
+                    )
+
+                return success
+
+        success = asyncio.run(_chunk())
+
+        if success:
+            return {"status": "success", "document_id": document_id}
+        else:
+            return {"status": "failed", "document_id": document_id}
+
+    except Exception as e:
+        logger.error(f"Chunking failed for {document_id}: {str(e)}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+@celery_app.task(name="process_document_embeddings", bind=True, max_retries=3)
+def process_document_embeddings(self, document_id: str) -> dict:
+    """
+    Background task to generate embeddings for document chunks.
+
+    This is a sub-task that can be called separately if needed.
+
+    Args:
+        self: Celery task instance
+        document_id: UUID of document to generate embeddings for
+
+    Returns:
+        dict: Embedding generation result
+    """
+    import asyncio
+
+    logger.info(f"Starting embedding generation for document {document_id}")
+
+    try:
+        doc_uuid = UUID(document_id)
+
+        async def _embed():
+            async with async_session_factory() as session:
+                processor = DocumentProcessor(session)
+                success = await processor.process_embeddings(doc_uuid)
+
+                if success:
+                    await _update_document_status_in_session(
+                        session, doc_uuid, DocumentProcessingStatus.EMBEDDED
+                    )
+
+                return success
+
+        success = asyncio.run(_embed())
+
+        if success:
+            return {"status": "success", "document_id": document_id, "indexed_for_search": True}
+        else:
+            return {"status": "failed", "document_id": document_id}
+
+    except Exception as e:
+        logger.error(f"Embedding generation failed for {document_id}: {str(e)}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
