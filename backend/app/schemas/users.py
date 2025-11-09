@@ -42,7 +42,7 @@ class UserDetailResponse(BaseModel):
     email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
-    avatar_url: Optional[str]
+    profile_picture: Optional[str]
     is_active: bool
     is_admin: bool
     company_id: uuid.UUID

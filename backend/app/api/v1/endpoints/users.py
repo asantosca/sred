@@ -143,16 +143,16 @@ async def upload_my_avatar(
     # For MVP: Store as base64 data URL
     # Format: data:image/png;base64,iVBORw0KGg...
     base64_image = base64.b64encode(contents).decode('utf-8')
-    avatar_url = f"data:{file.content_type};base64,{base64_image}"
+    profile_picture_url = f"data:{file.content_type};base64,{base64_image}"
 
-    # Save avatar URL to user record
-    user.avatar_url = avatar_url
+    # Save profile picture to user record
+    user.profile_picture = profile_picture_url
 
     await db.commit()
     await db.refresh(user)
 
     return AvatarUploadResponse(
-        avatar_url=avatar_url,
+        avatar_url=profile_picture_url,
         message="Avatar uploaded successfully"
     )
 

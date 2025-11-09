@@ -1,4 +1,4 @@
-"""Add avatar_url to users table
+"""Add profile_picture to users table
 
 Revision ID: f7e5e0f31187
 Revises: 3a06c0baabeb
@@ -17,10 +17,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add avatar_url column to users table
-    op.add_column('users', sa.Column('avatar_url', sa.Text(), nullable=True))
+    # Rename avatar_url column to profile_picture
+    op.alter_column('users', 'avatar_url', new_column_name='profile_picture')
 
 
 def downgrade() -> None:
-    # Remove avatar_url column from users table
-    op.drop_column('users', 'avatar_url')
+    # Rename profile_picture column back to avatar_url
+    op.alter_column('users', 'profile_picture', new_column_name='avatar_url')

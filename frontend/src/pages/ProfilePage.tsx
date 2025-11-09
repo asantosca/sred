@@ -142,9 +142,9 @@ export default function ProfilePage() {
           <CardContent>
             <div className="flex items-center space-x-6">
               <div className="relative">
-                {user?.avatar_url ? (
+                {user?.profile_picture ? (
                   <img
-                    src={user.avatar_url}
+                    src={user.profile_picture}
                     alt="Avatar"
                     className="h-24 w-24 rounded-full object-cover ring-4 ring-gray-200"
                   />

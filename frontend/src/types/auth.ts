@@ -5,7 +5,7 @@ export interface User {
   email: string
   first_name: string | null
   last_name: string | null
-  avatar_url: string | null
+  profile_picture: string | null
   is_active: boolean
   is_admin: boolean
   company_id: string

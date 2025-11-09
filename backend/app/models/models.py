@@ -37,7 +37,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=True)
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
-    avatar_url = Column(Text, nullable=True)
+    profile_picture = Column(Text, nullable=True)
     is_active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
