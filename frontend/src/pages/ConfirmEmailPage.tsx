@@ -28,10 +28,7 @@ export default function ConfirmEmailPage() {
       }
 
       try {
-        // First verify token is valid
-        await authApi.verifyEmailConfirmationToken(token)
-
-        // Then confirm email (activates account and returns auth tokens)
+        // Confirm email (activates account and returns auth tokens)
         const response = await authApi.confirmEmail(token)
 
         // Auto-login after email confirmation
@@ -96,7 +93,7 @@ export default function ConfirmEmailPage() {
               </div>
             )}
 
-            {!isConfirming && error && (
+            {!isConfirming && error && !success && (
               <>
                 <div className="text-center py-8">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">

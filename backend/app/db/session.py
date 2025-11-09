@@ -32,8 +32,9 @@ async_session_factory = async_sessionmaker(
     expire_on_commit=False
 )
 
-# Create base class for models
+# Create base class for models with bc_legal_ds schema
 Base = declarative_base()
+Base.metadata.schema = 'bc_legal_ds'
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Get database session."""
