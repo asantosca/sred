@@ -345,6 +345,32 @@ class Message(Base):
     feedback_text = Column(Text, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
+
+class WaitlistSignup(Base):
+    """Waitlist signup model for marketing site"""
+    __tablename__ = "waitlist_signups"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    full_name = Column(String(255), nullable=True)
+    company_name = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+    message = Column(Text, nullable=True)
+
+    # Tracking
+    source = Column(String(100), nullable=True)  # 'landing_page', 'contact_page', etc.
+    utm_source = Column(String(100), nullable=True)
+    utm_medium = Column(String(100), nullable=True)
+    utm_campaign = Column(String(100), nullable=True)
+
+    # Conversion tracking
+    converted_to_user = Column(Boolean, default=False, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User")

@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 # Import endpoint routers
-from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, sentry_test
+from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, sentry_test, public
 
 # Create main API router
 api_router = APIRouter()
@@ -15,6 +15,7 @@ async def api_health():
     return {"status": "healthy", "api_version": "v1"}
 
 # Include endpoint routers
+api_router.include_router(public.router, prefix="/public", tags=["public"])  # No auth required
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["user-management"])
 api_router.include_router(matters.router, prefix="/matters", tags=["matter-management"])

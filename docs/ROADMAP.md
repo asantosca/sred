@@ -544,7 +544,7 @@ Based on what we've actually built:
 
 ---
 
-## MVP Path (10-15 Weeks to Beta Launch)
+## MVP Path (12-17 Weeks to Beta Launch)
 
 ### Phase 1: Production RAG (1-2 weeks) [Done] COMPLETE
 
@@ -599,18 +599,112 @@ Based on what we've actually built:
 
 ---
 
-### Phase 4: Production Ready (2-3 weeks)
+### Phase 3.5: Marketing Website & Legal Compliance (1-2 weeks) [In Progress]
 
-**Goal**: Deploy to production environment
+**Goal**: Professional web presence and legal compliance for beta launch
 
-- [ ] Infrastructure setup (AWS/Railway + Vercel)
-- [ ] Security hardening (SSL, headers, rate limiting)
-- [ ] Monitoring and logging
-- [ ] Staging environment
-- [ ] Performance testing
-- [ ] Bug fixes
+**Marketing Site (www.bclegaltech.ca):**
 
-**Deliverable**: Production deployment ready for beta
+- [x] Next.js 14 marketing site setup in `/marketing` folder (monorepo) [Done]
+- [x] Landing page (hero, features, value proposition, CTA) [Done]
+- [x] Features page (detailed product capabilities) [Done]
+- [x] Pricing/Early Access page [Done]
+- [x] About Us page (company, mission, team) [Done]
+- [x] Contact form with waitlist signup [Done]
+
+**Waitlist System:**
+
+- [x] Add `waitlist_signups` table to PostgreSQL (bc_legal_ds schema) [Done]
+- [x] Public FastAPI endpoint: `POST /api/v1/public/waitlist` [Done]
+- [x] Email capture with validation and duplicate prevention [Done]
+- [x] Track attribution (UTM parameters, source page) [Done]
+- [ ] Admin view to manage waitlist (internal tool)
+
+**Legal & Compliance Pages:**
+
+- [x] Privacy Policy (BC/Canadian privacy law compliance) [Done - Template]
+- [ ] Terms of Service (liability, acceptable use, account terms)
+- [ ] Cookie Policy with consent banner (GDPR-compliant)
+- [ ] Data Processing Agreement (for legal firms)
+- [ ] Get legal review from lawyer (critical for legal tech)
+
+**Email & Analytics:**
+
+- [ ] AWS SES setup for transactional emails (@bclegaltech.ca)
+- [ ] Welcome email for waitlist signups
+- [ ] Analytics setup (Plausible or GA4 with consent)
+- [ ] Cookie consent management
+
+**Deployment:**
+
+- [ ] AWS Amplify deployment from GitHub (`/marketing` folder)
+- [ ] Custom domain setup (www.bclegaltech.ca)
+- [ ] SSL certificate configuration (AWS ACM)
+- [ ] CloudFront CDN for global distribution
+
+**Tech Stack:**
+- Next.js 14 (static export) + TailwindCSS
+- React Hook Form for forms
+- AWS Amplify for hosting
+- Shared FastAPI backend for waitlist API
+
+**Repository Structure:**
+```
+bc-legal-tech/ (monorepo)
+├── backend/          # Existing FastAPI
+├── frontend/         # Existing React app
+├── marketing/        # NEW - Next.js marketing site
+└── docs/
+```
+
+**Deliverable**: Professional marketing website with waitlist capture and legal compliance pages
+
+**Why This Matters**: Law firms need to see privacy policy, terms, and professional branding before trusting you with confidential legal documents. This is non-negotiable for beta launch.
+
+---
+
+### Phase 4: Production Infrastructure (2-3 weeks)
+
+**Goal**: Deploy application to production environment
+
+**Infrastructure Setup:**
+
+- [ ] Production PostgreSQL (AWS RDS with automated backups)
+- [ ] Production Redis cluster (AWS ElastiCache)
+- [ ] Production S3 buckets with IAM policies
+- [ ] Backend deployment (AWS ECS or App Runner from GitHub)
+- [ ] Frontend deployment (AWS Amplify: app.bclegaltech.ca)
+- [ ] Environment configuration (AWS Secrets Manager)
+- [ ] SSL certificates and domain setup (Route 53 + ACM)
+
+**Security Hardening:**
+
+- [ ] CORS configuration review
+- [ ] Security headers (HSTS, CSP, X-Frame-Options)
+- [ ] SQL injection audit (verify ORM usage)
+- [ ] Security scanning and vulnerability assessment
+
+**Observability:**
+
+- [ ] Monitoring and alerting (CloudWatch)
+- [ ] Log aggregation (CloudWatch Logs)
+- [x] Error tracking (Sentry - already configured)
+- [ ] Uptime monitoring
+
+**Environments:**
+
+- [ ] Staging environment (mirrors production)
+- [ ] Production environment
+- [ ] CI/CD pipeline from GitHub
+
+**Performance:**
+
+- [ ] Load testing (100+ concurrent users)
+- [ ] Database query optimization
+- [ ] API response time benchmarks
+- [ ] Frontend performance audit
+
+**Deliverable**: Production-ready infrastructure ready for beta testing
 
 ---
 
@@ -692,7 +786,28 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed This Session (November 9, 2025):**
+**Completed This Session (November 9, 2025 - Phase 3.5 Start):**
+
+- [Done] **Phase 3.5 Started**: Marketing website and legal compliance pages
+- [Done] **Marketing Site Infrastructure**: Next.js 14 marketing site in `/marketing` folder (monorepo)
+  - Landing page with hero, features, and waitlist form
+  - Features page with detailed product capabilities
+  - About Us page with mission, values, and company info
+  - Contact/Waitlist page with React Hook Form integration
+  - Pricing page (placeholder for beta)
+- [Done] **Waitlist System Backend**: Full backend integration for marketing waitlist
+  - Database migration: `waitlist_signups` table in bc_legal_ds schema
+  - SQLAlchemy model: `WaitlistSignup` with tracking fields
+  - Pydantic schemas: `WaitlistSignupCreate` and `WaitlistSignupResponse`
+  - Public API endpoint: `POST /api/v1/public/waitlist` (no auth required)
+  - Rate limiting: 3 signups per minute per IP
+  - Email validation and duplicate prevention
+  - UTM parameter tracking for attribution
+- [Done] **Privacy Policy**: Comprehensive privacy policy template (requires legal review)
+- [Done] **Repository Organization**: Docs moved to `/docs` folder for better structure
+- [Done] **AWS Amplify Configuration**: Created amplify.yml for `/marketing` folder deployment
+
+**Completed Earlier This Session (November 9, 2025 - Phase 3 Complete):**
 
 - [Done] **Phase 3 Complete**: Implemented error boundaries and toast notifications for production-ready error handling
 - [Done] **Sentry Error Tracking**: Full integration for both backend (FastAPI) and frontend (React)

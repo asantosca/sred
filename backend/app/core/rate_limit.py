@@ -15,6 +15,9 @@ limiter = Limiter(
 
 # Rate limit tiers for different endpoint types
 RATE_LIMITS = {
+    # Public endpoints (no authentication)
+    "public_waitlist": "3/minute",  # 3 waitlist signups per minute per IP
+
     # Authentication endpoints (prevent brute force)
     "auth_login": "5/minute",  # 5 login attempts per minute
     "auth_register": "3/minute",  # 3 registration attempts per minute
