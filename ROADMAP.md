@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-08 (Post-Phase 2: Chat system complete with full frontend)
+**Last Updated**: 2025-11-08 (Database schema reorganized, email confirmation fixed)
 
 ## Vision
 
@@ -90,6 +90,7 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 ### Completed ✅
 
 **Core RAG Infrastructure:**
+
 - [x] Database tables (document_chunks, document_relationships, document_processing_queue)
 - [x] PGvector extension with IVFFlat indexing
 - [x] Semantic chunking architecture (see RAG_ARCHITECTURE.md)
@@ -103,6 +104,7 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 - [x] **Citation tracking** (document metadata, page numbers, similarity scores)
 
 **What Works:**
+
 ```
 Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → Semantic Search ✅
 ```
@@ -110,18 +112,21 @@ Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → 
 ### Completed in Latest Update ✅
 
 **Background Processing:**
+
 - [x] **Background task queue** (Celery + Redis) ✅
 - [x] Auto-process documents after upload ✅
 - [x] Retry failed processing ✅
 - [x] Task status tracking ✅
 
 **Security & Validation:**
+
 - [x] Rate limiting on API endpoints (security) ✅
 - [x] Input validation middleware (security) ✅
 
 ### Remaining Tasks (Deferred to Post-MVP)
 
 **🟢 LOW - Post-MVP:**
+
 1. [ ] Document processing status dashboard
 2. [ ] OCR support for scanned documents
 3. [ ] Hybrid search (semantic + BM25 keyword)
@@ -132,6 +137,7 @@ Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → 
 ### What We Learned
 
 **Key Insights:**
+
 - Semantic search alone works well (hybrid search not critical for MVP)
 - Citation tracking already implemented (document metadata + page numbers in results)
 - OpenAI text-embedding-3-small (1536 dims) performs well for legal documents
@@ -150,6 +156,7 @@ Build conversational interface with RAG-powered responses.
 ### Completed ✅
 
 **Core Chat Infrastructure:**
+
 - [x] Create conversations table and schemas ✅
 - [x] Messages table and schemas ✅
 - [x] Database migration for conversations/messages ✅
@@ -164,6 +171,7 @@ Build conversational interface with RAG-powered responses.
 - [x] Message rating system (thumbs up/down with feedback) ✅
 
 **Frontend Integration:**
+
 - [x] Chat UI components (conversation list, message interface) ✅
 - [x] Streaming message display in frontend ✅
 - [x] Source citations display (clickable links to documents) ✅
@@ -171,6 +179,7 @@ Build conversational interface with RAG-powered responses.
 - [x] SSE streaming with token refresh ✅
 
 **What We Have:**
+
 - ✅ Full chat backend API ([backend/app/api/v1/endpoints/chat.py](backend/app/api/v1/endpoints/chat.py))
 - ✅ Chat service with RAG pipeline ([backend/app/services/chat_service.py](backend/app/services/chat_service.py))
 - ✅ Complete chat frontend ([frontend/src/pages/ChatPage.tsx](frontend/src/pages/ChatPage.tsx))
@@ -219,35 +228,21 @@ Minimum viable UI for lawyers to use the platform.
 ### Core Pages
 
 **Authentication:**
-1. [ ] Login page
-2. [ ] Register page
-3. [ ] Password reset flow
 
-**Document Management:**
-4. [ ] Document library (list view with filters)
-5. [ ] Quick Upload form
-6. [ ] Standard Upload form
-7. [ ] Document viewer/preview
-8. [ ] Document search interface
+1. [x] Login page
+2. [x] Register page
+3. [x] Password reset flow
 
-**Chat Interface:**
-9. [ ] Chat conversation list
-10. [ ] Chat message interface
-11. [ ] Streaming message display
-12. [ ] Source citations display (clickable links to documents)
+**Document Management:** 4. [ ] Document library (list view with filters) 5. [ ] Quick Upload form 6. [ ] Standard Upload form 7. [ ] Document viewer/preview 8. [ ] Document search interface
 
-**Matter Management:**
-13. [ ] Matter list page
-14. [ ] Create/edit matter form
-15. [ ] Matter detail page with documents
+**Chat Interface:** 9. [ ] Chat conversation list 10. [ ] Chat message interface 11. [ ] Streaming message display 12. [ ] Source citations display (clickable links to documents)
 
-**Infrastructure:**
-16. [ ] Loading states and spinners
-17. [ ] Error boundaries and error handling
-18. [ ] Toast notifications
-19. [ ] Navigation layout
+**Matter Management:** 13. [ ] Matter list page 14. [ ] Create/edit matter form 15. [ ] Matter detail page with documents
+
+**Infrastructure:** 16. [ ] Loading states and spinners 17. [ ] Error boundaries and error handling 18. [ ] Toast notifications 19. [ ] Navigation layout
 
 **What We Skip for MVP:**
+
 - ❌ Dashboard with analytics
 - ❌ User management UI (admin features)
 - ❌ Settings pages
@@ -293,24 +288,16 @@ Deploy to production environment.
 ### Critical Infrastructure
 
 **Database & Storage:**
+
 1. [ ] Production PostgreSQL (AWS RDS with backups)
 2. [ ] Redis cluster for caching
 3. [ ] S3 buckets with IAM policies
 
-**Application Deployment:**
-4. [ ] Backend deployment (AWS ECS or Railway)
-5. [ ] Frontend deployment (Vercel or CloudFront)
-6. [ ] Environment configuration (production secrets)
-7. [ ] SSL certificates and domain setup
+**Application Deployment:** 4. [ ] Backend deployment (AWS ECS) 5. [ ] Frontend deployment (CloudFront) 6. [ ] Environment configuration (Secrets Manager) 7. [ ] SSL certificates and domain setup
 
-**Observability:**
-8. [ ] Monitoring and alerting (CloudWatch/DataDog)
-9. [ ] Log aggregation (CloudWatch Logs)
-10. [ ] Error tracking (Sentry)
+**Observability:** 8. [ ] Monitoring and alerting (CloudWatch) 9. [ ] Log aggregation (CloudWatch Logs) 10. [ ] Error tracking (Sentry)
 
-**Environments:**
-11. [ ] Staging environment
-12. [ ] Production environment
+**Environments:** 11. [ ] Staging environment 12. [ ] Production environment
 
 **Estimated Time**: 1-2 weeks
 
@@ -323,6 +310,7 @@ Deploy to production environment.
 ### Immediate (Do During M3/M4)
 
 **Basic Security:**
+
 - [ ] Rate limiting on API endpoints ← DO NOW
 - [ ] Input validation and sanitization ← DO NOW
 - [ ] CORS configuration review
@@ -331,6 +319,7 @@ Deploy to production environment.
 ### Before Beta Launch
 
 **Production Security:**
+
 - [ ] CSRF protection (depends on frontend architecture)
 - [ ] Security headers (HSTS, CSP, X-Frame-Options)
 - [ ] TLS/SSL certificate management
@@ -340,6 +329,7 @@ Deploy to production environment.
 ### Before Public Launch
 
 **Compliance:**
+
 - [ ] Data encryption at rest
 - [ ] Data retention policies
 - [ ] GDPR compliance documentation
@@ -347,6 +337,7 @@ Deploy to production environment.
 - [ ] Backup and disaster recovery procedures
 
 **What We Already Have:**
+
 - ✅ Row-level security (company_id isolation)
 - ✅ JWT authentication
 - ✅ Parameterized queries (SQLAlchemy ORM)
@@ -361,6 +352,7 @@ Deploy to production environment.
 ### Approach: Test During Development
 
 **Unit Tests (Write alongside features):**
+
 - [ ] Authentication service tests
 - [ ] Document service tests
 - [ ] RAG pipeline tests
@@ -368,17 +360,20 @@ Deploy to production environment.
 - [ ] Chat service tests
 
 **Integration Tests (After each milestone):**
+
 - [ ] API endpoint tests
 - [ ] Database integration tests
 - [ ] S3 integration tests
 - [ ] OpenAI API integration tests
 
 **E2E Tests (Before launch):**
+
 - [ ] Critical user flows
 - [ ] Document upload → search → chat flow
 - [ ] Multi-user collaboration scenarios
 
 **Performance Testing (Before launch):**
+
 - [ ] Load testing (100+ concurrent users)
 - [ ] Database query optimization
 - [ ] API response time benchmarks
@@ -397,31 +392,22 @@ Launch with 3-5 pilot law firms.
 ### Pre-Launch
 
 **Documentation:**
+
 1. [ ] API documentation with examples
 2. [ ] User guide (how to use the platform)
 3. [ ] Video walkthrough (5-10 min)
 4. [ ] FAQ document
 
-**Onboarding:**
-5. [ ] New user onboarding flow
-6. [ ] In-app tutorials/tooltips
-7. [ ] Sample documents and matters
+**Onboarding:** 5. [ ] New user onboarding flow 6. [ ] In-app tutorials/tooltips 7. [ ] Sample documents and matters
 
-**Support:**
-8. [ ] Support email setup
-9. [ ] Bug reporting system
-10. [ ] Feedback collection form
+**Support:** 8. [ ] Support email setup 9. [ ] Bug reporting system 10. [ ] Feedback collection form
 
 ### Beta Testing
 
-**Pilot Firms:**
-11. [ ] Recruit 3-5 small law firms in BC
-12. [ ] Onboard each firm (1-2 users per firm)
-13. [ ] Weekly check-ins and feedback sessions
-14. [ ] Monitor usage and errors
-15. [ ] Iterate based on feedback
+**Pilot Firms:** 11. [ ] Recruit 3-5 small law firms in BC 12. [ ] Onboard each firm (1-2 users per firm) 13. [ ] Weekly check-ins and feedback sessions 14. [ ] Monitor usage and errors 15. [ ] Iterate based on feedback
 
 **Success Criteria:**
+
 - 80% of users successfully upload documents
 - 80% of users successfully search documents
 - 80% of users successfully use chat
@@ -439,12 +425,14 @@ Launch with 3-5 pilot law firms.
 <summary>View future features</summary>
 
 **Monetization:**
+
 - [ ] Usage tracking and billing metering
 - [ ] Subscription management (Stripe integration)
 - [ ] Plan enforcement and upgrade prompts
 - [ ] Billing dashboard
 
 **Advanced Features:**
+
 - [ ] Google OAuth authentication
 - [ ] Microsoft OAuth authentication (Office 365)
 - [ ] Analytics dashboard (usage stats)
@@ -455,6 +443,7 @@ Launch with 3-5 pilot law firms.
 - [ ] Admin panel for platform management
 
 **What We Already Have:**
+
 - ✅ Matter/case organization (matters table with full API)
 - ✅ Multi-tenant isolation (company-based)
 
@@ -469,31 +458,37 @@ Launch with 3-5 pilot law firms.
 Based on what we've actually built:
 
 ### Backend
+
 - **Framework**: FastAPI (Python) with async support
-- **Database**: PostgreSQL 15 with PGvector extension
+- **Database**: PostgreSQL 15 with PGvector extension (bc_legal_ds schema)
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Cache**: Redis
 - **Storage**: AWS S3 (LocalStack for local dev)
-- **Background Jobs**: Celery + Redis (planned, not yet implemented)
+- **Background Jobs**: Celery + Redis ✅
+- **Migrations**: Alembic with single consolidated initial migration
 
 ### AI/ML
+
 - **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
 - **Chat**: Claude 3.5 Sonnet (planned)
 - **Vector DB**: PostgreSQL + PGvector
 - **Search**: Semantic similarity (cosine distance)
 
 ### Frontend (Planned)
+
 - **Framework**: React + TypeScript
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS
 - **State Management**: React Query + Context API
 
 ### Infrastructure
+
 - **Cloud**: AWS
 - **IaC**: Terraform (structure exists, not configured)
 - **Deployment**: ECS or Railway (backend), Vercel (frontend)
 
 ### Multi-Tenancy
+
 - **Approach**: Row-level security (company_id filtering)
 - **Isolation**: Company-based with JWT tokens
 - **Models**: Currently shared database, can migrate to dedicated schemas later
@@ -503,6 +498,7 @@ Based on what we've actually built:
 ## MVP Path (10-15 Weeks to Beta Launch)
 
 ### Phase 1: Production RAG (1-2 weeks) ✅ COMPLETE
+
 **Goal**: Automatic document processing
 
 - [x] Background task queue (Celery + Redis) ✅
@@ -517,6 +513,7 @@ Based on what we've actually built:
 ---
 
 ### Phase 2: AI Chat (2-3 weeks) ✅ COMPLETE
+
 **Goal**: Conversational search with citations
 
 - [x] Conversation & message tables ✅
@@ -536,6 +533,7 @@ Based on what we've actually built:
 ---
 
 ### Phase 3: Essential Frontend (3-4 weeks)
+
 **Goal**: Usable UI for lawyers
 
 - [ ] Auth pages (Login, Register, Password Reset)
@@ -551,6 +549,7 @@ Based on what we've actually built:
 ---
 
 ### Phase 4: Production Ready (2-3 weeks)
+
 **Goal**: Deploy to production environment
 
 - [ ] Infrastructure setup (AWS/Railway + Vercel)
@@ -565,6 +564,7 @@ Based on what we've actually built:
 ---
 
 ### Phase 5: Beta Launch (2-3 weeks)
+
 **Goal**: Launch with 3-5 pilot firms
 
 - [ ] Documentation (user guide, API docs, FAQ)
@@ -581,18 +581,21 @@ Based on what we've actually built:
 ## Success Metrics
 
 **Beta (Phase 5):**
+
 - 3-5 pilot law firms
 - 10-20 active users
 - 80%+ task completion rate
 - Positive feedback ("would recommend")
 
 **Public Launch (Post-Beta):**
+
 - 10-20 paying law firms
 - 50-100 active users
 - $5K-10K MRR
 - 90%+ uptime
 
 **Scale (Year 1):**
+
 - 50-100 law firms
 - 500+ active users
 - $50K+ MRR
@@ -605,22 +608,26 @@ Based on what we've actually built:
 What makes BC Legal Tech unique:
 
 1. **Legal-Specific RAG**
+
    - Semantic chunking that understands legal document structure
    - Always cited sources with page numbers
    - Confidence indicators for AI responses
    - "I don't know" when insufficient information
 
 2. **BC-Focused**
+
    - Tailored for British Columbia law firms
    - Understands BC legal terminology
    - Future: BC case law integration
 
 3. **Secure Multi-Tenancy**
+
    - Complete data isolation between firms
    - Role-based access control
    - Audit logging for compliance
 
 4. **Matter-Centric Organization**
+
    - All documents organized by legal matters/cases
    - Matter-based access control
    - Easy case file management
@@ -634,7 +641,16 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed Since Last Update (November 8, 2025):**
+**Completed Since Last Update (November 8, 2025 - Evening):**
+
+- ✅ **Database Schema Reorganization**: Created `bc_legal_ds` dedicated schema for all application tables
+- ✅ **Migration Consolidation**: Reduced 7 separate migration files into 1 clean initial migration
+- ✅ **Email Confirmation Bug Fix**: Fixed dual message display issue on email confirmation page
+- ✅ **Schema Benefits**: Better organization, security, and separation from PostgreSQL system tables
+- ✅ **Migration Improvements**: Added explicit commit in async migration runner for reliability
+
+**Completed Earlier (November 8, 2025 - Morning):**
+
 - ✅ Complete chat frontend with streaming support
 - ✅ Chat UI components (ConversationList, ChatInterface, MessageInput, SourceCitations)
 - ✅ SSE streaming integration with token refresh
@@ -644,6 +660,7 @@ What makes BC Legal Tech unique:
 - ✅ Comprehensive documentation (CHAT_FRONTEND_COMPLETE.md)
 
 **Previously Completed (November 6, 2025):**
+
 - ✅ Background task queue (Celery + Redis) for document processing
 - ✅ Rate limiting middleware for API protection
 - ✅ Input validation middleware for security
@@ -655,11 +672,13 @@ What makes BC Legal Tech unique:
 - ✅ Message rating system (thumbs up/down with feedback)
 
 **Previously Completed:**
+
 - ✅ Semantic search API with vector similarity
 - ✅ Citation tracking (document metadata + page numbers)
 - ✅ Search result enrichment
 
 **Reorganized:**
+
 - Split M4 → M4A (Chat - MVP) + M4B (Workflow - Post-MVP)
 - Split M5 → M5A (Essential UI - MVP) + M5B (Advanced Features - Post-MVP)
 - Moved infrastructure to M6 (before beta, not after)
@@ -667,6 +686,7 @@ What makes BC Legal Tech unique:
 - Moved critical security items earlier
 
 **Deferred to Post-MVP:**
+
 - OCR support (many legal docs are digital)
 - Hybrid search (semantic works well alone)
 - Advanced upload UI (8-screen flow is over-engineered)
@@ -676,6 +696,7 @@ What makes BC Legal Tech unique:
 - Dashboard analytics (can launch without)
 
 **Added Clarity:**
+
 - Clear MVP path (10-15 weeks)
 - Phase-by-phase deliverables
 - What we already have vs. what's needed
@@ -686,22 +707,16 @@ What makes BC Legal Tech unique:
 ## Questions to Consider
 
 **Before Starting Phase 1:**
+
 1. Do we want to use Railway (simpler) or AWS (more control) for backend hosting?
 2. Should we add rate limiting now or wait until after chat?
 3. What's our budget for OpenAI API costs? (embeddings + chat)
 
-**Before Starting Phase 2:**
-4. How do we want to handle conversation history limits? (token limits)
-5. Should chat be free or paid feature?
-6. Do we need conversation export (PDF/DOCX) for MVP?
+**Before Starting Phase 2:** 4. How do we want to handle conversation history limits? (token limits) 5. Should chat be free or paid feature? 6. Do we need conversation export (PDF/DOCX) for MVP?
 
-**Before Starting Phase 3:**
-7. Do we need mobile responsive for lawyers? (most work on desktop)
-8. Should we build our own UI components or use a library? (shadcn/ui, Chakra, etc.)
+**Before Starting Phase 3:** 7. Do we need mobile responsive for lawyers? (most work on desktop) 8. Should we build our own UI components or use a library? (shadcn/ui, Chakra, etc.)
 
-**Before Phase 5:**
-9. How do we recruit pilot firms? (personal network, cold outreach, ads?)
-10. What's our pricing strategy? (per user, per document, per firm?)
+**Before Phase 5:** 9. How do we recruit pilot firms? (personal network, cold outreach, ads?) 10. What's our pricing strategy? (per user, per document, per firm?)
 
 ---
 
