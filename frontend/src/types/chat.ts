@@ -70,6 +70,7 @@ export interface ChatStreamChunk {
   content?: string
   source?: MessageSource
   message_id?: string
+  conversation_id?: string
   error?: string
 }
 

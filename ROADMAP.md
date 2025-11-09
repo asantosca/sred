@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-09 (Celery worker fixes, complete RAG pipeline)
+**Last Updated**: 2025-11-09 (Chat streaming bug fixes and UX improvements)
 
 ## Vision
 
@@ -177,6 +177,16 @@ Build conversational interface with RAG-powered responses.
 - [x] Source citations display (clickable links to documents) [Done]
 - [x] TypeScript types matching backend schemas [Done]
 - [x] SSE streaming with token refresh [Done]
+- [x] Optimistic UI updates (pending messages) [Done]
+- [x] Conversation selection and state management [Done]
+
+**Bug Fixes (2025-11-09):**
+
+- [x] Fixed UUID serialization in message sources (mode='json') [Done]
+- [x] Fixed SSE chunk formatting to include conversation_id at top level [Done]
+- [x] Fixed conversation selection for new chats (empty state issue) [Done]
+- [x] Implemented optimistic message rendering during streaming [Done]
+- [x] Fixed React Query cache synchronization issues [Done]
 
 **What We Have:**
 

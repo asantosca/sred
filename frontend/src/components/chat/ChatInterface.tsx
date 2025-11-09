@@ -9,6 +9,7 @@ interface ChatInterfaceProps {
   messages: Message[]
   streamingContent?: string
   isStreaming?: boolean
+  pendingUserMessage?: string | null
   onSubmitFeedback?: (messageId: string, rating: number) => void
   onViewDocument?: (documentId: string) => void
 }
@@ -17,6 +18,7 @@ export default function ChatInterface({
   messages,
   streamingContent,
   isStreaming = false,
+  pendingUserMessage = null,
   onSubmitFeedback,
   onViewDocument,
 }: ChatInterfaceProps) {
@@ -28,7 +30,7 @@ export default function ChatInterface({
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, streamingContent])
+  }, [messages, streamingContent, pendingUserMessage])
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -146,7 +148,7 @@ export default function ChatInterface({
       ref={scrollContainerRef}
       className="flex-1 overflow-y-auto bg-white p-4"
     >
-      {messages.length === 0 && !isStreaming ? (
+      {messages.length === 0 && !isStreaming && !pendingUserMessage ? (
         <div className="flex h-full flex-col items-center justify-center text-center">
           <Bot className="h-16 w-16 text-gray-300" />
           <h3 className="mt-4 text-lg font-medium text-gray-900">
@@ -160,6 +162,26 @@ export default function ChatInterface({
       ) : (
         <div className="mx-auto max-w-4xl space-y-6">
           {messages.map(renderMessage)}
+
+          {/* Pending user message (optimistic update) */}
+          {pendingUserMessage && (
+            <div className="flex gap-3 flex-row-reverse">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600">
+                <User className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 text-right">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Just now</span>
+                  <span className="text-sm font-medium text-gray-900">You</span>
+                </div>
+                <div className="inline-block max-w-3xl rounded-lg bg-blue-600 px-4 py-2 text-white">
+                  <div className="whitespace-pre-wrap break-words text-sm">
+                    {pendingUserMessage}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Streaming message */}
           {isStreaming && streamingContent && (

@@ -1,6 +1,6 @@
 // ChatPage - Main chat page with conversation management and streaming
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
@@ -21,6 +21,8 @@ export default function ChatPage() {
   const [streamingContent, setStreamingContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null)
+  const [localMessages, setLocalMessages] = useState<any[]>([])
 
   // Fetch conversations
   const { data: conversationsData, isLoading: loadingConversations } = useQuery({
@@ -41,6 +43,17 @@ export default function ChatPage() {
     },
     enabled: !!selectedConversationId,
   })
+
+  // Sync local messages with conversation data
+  useEffect(() => {
+    if (conversationData?.messages) {
+      setLocalMessages(conversationData.messages)
+      // Clear pending message when we have the actual messages
+      if (pendingUserMessage && conversationData.messages.length >= 2) {
+        setPendingUserMessage(null)
+      }
+    }
+  }, [conversationData?.messages, pendingUserMessage])
 
   // Delete conversation mutation
   const deleteConversationMutation = useMutation({
@@ -86,6 +99,7 @@ export default function ChatPage() {
     setError(null)
     setStreamingContent('')
     setIsStreaming(true)
+    setPendingUserMessage(message) // Show user's message immediately
 
     try {
       const response = await chatApi.sendMessageStream({
@@ -130,19 +144,38 @@ export default function ChatPage() {
             setIsStreaming(false)
             setStreamingContent('')
 
-            // Refresh conversation data
+            // Determine the conversation ID to refresh
+            const conversationIdToRefresh = parsed.conversation_id || selectedConversationId
+
+            // Fetch the conversation messages and update local state directly
+            if (conversationIdToRefresh) {
+              const conversationResponse = await chatApi.getConversation(conversationIdToRefresh)
+              const conversationWithMessages = conversationResponse.data
+
+              // Update local messages directly
+              setLocalMessages(conversationWithMessages.messages)
+
+              // Update the query cache for future use
+              queryClient.setQueryData(['conversation', conversationIdToRefresh], conversationWithMessages)
+
+              // Wait for React to process the state update before clearing pending message
+              await new Promise(resolve => setTimeout(resolve, 50))
+
+              // Clear pending message now that we have real messages
+              setPendingUserMessage(null)
+            }
+
+            // Refresh conversation list
             queryClient.invalidateQueries({ queryKey: ['conversations'] })
-            queryClient.invalidateQueries({ queryKey: ['conversation', selectedConversationId] })
 
             // If new conversation was created, select it
-            if (parsed.message_id && !selectedConversationId) {
-              // Get the conversation ID from the message
-              // We'll need to refetch conversations to get the new one
-              queryClient.invalidateQueries({ queryKey: ['conversations'] })
+            if (parsed.conversation_id && !selectedConversationId) {
+              setSelectedConversationId(parsed.conversation_id)
             }
           } else if (parsed.type === 'error' && parsed.error) {
             setError(parsed.error)
             setIsStreaming(false)
+            setPendingUserMessage(null) // Clear pending message on error
           }
         }
       }
@@ -151,11 +184,14 @@ export default function ChatPage() {
       setError(err instanceof Error ? err.message : 'Failed to send message')
       setIsStreaming(false)
       setStreamingContent('')
+      setPendingUserMessage(null) // Clear pending message on error
     }
   }
 
   const handleNewConversation = () => {
     setSelectedConversationId(null)
+    setLocalMessages([])
+    setPendingUserMessage(null)
   }
 
   const handleViewDocument = (documentId: string) => {
@@ -163,7 +199,7 @@ export default function ChatPage() {
   }
 
   const conversations = conversationsData?.conversations || []
-  const messages = conversationData?.messages || []
+  const messages = localMessages
 
   return (
     <DashboardLayout>
@@ -194,6 +230,7 @@ export default function ChatPage() {
             messages={messages}
             streamingContent={streamingContent}
             isStreaming={isStreaming}
+            pendingUserMessage={pendingUserMessage}
             onSubmitFeedback={(messageId, rating) =>
               submitFeedbackMutation.mutate({ messageId, rating })
             }

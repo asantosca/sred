@@ -199,10 +199,10 @@ class ChatService:
         # 7. Send sources
         if request.include_sources and sources:
             for source in sources:
-                yield f"data: {self._format_sse_chunk('source', source.model_dump())}\n\n"
+                yield f"data: {self._format_sse_chunk('source', source.model_dump(mode='json'))}\n\n"
 
-        # 8. Send done signal with message ID
-        yield f"data: {self._format_sse_chunk('done', {'message_id': str(assistant_message.id)})}\n\n"
+        # 8. Send done signal with message ID and conversation ID
+        yield f"data: {self._format_sse_chunk('done', {'message_id': str(assistant_message.id), 'conversation_id': str(conversation.id)})}\n\n"
 
     async def get_conversation_with_messages(
         self,
@@ -403,7 +403,7 @@ class ChatService:
             conversation_id=conversation_id,
             role=role,
             content=content,
-            sources=[s.model_dump() for s in sources] if sources else None,
+            sources=[s.model_dump(mode='json') for s in sources] if sources else None,
             model_name=model_name,
             token_count=token_count,
             context_chunks=context_chunks
@@ -563,4 +563,8 @@ Important guidelines:
     def _format_sse_chunk(self, chunk_type: str, data: Any) -> str:
         """Format chunk as JSON for SSE"""
         import json
-        return json.dumps({"type": chunk_type, chunk_type: data})
+        # Merge data into the top level along with type
+        if isinstance(data, dict):
+            return json.dumps({"type": chunk_type, **data})
+        else:
+            return json.dumps({"type": chunk_type, chunk_type: data})
