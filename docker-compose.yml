@@ -4,7 +4,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg15
     environment:
-      POSTGRES_DB: bc_legal_dev
+      POSTGRES_DB: bc_legal_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -47,6 +47,34 @@ services:
     networks:
       - bc-legal-network
     restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bc-legal-celery
+    command: celery -A app.core.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/bc_legal_db
+      REDIS_URL: redis://redis:6379/0
+      AWS_ENDPOINT_URL: http://localstack-minimal:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      S3_BUCKET_NAME: bc-legal-documents
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+      - localstack-minimal
+    networks:
+      - bc-legal-network
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
 
 volumes:
   postgres_data:

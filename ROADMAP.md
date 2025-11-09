@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-08 (Matter management pages, usage tracking, schema fixes)
+**Last Updated**: 2025-11-09 (Celery worker fixes, complete RAG pipeline)
 
 ## Vision
 
@@ -652,7 +652,17 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed Since Last Update (November 8, 2025 - Late Evening):**
+**Completed This Session (November 9, 2025):**
+
+- [Done] **Celery Worker Docker Integration**: Fixed S3 lazy initialization preventing import-time connection errors
+- [Done] **Document Processing Pipeline**: Added missing text extraction step (Extract → Chunk → Embed)
+- [Done] **Asyncio Event Loop Fix**: Changed from `asyncio.run()` to `loop.run_until_complete()` for Celery compatibility
+- [Done] **Environment Configuration**: Created Docker-compatible environment variable setup with root .env file
+- [Done] **AWS Endpoint Configuration**: Fixed hardcoded localhost to use proper Docker service hostnames
+- [Done] **Chat Service Model Fixes**: Fixed attribute mismatches (doc.title → doc.document_title, matter.name → matter.matter_number)
+- [Done] **Docker Containerization**: Created Dockerfile and .dockerignore for Celery worker deployment
+
+**Completed Earlier (November 8, 2025 - Late Evening):**
 
 - [Done] **Matter Management Frontend**: Complete matter list, create, and detail pages with document integration
 - [Done] **Usage Tracking System**: Plan limits enforcement with document count, storage, and tier-based restrictions

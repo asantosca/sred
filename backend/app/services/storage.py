@@ -14,7 +14,7 @@ from app.core.config import settings
 
 class StorageService:
     """Service for handling file storage operations with S3"""
-    
+
     def __init__(self):
         """Initialize S3 client"""
         self.s3_client = boto3.client(
@@ -25,14 +25,16 @@ class StorageService:
             region_name=settings.AWS_REGION
         )
         self.bucket_name = settings.S3_BUCKET_NAME
-        
-        # Ensure bucket exists
-        self._ensure_bucket_exists()
+        self._bucket_checked = False
     
     def _ensure_bucket_exists(self):
-        """Create bucket if it doesn't exist"""
+        """Create bucket if it doesn't exist (called lazily on first use)"""
+        if self._bucket_checked:
+            return
+
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
+            self._bucket_checked = True
         except ClientError as e:
             error_code = e.response['Error']['Code']
             if error_code == '404':
@@ -47,6 +49,7 @@ class StorageService:
                             CreateBucketConfiguration={'LocationConstraint': settings.AWS_REGION}
                         )
                     print(f"Created S3 bucket: {self.bucket_name}")
+                    self._bucket_checked = True
                 except ClientError as create_error:
                     print(f"Error creating bucket: {create_error}")
             else:
@@ -120,6 +123,9 @@ class StorageService:
         Upload file to S3
         Returns upload result with S3 key and metadata
         """
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             # Prepare upload parameters
             upload_params = {
@@ -160,6 +166,9 @@ class StorageService:
     
     async def get_file(self, storage_path: str) -> bytes:
         """Download file from S3"""
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             response = self.s3_client.get_object(
                 Bucket=self.bucket_name,
@@ -185,6 +194,9 @@ class StorageService:
     
     async def delete_file(self, storage_path: str) -> bool:
         """Delete file from S3"""
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             self.s3_client.delete_object(
                 Bucket=self.bucket_name,
@@ -206,6 +218,9 @@ class StorageService:
         Generate presigned URL for secure file access
         Default expiration: 1 hour
         """
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             url = self.s3_client.generate_presigned_url(
                 http_method,
@@ -221,6 +236,9 @@ class StorageService:
     
     def check_file_exists(self, storage_path: str) -> bool:
         """Check if file exists in S3"""
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             self.s3_client.head_object(
                 Bucket=self.bucket_name,
@@ -232,6 +250,9 @@ class StorageService:
     
     def get_file_info(self, storage_path: str) -> dict:
         """Get file metadata from S3"""
+        # Ensure bucket exists (lazy initialization)
+        self._ensure_bucket_exists()
+
         try:
             response = self.s3_client.head_object(
                 Bucket=self.bucket_name,

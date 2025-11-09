@@ -40,8 +40,18 @@ def process_document_pipeline(self, document_id: str) -> dict:
     logger.info(f"Starting document processing pipeline for document {document_id}")
 
     try:
+        # Get or create event loop for this thread
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         # Run async processing in sync context
-        result = asyncio.run(_process_document_async(document_id))
+        result = loop.run_until_complete(_process_document_async(document_id))
 
         logger.info(f"Document {document_id} processed successfully")
         return result
@@ -51,7 +61,12 @@ def process_document_pipeline(self, document_id: str) -> dict:
 
         # Update document status to failed
         try:
-            asyncio.run(_update_document_status(document_id, STATUS_FAILED))
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            loop.run_until_complete(_update_document_status(document_id, STATUS_FAILED))
         except Exception as update_error:
             logger.error(f"Failed to update document status: {str(update_error)}")
 
@@ -77,7 +92,20 @@ async def _process_document_async(document_id: str) -> dict:
         # Update status to processing
         await _update_document_status_in_session(session, doc_uuid, STATUS_PROCESSING)
 
-        # Step 1: Process chunking
+        # Step 1: Extract text from document
+        logger.info(f"Extracting text from document {document_id}")
+        extraction_success = await processor.process_text_extraction(doc_uuid)
+
+        if not extraction_success:
+            logger.error(f"Text extraction failed for document {document_id}")
+            await _update_document_status_in_session(session, doc_uuid, STATUS_FAILED)
+            return {
+                "status": "failed",
+                "stage": "extraction",
+                "document_id": document_id
+            }
+
+        # Step 2: Process chunking
         logger.info(f"Processing chunking for document {document_id}")
         chunking_success = await processor.process_chunking(doc_uuid)
 
@@ -93,7 +121,7 @@ async def _process_document_async(document_id: str) -> dict:
         # Update status to chunked
         await _update_document_status_in_session(session, doc_uuid, STATUS_CHUNKED)
 
-        # Step 2: Generate embeddings
+        # Step 3: Generate embeddings
         logger.info(f"Generating embeddings for document {document_id}")
         embedding_success = await processor.process_embeddings(doc_uuid)
 

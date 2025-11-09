@@ -462,13 +462,13 @@ class ChatService:
                 doc, matter = doc_matter
                 sources.append(MessageSource(
                     document_id=result["document_id"],
-                    document_title=doc.title,
+                    document_title=doc.document_title or doc.filename,
                     chunk_id=result["chunk_id"],
                     content=result["content"],
                     page_number=result.get("page_number"),
                     similarity_score=result["similarity"],
                     matter_id=matter.id,
-                    matter_name=matter.name
+                    matter_name=f"{matter.matter_number} - {matter.client_name}"
                 ))
 
         return search_results, sources

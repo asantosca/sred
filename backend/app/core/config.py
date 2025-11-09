@@ -35,11 +35,11 @@ class Settings:
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # AWS/S3 settings
-    AWS_ACCESS_KEY_ID: str = "test"
-    AWS_SECRET_ACCESS_KEY: str = "test"
-    AWS_ENDPOINT_URL: Optional[str] = "http://localhost:4566"  # LocalStack
-    AWS_REGION: str = "us-east-1"
-    S3_BUCKET_NAME: str = "bc-legal-documents"
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "test")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "test")
+    AWS_ENDPOINT_URL: Optional[str] = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")  # LocalStack
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "bc-legal-documents")
 
     # Email settings
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
