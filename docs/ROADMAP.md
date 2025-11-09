@@ -623,8 +623,8 @@ Based on what we've actually built:
 **Legal & Compliance Pages:**
 
 - [x] Privacy Policy (BC/Canadian privacy law compliance) [Done - Template]
-- [ ] Terms of Service (liability, acceptable use, account terms)
-- [ ] Cookie Policy with consent banner (GDPR-compliant)
+- [x] Terms of Service (liability, acceptable use, account terms) [Done - Template]
+- [x] Cookie Policy with consent banner (GDPR-compliant) [Done]
 - [ ] Data Processing Agreement (for legal firms)
 - [ ] Get legal review from lawyer (critical for legal tech)
 
@@ -633,7 +633,7 @@ Based on what we've actually built:
 - [ ] AWS SES setup for transactional emails (@bclegaltech.ca)
 - [ ] Welcome email for waitlist signups
 - [ ] Analytics setup (Plausible or GA4 with consent)
-- [ ] Cookie consent management
+- [x] Cookie consent management [Done]
 
 **Deployment:**
 
@@ -803,7 +803,11 @@ What makes BC Legal Tech unique:
   - Rate limiting: 3 signups per minute per IP
   - Email validation and duplicate prevention
   - UTM parameter tracking for attribution
-- [Done] **Privacy Policy**: Comprehensive privacy policy template (requires legal review)
+- [Done] **Legal Pages Complete**: All legal compliance pages for marketing site
+  - Privacy Policy: Comprehensive template covering BC/Canadian privacy law (11 sections)
+  - Terms of Service: Complete terms covering all aspects of service usage (14 sections)
+  - Cookie Policy: Detailed cookie usage and management guide with tables
+  - Cookie Consent Banner: GDPR-compliant banner with granular preferences
 - [Done] **Repository Organization**: Docs moved to `/docs` folder for better structure
 - [Done] **AWS Amplify Configuration**: Created amplify.yml for `/marketing` folder deployment
 
