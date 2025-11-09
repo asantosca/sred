@@ -30,8 +30,8 @@ class UsageTracker:
             SELECT
                 c.usage_documents_count,
                 pl.max_documents
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -64,8 +64,8 @@ class UsageTracker:
             SELECT
                 c.usage_storage_bytes,
                 pl.max_storage_gb
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -95,10 +95,8 @@ class UsageTracker:
         query = text("""
             SELECT
                 c.usage_ai_queries_count,
-                c.usage_reset_date,
-                pl.max_ai_queries_per_month
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+                c.usage_reset_date
+            FROM bc_legal_ds.companies c
             WHERE c.id = :company_id
         """)
 
@@ -108,19 +106,15 @@ class UsageTracker:
         if not row:
             return False
 
-        current_queries, reset_date, max_queries = row
+        current_queries, reset_date = row
 
         # Check if we need to reset monthly counter
         first_of_month = date.today().replace(day=1)
         if reset_date is None or reset_date < first_of_month:
             await self.reset_monthly_usage(company_id)
-            current_queries = 0
 
-        # -1 means unlimited
-        if max_queries == -1:
-            return True
-
-        return current_queries < max_queries
+        # For now, AI queries are unlimited
+        return True
 
     async def check_document_size_limit(self, company_id: UUID, file_size_bytes: int) -> bool:
         """
@@ -135,8 +129,8 @@ class UsageTracker:
         """
         query = text("""
             SELECT pl.max_document_size_mb
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -160,7 +154,7 @@ class UsageTracker:
             file_size_bytes: Size of uploaded document in bytes
         """
         query = text("""
-            UPDATE companies
+            UPDATE bc_legal_ds.companies
             SET
                 usage_documents_count = usage_documents_count + 1,
                 usage_storage_bytes = usage_storage_bytes + :file_size
@@ -181,7 +175,7 @@ class UsageTracker:
             company_id: Company UUID
         """
         query = text("""
-            UPDATE companies
+            UPDATE bc_legal_ds.companies
             SET usage_ai_queries_count = usage_ai_queries_count + 1
             WHERE id = :company_id
         """)
@@ -198,7 +192,7 @@ class UsageTracker:
             chunk_count: Number of chunks/embeddings generated
         """
         query = text("""
-            UPDATE companies
+            UPDATE bc_legal_ds.companies
             SET usage_embeddings_count = usage_embeddings_count + :chunk_count
             WHERE id = :company_id
         """)
@@ -220,7 +214,7 @@ class UsageTracker:
         first_of_month = date.today().replace(day=1)
 
         query = text("""
-            UPDATE companies
+            UPDATE bc_legal_ds.companies
             SET
                 usage_ai_queries_count = 0,
                 usage_reset_date = :reset_date
@@ -249,11 +243,10 @@ class UsageTracker:
                 c.plan_tier,
                 pl.max_documents,
                 pl.max_storage_gb,
-                pl.max_ai_queries_per_month,
                 pl.max_document_size_mb,
                 pl.max_users
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -265,7 +258,7 @@ class UsageTracker:
 
         (
             doc_count, storage_bytes, ai_queries, embeddings_count,
-            plan_tier, max_docs, max_storage_gb, max_ai_queries,
+            plan_tier, max_docs, max_storage_gb,
             max_doc_size_mb, max_users
         ) = row
 
@@ -293,8 +286,8 @@ class UsageTracker:
             },
             "ai_queries": {
                 "current": ai_queries,
-                "limit": max_ai_queries if max_ai_queries != -1 else "unlimited",
-                "percentage": calc_percentage(ai_queries, max_ai_queries)
+                "limit": "unlimited",
+                "percentage": 0.0
             },
             "embeddings": {
                 "total_generated": embeddings_count
@@ -317,13 +310,10 @@ class UsageTracker:
                 pl.plan_tier,
                 pl.max_documents,
                 pl.max_storage_gb,
-                pl.max_ai_queries_per_month,
                 pl.max_document_size_mb,
-                pl.max_users,
-                pl.allow_embeddings,
-                pl.allow_ocr
-            FROM companies c
-            JOIN plan_limits pl ON pl.plan_tier = c.plan_tier
+                pl.max_users
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -337,9 +327,6 @@ class UsageTracker:
             "plan_tier": row[0],
             "max_documents": row[1],
             "max_storage_gb": row[2],
-            "max_ai_queries_per_month": row[3],
-            "max_document_size_mb": row[4],
-            "max_users": row[5],
-            "allow_embeddings": row[6],
-            "allow_ocr": row[7]
+            "max_document_size_mb": row[3],
+            "max_users": row[4]
         }

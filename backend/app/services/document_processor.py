@@ -271,7 +271,7 @@ class DocumentProcessor:
                 pool = await vector_storage_service.get_pool()
                 async with pool.acquire() as conn:
                     first_chunk = await conn.fetchrow(
-                        "SELECT embedding FROM document_chunks WHERE id = $1",
+                        "SELECT embedding FROM bc_legal_ds.document_chunks WHERE id = $1",
                         chunks[0].id
                     )
                     if first_chunk and first_chunk['embedding'] is not None:

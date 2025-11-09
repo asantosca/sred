@@ -40,7 +40,7 @@ export interface MatterUpdate {
 }
 
 export interface MatterListResponse {
-  items: Matter[]
+  matters: Matter[]
   total: number
   page: number
   size: number

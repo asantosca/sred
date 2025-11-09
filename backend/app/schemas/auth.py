@@ -64,7 +64,7 @@ class UserResponse(UserBase):
 
 class CompanyCreate(BaseModel):
     name: str
-    plan_tier: str = "starter"
+    plan_tier: str = "free"
     
     @validator('name')
     def validate_name(cls, v):
@@ -89,7 +89,7 @@ class CompanyRegistration(BaseModel):
     admin_password: str
     admin_first_name: Optional[str] = None
     admin_last_name: Optional[str] = None
-    plan_tier: str = "starter"
+    plan_tier: str = "free"
 
 class Token(BaseModel):
     access_token: str

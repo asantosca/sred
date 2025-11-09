@@ -26,7 +26,7 @@ export default function MattersPage() {
       setLoading(true)
       setError(null)
       const response = await mattersApi.list()
-      setMatters(response.data.items)
+      setMatters(response.data.matters)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load matters')
     } finally {

@@ -84,7 +84,7 @@ class VectorStorageService:
                 # Batch update all chunks with their embeddings
                 updated = await conn.executemany(
                     """
-                    UPDATE document_chunks
+                    UPDATE bc_legal_ds.document_chunks
                     SET embedding = $1::vector(1536),
                         embedding_model = $2
                     WHERE id = $3
@@ -122,7 +122,7 @@ class VectorStorageService:
                 rows = await conn.fetch(
                     """
                     SELECT id, embedding, embedding_model
-                    FROM document_chunks
+                    FROM bc_legal_ds.document_chunks
                     WHERE document_id = $1
                     AND embedding IS NOT NULL
                     ORDER BY chunk_index
@@ -182,8 +182,8 @@ class VectorStorageService:
                             dc.content,
                             dc.chunk_index,
                             1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
-                        FROM document_chunks dc
-                        JOIN documents d ON d.id = dc.document_id
+                        FROM bc_legal_ds.document_chunks dc
+                        JOIN bc_legal_ds.documents d ON d.id = dc.document_id
                         WHERE d.matter_id = $2
                         AND dc.embedding IS NOT NULL
                         AND dc.embedding <=> $1::vector(1536) < $3
@@ -201,7 +201,7 @@ class VectorStorageService:
                             content,
                             chunk_index,
                             1 - (embedding <=> $1::vector(1536)) / 2 as similarity
-                        FROM document_chunks
+                        FROM bc_legal_ds.document_chunks
                         WHERE embedding IS NOT NULL
                         AND embedding <=> $1::vector(1536) < $2
                         ORDER BY embedding <=> $1::vector(1536)

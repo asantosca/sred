@@ -42,7 +42,7 @@ export default function MatterDetailPage() {
   const fetchMatterDocuments = async () => {
     try {
       const response = await documentsApi.list({ matter_id: matterId })
-      setDocuments(response.data.items)
+      setDocuments(response.data.documents || [])
     } catch (err) {
       console.error('Failed to load documents:', err)
     }

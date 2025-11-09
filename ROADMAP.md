@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-08 (Database schema reorganized, email confirmation fixed)
+**Last Updated**: 2025-11-08 (Matter management pages, usage tracking, schema fixes)
 
 ## Vision
 
@@ -15,14 +15,14 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ## Current Status
 
-**✅ Milestones 1, 2, 2.5, 3, 4A Complete** - Full auth, document management, RAG pipeline, and AI chat system
-**🎯 Next: Essential Frontend (remaining pages) → Production Deploy → Beta Launch**
+**[Done] Milestones 1, 2, 2.5, 3, 4A Complete** - Full auth, document management, RAG pipeline, and AI chat system
+** Next: Essential Frontend (remaining pages) → Production Deploy → Beta Launch**
 
 ---
 
-## MILESTONE 1: Core Authentication & User Management ✅
+## MILESTONE 1: Core Authentication & User Management [Done]
 
-**Status**: ✅ **COMPLETE** - All core authentication features implemented
+**Status**: [Done] **COMPLETE** - All core authentication features implemented
 
 <details>
 <summary>View completed tasks</summary>
@@ -39,9 +39,9 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ---
 
-## MILESTONE 2: Core Document Upload ✅
+## MILESTONE 2: Core Document Upload [Done]
 
-**Status**: ✅ **COMPLETE** - Full document management with Quick Upload mode
+**Status**: [Done] **COMPLETE** - Full document management with Quick Upload mode
 
 <details>
 <summary>View completed tasks</summary>
@@ -63,9 +63,9 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ---
 
-## MILESTONE 2.5: Enhanced Document Classification ✅
+## MILESTONE 2.5: Enhanced Document Classification [Done]
 
-**Status**: ✅ **COMPLETE** - Standard Upload mode with auto-detection
+**Status**: [Done] **COMPLETE** - Standard Upload mode with auto-detection
 
 <details>
 <summary>View completed tasks</summary>
@@ -85,9 +85,9 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ## MILESTONE 3: RAG Pipeline & Vector Search
 
-**Status**: ✅ **COMPLETE** - Semantic search and background processing implemented
+**Status**: [Done] **COMPLETE** - Semantic search and background processing implemented
 
-### Completed ✅
+### Completed [Done]
 
 **Core RAG Infrastructure:**
 
@@ -106,26 +106,26 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 **What Works:**
 
 ```
-Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → Semantic Search ✅
+Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → Semantic Search [Done]
 ```
 
-### Completed in Latest Update ✅
+### Completed in Latest Update [Done]
 
 **Background Processing:**
 
-- [x] **Background task queue** (Celery + Redis) ✅
-- [x] Auto-process documents after upload ✅
-- [x] Retry failed processing ✅
-- [x] Task status tracking ✅
+- [x] **Background task queue** (Celery + Redis) [Done]
+- [x] Auto-process documents after upload [Done]
+- [x] Retry failed processing [Done]
+- [x] Task status tracking [Done]
 
 **Security & Validation:**
 
-- [x] Rate limiting on API endpoints (security) ✅
-- [x] Input validation middleware (security) ✅
+- [x] Rate limiting on API endpoints (security) [Done]
+- [x] Input validation middleware (security) [Done]
 
 ### Remaining Tasks (Deferred to Post-MVP)
 
-**🟢 LOW - Post-MVP:**
+** LOW - Post-MVP:**
 
 1. [ ] Document processing status dashboard
 2. [ ] OCR support for scanned documents
@@ -149,45 +149,45 @@ Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → 
 
 ## MILESTONE 4A: AI Chat System (MVP)
 
-**Status**: ✅ **COMPLETE** - Full chat system with streaming frontend
+**Status**: [Done] **COMPLETE** - Full chat system with streaming frontend
 
 Build conversational interface with RAG-powered responses.
 
-### Completed ✅
+### Completed [Done]
 
 **Core Chat Infrastructure:**
 
-- [x] Create conversations table and schemas ✅
-- [x] Messages table and schemas ✅
-- [x] Database migration for conversations/messages ✅
-- [x] Conversation CRUD endpoints (create, list, get, delete) ✅
-- [x] Message creation endpoint ✅
-- [x] Integrate Claude 3.5 Sonnet API ✅
-- [x] Implement RAG context retrieval (semantic search integration) ✅
-- [x] Build prompt engineering for legal context ✅
-- [x] Add streaming support (Server-Sent Events) ✅
-- [x] Implement conversation history management ✅
-- [x] **Always cite sources** (document name, page number, similarity scores) ✅
-- [x] Message rating system (thumbs up/down with feedback) ✅
+- [x] Create conversations table and schemas [Done]
+- [x] Messages table and schemas [Done]
+- [x] Database migration for conversations/messages [Done]
+- [x] Conversation CRUD endpoints (create, list, get, delete) [Done]
+- [x] Message creation endpoint [Done]
+- [x] Integrate Claude 3.5 Sonnet API [Done]
+- [x] Implement RAG context retrieval (semantic search integration) [Done]
+- [x] Build prompt engineering for legal context [Done]
+- [x] Add streaming support (Server-Sent Events) [Done]
+- [x] Implement conversation history management [Done]
+- [x] **Always cite sources** (document name, page number, similarity scores) [Done]
+- [x] Message rating system (thumbs up/down with feedback) [Done]
 
 **Frontend Integration:**
 
-- [x] Chat UI components (conversation list, message interface) ✅
-- [x] Streaming message display in frontend ✅
-- [x] Source citations display (clickable links to documents) ✅
-- [x] TypeScript types matching backend schemas ✅
-- [x] SSE streaming with token refresh ✅
+- [x] Chat UI components (conversation list, message interface) [Done]
+- [x] Streaming message display in frontend [Done]
+- [x] Source citations display (clickable links to documents) [Done]
+- [x] TypeScript types matching backend schemas [Done]
+- [x] SSE streaming with token refresh [Done]
 
 **What We Have:**
 
-- ✅ Full chat backend API ([backend/app/api/v1/endpoints/chat.py](backend/app/api/v1/endpoints/chat.py))
-- ✅ Chat service with RAG pipeline ([backend/app/services/chat_service.py](backend/app/services/chat_service.py))
-- ✅ Complete chat frontend ([frontend/src/pages/ChatPage.tsx](frontend/src/pages/ChatPage.tsx))
-- ✅ Chat components ([frontend/src/components/chat/](frontend/src/components/chat/))
-- ✅ RAG context retrieval (semantic search API)
-- ✅ Document metadata and citations
-- ✅ Multi-tenant isolation (company_id filtering)
-- ✅ Streaming responses via SSE
+- [Done] Full chat backend API ([backend/app/api/v1/endpoints/chat.py](backend/app/api/v1/endpoints/chat.py))
+- [Done] Chat service with RAG pipeline ([backend/app/services/chat_service.py](backend/app/services/chat_service.py))
+- [Done] Complete chat frontend ([frontend/src/pages/ChatPage.tsx](frontend/src/pages/ChatPage.tsx))
+- [Done] Chat components ([frontend/src/components/chat/](frontend/src/components/chat/))
+- [Done] RAG context retrieval (semantic search API)
+- [Done] Document metadata and citations
+- [Done] Multi-tenant isolation (company_id filtering)
+- [Done] Streaming responses via SSE
 
 **New Tables**: conversations, messages (implemented)
 **New Components**: ConversationList, ChatInterface, MessageInput, SourceCitations
@@ -198,7 +198,7 @@ Build conversational interface with RAG-powered responses.
 
 ## MILESTONE 4B: Document Workflow (Post-MVP)
 
-**Priority**: ⚪ **Defer to post-launch**
+**Priority**: **Defer to post-launch**
 
 Advanced workflow management features.
 
@@ -221,7 +221,7 @@ Advanced workflow management features.
 
 ## MILESTONE 5A: Essential Frontend (MVP)
 
-**Priority**: 🎯 **Start in parallel with M4A**
+**Priority**: **Start in parallel with M4A**
 
 Minimum viable UI for lawyers to use the platform.
 
@@ -235,19 +235,30 @@ Minimum viable UI for lawyers to use the platform.
 
 **Document Management:** 4. [ ] Document library (list view with filters) 5. [ ] Quick Upload form 6. [ ] Standard Upload form 7. [ ] Document viewer/preview 8. [ ] Document search interface
 
-**Chat Interface:** 9. [ ] Chat conversation list 10. [ ] Chat message interface 11. [ ] Streaming message display 12. [ ] Source citations display (clickable links to documents)
+**Chat Interface:**
+9. [x] Chat conversation list
+10. [x] Chat message interface
+11. [x] Streaming message display
+12. [x] Source citations display (clickable links to documents)
 
-**Matter Management:** 13. [ ] Matter list page 14. [ ] Create/edit matter form 15. [ ] Matter detail page with documents
+**Matter Management:**
+13. [x] Matter list page (MattersPage.tsx)
+14. [x] Create/edit matter form (CreateMatterPage.tsx)
+15. [x] Matter detail page with documents (MatterDetailPage.tsx)
 
-**Infrastructure:** 16. [ ] Loading states and spinners 17. [ ] Error boundaries and error handling 18. [ ] Toast notifications 19. [ ] Navigation layout
+**Infrastructure:**
+16. [x] Loading states and spinners
+17. [ ] Error boundaries and error handling
+18. [ ] Toast notifications
+19. [x] Navigation layout
 
 **What We Skip for MVP:**
 
-- ❌ Dashboard with analytics
-- ❌ User management UI (admin features)
-- ❌ Settings pages
-- ❌ Dark mode
-- ❌ Mobile responsive (desktop-first for lawyers)
+- [TBD] Dashboard with analytics
+- [TBD] User management UI (admin features)
+- [TBD] Settings pages
+- [TBD] Dark mode
+- [TBD] Mobile responsive (desktop-first for lawyers)
 
 **Tech Stack**: React + TypeScript + Vite + TailwindCSS
 
@@ -257,7 +268,7 @@ Minimum viable UI for lawyers to use the platform.
 
 ## MILESTONE 5B: Enhanced Frontend (Post-MVP)
 
-**Priority**: ⚪ **Defer to post-launch**
+**Priority**: **Defer to post-launch**
 
 <details>
 <summary>View deferred features</summary>
@@ -281,7 +292,7 @@ Minimum viable UI for lawyers to use the platform.
 
 ## MILESTONE 6: Production Infrastructure
 
-**Priority**: 🎯 **Required before beta testing**
+**Priority**: **Required before beta testing**
 
 Deploy to production environment.
 
@@ -338,10 +349,10 @@ Deploy to production environment.
 
 **What We Already Have:**
 
-- ✅ Row-level security (company_id isolation)
-- ✅ JWT authentication
-- ✅ Parameterized queries (SQLAlchemy ORM)
-- ✅ Gitignored secrets (.env file)
+- [Done] Row-level security (company_id isolation)
+- [Done] JWT authentication
+- [Done] Parameterized queries (SQLAlchemy ORM)
+- [Done] Gitignored secrets (.env file)
 
 ---
 
@@ -385,7 +396,7 @@ Deploy to production environment.
 
 ## MILESTONE 9: Beta Launch
 
-**Priority**: 🎯 **After M4A, M5A, M6, M7 essentials complete**
+**Priority**: **After M4A, M5A, M6, M7 essentials complete**
 
 Launch with 3-5 pilot law firms.
 
@@ -419,7 +430,7 @@ Launch with 3-5 pilot law firms.
 
 ## MILESTONE 10: Monetization & Advanced Features
 
-**Priority**: ⚪ **Post-beta, pre-public launch**
+**Priority**: **Post-beta, pre-public launch**
 
 <details>
 <summary>View future features</summary>
@@ -444,8 +455,8 @@ Launch with 3-5 pilot law firms.
 
 **What We Already Have:**
 
-- ✅ Matter/case organization (matters table with full API)
-- ✅ Multi-tenant isolation (company-based)
+- [Done] Matter/case organization (matters table with full API)
+- [Done] Multi-tenant isolation (company-based)
 
 **Note**: Matter management already fully implemented. Remove from this milestone in future updates.
 
@@ -464,7 +475,7 @@ Based on what we've actually built:
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Cache**: Redis
 - **Storage**: AWS S3 (LocalStack for local dev)
-- **Background Jobs**: Celery + Redis ✅
+- **Background Jobs**: Celery + Redis [Done]
 - **Migrations**: Alembic with single consolidated initial migration
 
 ### AI/ML
@@ -497,38 +508,38 @@ Based on what we've actually built:
 
 ## MVP Path (10-15 Weeks to Beta Launch)
 
-### Phase 1: Production RAG (1-2 weeks) ✅ COMPLETE
+### Phase 1: Production RAG (1-2 weeks) [Done] COMPLETE
 
 **Goal**: Automatic document processing
 
-- [x] Background task queue (Celery + Redis) ✅
-- [x] Document processing status tracking ✅
-- [x] Rate limiting ✅
-- [x] Input validation ✅
+- [x] Background task queue (Celery + Redis) [Done]
+- [x] Document processing status tracking [Done]
+- [x] Rate limiting [Done]
+- [x] Input validation [Done]
 
 **Deliverable**: Documents auto-process after upload
 
-**Status**: ✅ **COMPLETE**
+**Status**: [Done] **COMPLETE**
 
 ---
 
-### Phase 2: AI Chat (2-3 weeks) ✅ COMPLETE
+### Phase 2: AI Chat (2-3 weeks) [Done] COMPLETE
 
 **Goal**: Conversational search with citations
 
-- [x] Conversation & message tables ✅
-- [x] Chat CRUD endpoints ✅
-- [x] Claude 3.5 Sonnet integration ✅
-- [x] RAG context retrieval (use semantic search) ✅
-- [x] Cited sources in responses ✅
-- [x] Streaming support ✅
-- [x] Chat frontend with SSE streaming ✅
-- [x] Source citations UI ✅
-- [x] Message feedback UI ✅
+- [x] Conversation & message tables [Done]
+- [x] Chat CRUD endpoints [Done]
+- [x] Claude 3.5 Sonnet integration [Done]
+- [x] RAG context retrieval (use semantic search) [Done]
+- [x] Cited sources in responses [Done]
+- [x] Streaming support [Done]
+- [x] Chat frontend with SSE streaming [Done]
+- [x] Source citations UI [Done]
+- [x] Message feedback UI [Done]
 
 **Deliverable**: Working chat interface (backend + frontend)
 
-**Status**: ✅ **COMPLETE** - Full chat system with streaming frontend
+**Status**: [Done] **COMPLETE** - Full chat system with streaming frontend
 
 ---
 
@@ -536,15 +547,15 @@ Based on what we've actually built:
 
 **Goal**: Usable UI for lawyers
 
-- [ ] Auth pages (Login, Register, Password Reset)
+- [x] Auth pages (Login, Register, Password Reset) [Done]
 - [ ] Document library (upload, list, view)
-- [x] Chat interface ✅
-- [ ] Matter management
-- [ ] Error handling and loading states
+- [x] Chat interface [Done]
+- [x] Matter management [Done]
+- [x] Error handling and loading states [Partial - needs error boundaries and toast notifications]
 
 **Deliverable**: Complete end-user interface
 
-**Progress**: Chat interface complete, auth and document pages remain
+**Progress**: Chat interface, auth pages, and matter management complete. Document library remains.
 
 ---
 
@@ -641,41 +652,50 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed Since Last Update (November 8, 2025 - Evening):**
+**Completed Since Last Update (November 8, 2025 - Late Evening):**
 
-- ✅ **Database Schema Reorganization**: Created `bc_legal_ds` dedicated schema for all application tables
-- ✅ **Migration Consolidation**: Reduced 7 separate migration files into 1 clean initial migration
-- ✅ **Email Confirmation Bug Fix**: Fixed dual message display issue on email confirmation page
-- ✅ **Schema Benefits**: Better organization, security, and separation from PostgreSQL system tables
-- ✅ **Migration Improvements**: Added explicit commit in async migration runner for reliability
+- [Done] **Matter Management Frontend**: Complete matter list, create, and detail pages with document integration
+- [Done] **Usage Tracking System**: Plan limits enforcement with document count, storage, and tier-based restrictions
+- [Done] **Schema Fixes**: Added bc_legal_ds schema prefix to all SQL queries (usage_tracker, vector_storage, document_processor)
+- [Done] **Database Migrations**: Created plan_limits table and usage tracking columns with proper Alembic migrations
+- [Done] **Plan Tier Alignment**: Fixed default plan_tier from 'starter' to 'free' to match available plan tiers
+- [Done] **Frontend-Backend Alignment**: Fixed API response structure mismatch (matters vs items)
+
+**Completed Earlier (November 8, 2025 - Evening):**
+
+- [Done] **Database Schema Reorganization**: Created `bc_legal_ds` dedicated schema for all application tables
+- [Done] **Migration Consolidation**: Reduced 7 separate migration files into 1 clean initial migration
+- [Done] **Email Confirmation Bug Fix**: Fixed dual message display issue on email confirmation page
+- [Done] **Schema Benefits**: Better organization, security, and separation from PostgreSQL system tables
+- [Done] **Migration Improvements**: Added explicit commit in async migration runner for reliability
 
 **Completed Earlier (November 8, 2025 - Morning):**
 
-- ✅ Complete chat frontend with streaming support
-- ✅ Chat UI components (ConversationList, ChatInterface, MessageInput, SourceCitations)
-- ✅ SSE streaming integration with token refresh
-- ✅ TypeScript types matching backend Pydantic schemas
-- ✅ Source citations display with document navigation
-- ✅ Message feedback UI (thumbs up/down)
-- ✅ Comprehensive documentation (CHAT_FRONTEND_COMPLETE.md)
+- [Done] Complete chat frontend with streaming support
+- [Done] Chat UI components (ConversationList, ChatInterface, MessageInput, SourceCitations)
+- [Done] SSE streaming integration with token refresh
+- [Done] TypeScript types matching backend Pydantic schemas
+- [Done] Source citations display with document navigation
+- [Done] Message feedback UI (thumbs up/down)
+- [Done] Comprehensive documentation (CHAT_FRONTEND_COMPLETE.md)
 
 **Previously Completed (November 6, 2025):**
 
-- ✅ Background task queue (Celery + Redis) for document processing
-- ✅ Rate limiting middleware for API protection
-- ✅ Input validation middleware for security
-- ✅ Chat API with full CRUD endpoints
-- ✅ Claude 3.5 Sonnet integration for AI assistance
-- ✅ Chat service with RAG pipeline integration
-- ✅ Conversation and message models with database migration
-- ✅ Streaming support via Server-Sent Events
-- ✅ Message rating system (thumbs up/down with feedback)
+- [Done] Background task queue (Celery + Redis) for document processing
+- [Done] Rate limiting middleware for API protection
+- [Done] Input validation middleware for security
+- [Done] Chat API with full CRUD endpoints
+- [Done] Claude 3.5 Sonnet integration for AI assistance
+- [Done] Chat service with RAG pipeline integration
+- [Done] Conversation and message models with database migration
+- [Done] Streaming support via Server-Sent Events
+- [Done] Message rating system (thumbs up/down with feedback)
 
 **Previously Completed:**
 
-- ✅ Semantic search API with vector similarity
-- ✅ Citation tracking (document metadata + page numbers)
-- ✅ Search result enrichment
+- [Done] Semantic search API with vector similarity
+- [Done] Citation tracking (document metadata + page numbers)
+- [Done] Search result enrichment
 
 **Reorganized:**
 
