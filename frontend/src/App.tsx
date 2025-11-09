@@ -16,6 +16,9 @@ import DashboardPage from '@/pages/DashboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import DocumentsPage from '@/pages/DocumentsPage'
 import ChatPage from '@/pages/ChatPage'
+import MattersPage from '@/pages/MattersPage'
+import CreateMatterPage from '@/pages/CreateMatterPage'
+import MatterDetailPage from '@/pages/MatterDetailPage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -66,6 +69,34 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Matters routes */}
+          <Route
+            path="/matters"
+            element={
+              <ProtectedRoute>
+                <MattersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/matters/new"
+            element={
+              <ProtectedRoute>
+                <CreateMatterPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/matters/:matterId"
+            element={
+              <ProtectedRoute>
+                <MatterDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Chat route */}
           <Route
             path="/chat"
             element={

@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   User,
+  Briefcase,
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Matters', href: '/matters', icon: Briefcase },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
     { name: 'Users', href: '/users', icon: Users, adminOnly: true },
