@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { documentsApi } from '@/lib/api'
 import {
   QuickDocumentUpload,
@@ -12,15 +13,16 @@ import MatterSelector from './MatterSelector'
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 interface DocumentUploadProps {
+  matterId?: string
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export default function DocumentUpload({ onSuccess, onCancel }: DocumentUploadProps) {
+export default function DocumentUpload({ matterId, onSuccess, onCancel }: DocumentUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [formData, setFormData] = useState<QuickDocumentUpload>({
-    matter_id: '',
+    matter_id: matterId || '',
     document_type: '',
     document_title: '',
     document_date: new Date().toISOString().split('T')[0],
@@ -41,6 +43,7 @@ export default function DocumentUpload({ onSuccess, onCancel }: DocumentUploadPr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
+      toast.success('Document uploaded successfully')
       setSelectedFile(null)
       setFormData({
         matter_id: '',
@@ -54,9 +57,9 @@ export default function DocumentUpload({ onSuccess, onCancel }: DocumentUploadPr
       onSuccess?.()
     },
     onError: (error: any) => {
-      setUploadError(
-        error.response?.data?.detail || 'Failed to upload document'
-      )
+      const errorMessage = error.response?.data?.detail || 'Failed to upload document'
+      setUploadError(errorMessage)
+      toast.error(errorMessage)
     },
   })
 

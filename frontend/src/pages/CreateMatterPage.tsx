@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi } from '@/lib/api'
 import { MATTER_TYPES, MATTER_STATUSES } from '@/types/matters'
@@ -55,10 +56,13 @@ export default function CreateMatterPage() {
 
       const response = await mattersApi.create(submitData)
 
+      toast.success('Matter created successfully')
       // Navigate to the newly created matter
       navigate(`/matters/${response.data.id}`)
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create matter')
+      const errorMessage = err.response?.data?.detail || 'Failed to create matter'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

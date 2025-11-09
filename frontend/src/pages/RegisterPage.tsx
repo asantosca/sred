@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import toast from 'react-hot-toast'
 import { authApi } from '@/lib/api'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -46,10 +47,12 @@ export default function RegisterPage() {
     try {
       await authApi.register(data)
       setSuccess(true)
+      toast.success('Registration successful! Please check your email to confirm your account.')
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.detail || 'Registration failed. Please try again.'
       setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

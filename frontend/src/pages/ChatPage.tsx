@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import ConversationList from '@/components/chat/ConversationList'
 import ChatInterface from '@/components/chat/ChatInterface'
@@ -60,6 +61,10 @@ export default function ChatPage() {
       if (selectedConversationId === deletedId) {
         setSelectedConversationId(null)
       }
+      toast.success('Conversation deleted')
+    },
+    onError: () => {
+      toast.error('Failed to delete conversation')
     },
   })
 
@@ -67,8 +72,12 @@ export default function ChatPage() {
   const submitFeedbackMutation = useMutation({
     mutationFn: ({ messageId, rating }: { messageId: string; rating: number }) =>
       chatApi.submitFeedback(messageId, { rating }),
-    onSuccess: () => {
+    onSuccess: (_, { rating }) => {
       queryClient.invalidateQueries({ queryKey: ['conversation', selectedConversationId] })
+      toast.success(rating > 0 ? 'Thank you for your feedback!' : 'Feedback submitted')
+    },
+    onError: () => {
+      toast.error('Failed to submit feedback')
     },
   })
 

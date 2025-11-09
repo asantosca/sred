@@ -73,5 +73,10 @@ class Settings:
     CELERY_TIMEZONE: str = "America/Vancouver"  # BC timezone
     CELERY_ENABLE_UTC: bool = True
 
+    # Sentry settings (error tracking)
+    SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN", None)
+    SENTRY_TRACES_SAMPLE_RATE: float = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))  # 10% of transactions
+    SENTRY_ENVIRONMENT: str = os.getenv("SENTRY_ENVIRONMENT", ENVIRONMENT)
+
 # Create global settings instance
 settings = Settings()

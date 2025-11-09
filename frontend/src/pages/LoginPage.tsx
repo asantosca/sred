@@ -5,6 +5,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -42,10 +43,12 @@ export default function LoginPage() {
 
     try {
       await login(data.email, data.password)
+      toast.success('Welcome back!')
       navigate('/dashboard')
     } catch (error) {
       // Error is handled in the store
       console.error('Login error:', error)
+      toast.error('Login failed. Please check your credentials.')
     } finally {
       setIsSubmitting(false)
     }
