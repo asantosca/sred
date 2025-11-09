@@ -380,7 +380,7 @@ async def _process_document_upload(
         # For quick uploads, enhance basic fields if they're generic
         if hasattr(upload_data, 'document_title') and (
             upload_data.document_title.lower() in ['document', 'untitled', file.filename] or
-            len(upload_data.document_title.strip()) < 5
+            not upload_data.document_title.strip()
         ):
             if detected.document_title:
                 upload_data.document_title = detected.document_title
