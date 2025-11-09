@@ -20,24 +20,10 @@ engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-# Register pgvector type using pool event
-@event.listens_for(engine.sync_engine.pool, "connect")
-def register_vector_on_connect(dbapi_conn, connection_record):
-    """Register pgvector type on each new pool connection."""
-    from pgvector.asyncpg import register_vector
-
-    try:
-        # Create event loop for async registration
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(register_vector(dbapi_conn))
-            logger.info("Registered pgvector type on pool connection")
-        finally:
-            loop.close()
-            asyncio.set_event_loop(None)
-    except Exception as e:
-        logger.error(f"Failed to register pgvector on pool connect: {str(e)}", exc_info=True)
+# Note: pgvector registration is handled by vector_storage_service
+# when it creates its own asyncpg connection pool for vector operations.
+# We don't need to register it here for SQLAlchemy connections since
+# those don't handle vector types directly.
 
 # Create session factory
 async_session_factory = async_sessionmaker(
