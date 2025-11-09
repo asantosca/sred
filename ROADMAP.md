@@ -233,32 +233,46 @@ Minimum viable UI for lawyers to use the platform.
 2. [x] Register page
 3. [x] Password reset flow
 
-**Document Management:** 4. [ ] Document library (list view with filters) 5. [ ] Quick Upload form 6. [ ] Standard Upload form 7. [ ] Document viewer/preview 8. [ ] Document search interface
+**Document Management:**
+
+4. [x] Document library (DocumentsPage.tsx with DocumentList component)
+5. [x] Quick Upload form (5 fields: matter, type, title, date, confidentiality)
+6. [ ] Standard Upload form (12 fields: adds author, recipient, dates, notes) - **Post-MVP**
+7. [ ] Type-specific upload forms (Contract, Pleading, Correspondence, Discovery, Exhibit) - **Post-MVP**
+8. [ ] Document viewer/preview - **Nice to have**
+9. [ ] Document search interface - **Nice to have**
 
 **Chat Interface:**
-9. [x] Chat conversation list
-10. [x] Chat message interface
-11. [x] Streaming message display
-12. [x] Source citations display (clickable links to documents)
+
+10. [x] Chat conversation list
+11. [x] Chat message interface
+12. [x] Streaming message display
+13. [x] Source citations display (clickable links to documents)
 
 **Matter Management:**
-13. [x] Matter list page (MattersPage.tsx)
-14. [x] Create/edit matter form (CreateMatterPage.tsx)
-15. [x] Matter detail page with documents (MatterDetailPage.tsx)
+
+14. [x] Matter list page (MattersPage.tsx)
+15. [x] Create/edit matter form (CreateMatterPage.tsx)
+16. [x] Matter detail page with documents (MatterDetailPage.tsx)
 
 **Infrastructure:**
-16. [x] Loading states and spinners
-17. [ ] Error boundaries and error handling
-18. [ ] Toast notifications
-19. [x] Navigation layout
+
+17. [x] Loading states and spinners
+18. [ ] Error boundaries and error handling - **Important for MVP**
+19. [ ] Toast notifications - **Important for MVP**
+20. [x] Navigation layout
 
 **What We Skip for MVP:**
 
-- [TBD] Dashboard with analytics
-- [TBD] User management UI (admin features)
-- [TBD] Settings pages
-- [TBD] Dark mode
-- [TBD] Mobile responsive (desktop-first for lawyers)
+- Dashboard with analytics
+- User management UI (admin features)
+- Settings pages
+- Dark mode
+- Mobile responsive (desktop-first for lawyers)
+- Standard Upload form (12 fields)
+- Type-specific upload forms (Contract, Pleading, etc.)
+- Document viewer/preview
+- Document search interface
 
 **Tech Stack**: React + TypeScript + Vite + TailwindCSS
 
@@ -273,18 +287,29 @@ Minimum viable UI for lawyers to use the platform.
 <details>
 <summary>View deferred features</summary>
 
+**Enhanced Document Upload:**
+- [ ] Standard Upload form (12 fields: Quick Upload + author, recipient, dates, internal notes)
+- [ ] Type-specific upload forms:
+  - [ ] Contract Upload (adds: contract type, value, effective/expiration dates, governing law)
+  - [ ] Pleading Upload (adds: court jurisdiction, case number, opposing party, judge, opposing counsel)
+  - [ ] Correspondence Upload (adds: author, recipient, CC, subject, correspondence type)
+  - [ ] Discovery Upload (adds: discovery type, propounding/responding parties, response due date)
+  - [ ] Exhibit Upload (adds: exhibit number, related document linking)
+- [ ] Bulk upload interface (multiple files at once)
+- [ ] Excel import for bulk metadata
+- [ ] Upload session management (save drafts)
+- [ ] Document viewer/preview in browser
+
+**Other Enhanced Features:**
 - [ ] Dashboard with overview stats
 - [ ] User management UI (admin)
 - [ ] Settings pages (Profile, Company, Billing)
 - [ ] Responsive mobile layout
 - [ ] Dark mode support
-- [ ] Advanced upload UI (8-screen detailed flow)
-- [ ] Bulk upload interface
-- [ ] Excel import for bulk metadata
 - [ ] Document relationship management UI
-- [ ] Upload session management (save drafts)
+- [ ] Advanced document search with filters
 
-**Rationale**: Quick + Standard upload is sufficient for MVP. The 8-screen detailed flow is over-engineered for initial launch.
+**Rationale**: Quick Upload (5 fields) is sufficient for MVP. Standard and type-specific uploads add nice-to-have metadata that can wait until users request them based on actual usage patterns.
 
 </details>
 
@@ -543,19 +568,21 @@ Based on what we've actually built:
 
 ---
 
-### Phase 3: Essential Frontend (3-4 weeks)
+### Phase 3: Essential Frontend (3-4 weeks) **NEARLY COMPLETE**
 
 **Goal**: Usable UI for lawyers
 
 - [x] Auth pages (Login, Register, Password Reset) [Done]
-- [ ] Document library (upload, list, view)
+- [x] Document library (DocumentsPage with DocumentList) [Done]
+- [x] Quick Upload form (5 fields) [Done]
 - [x] Chat interface [Done]
 - [x] Matter management [Done]
-- [x] Error handling and loading states [Partial - needs error boundaries and toast notifications]
+- [ ] Error boundaries - **Critical for MVP**
+- [ ] Toast notifications - **Critical for MVP**
 
 **Deliverable**: Complete end-user interface
 
-**Progress**: Chat interface, auth pages, and matter management complete. Document library remains.
+**Progress**: **95% complete!** Only error boundaries and toast notifications remain for MVP. Standard Upload and type-specific upload forms are Post-MVP enhancements.
 
 ---
 
