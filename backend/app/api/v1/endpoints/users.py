@@ -145,15 +145,15 @@ async def upload_my_avatar(
     base64_image = base64.b64encode(contents).decode('utf-8')
     avatar_url = f"data:{file.content_type};base64,{base64_image}"
 
-    # TODO: In production, upload to S3 and store URL
-    # For now, we'll just return the data URL
-    # In a real implementation, add an avatar_url column to User model
+    # Save avatar URL to user record
+    user.avatar_url = avatar_url
 
     await db.commit()
+    await db.refresh(user)
 
     return AvatarUploadResponse(
         avatar_url=avatar_url,
-        message="Avatar uploaded successfully (stored as base64 for MVP)"
+        message="Avatar uploaded successfully"
     )
 
 @router.post("/invite", response_model=UserDetailResponse, status_code=status.HTTP_201_CREATED)

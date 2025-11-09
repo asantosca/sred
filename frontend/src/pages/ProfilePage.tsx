@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuthStore } from '@/store/authStore'
 import { userApi } from '@/lib/api'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -25,7 +26,6 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -84,8 +84,8 @@ export default function ProfilePage() {
     setSuccess(null)
 
     try {
-      const response = await userApi.uploadAvatar(file)
-      setAvatarUrl(response.data.avatar_url)
+      await userApi.uploadAvatar(file)
+      await refreshUser()
       setSuccess('Avatar uploaded successfully')
     } catch (err: any) {
       const errorMessage =
@@ -98,18 +98,20 @@ export default function ProfilePage() {
 
   if (!user || !company) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading profile...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading profile...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+    <DashboardLayout>
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
           <p className="mt-1 text-sm text-gray-600">
@@ -140,9 +142,9 @@ export default function ProfilePage() {
           <CardContent>
             <div className="flex items-center space-x-6">
               <div className="relative">
-                {avatarUrl ? (
+                {user?.avatar_url ? (
                   <img
-                    src={avatarUrl}
+                    src={user.avatar_url}
                     alt="Avatar"
                     className="h-24 w-24 rounded-full object-cover ring-4 ring-gray-200"
                   />
@@ -302,6 +304,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
