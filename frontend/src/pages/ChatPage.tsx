@@ -48,12 +48,8 @@ export default function ChatPage() {
   useEffect(() => {
     if (conversationData?.messages) {
       setLocalMessages(conversationData.messages)
-      // Clear pending message when we have the actual messages
-      if (pendingUserMessage && conversationData.messages.length >= 2) {
-        setPendingUserMessage(null)
-      }
     }
-  }, [conversationData?.messages, pendingUserMessage])
+  }, [conversationData?.messages])
 
   // Delete conversation mutation
   const deleteConversationMutation = useMutation({
@@ -140,10 +136,6 @@ export default function ChatPage() {
           if (parsed.type === 'content' && parsed.content) {
             setStreamingContent((prev) => prev + parsed.content)
           } else if (parsed.type === 'done') {
-            // Streaming complete
-            setIsStreaming(false)
-            setStreamingContent('')
-
             // Determine the conversation ID to refresh
             const conversationIdToRefresh = parsed.conversation_id || selectedConversationId
 
@@ -158,12 +150,13 @@ export default function ChatPage() {
               // Update the query cache for future use
               queryClient.setQueryData(['conversation', conversationIdToRefresh], conversationWithMessages)
 
-              // Wait for React to process the state update before clearing pending message
-              await new Promise(resolve => setTimeout(resolve, 50))
-
               // Clear pending message now that we have real messages
               setPendingUserMessage(null)
             }
+
+            // Clear streaming state AFTER messages are loaded
+            setIsStreaming(false)
+            setStreamingContent('')
 
             // Refresh conversation list
             queryClient.invalidateQueries({ queryKey: ['conversations'] })
