@@ -15,6 +15,7 @@ import ConfirmEmailPage from '@/pages/ConfirmEmailPage'
 import DashboardPage from '@/pages/DashboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import DocumentsPage from '@/pages/DocumentsPage'
+import ChatPage from '@/pages/ChatPage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -69,12 +70,7 @@ function App() {
             path="/chat"
             element={
               <ProtectedRoute>
-                <div className="flex h-screen items-center justify-center">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-                    <p className="mt-2 text-gray-600">Coming soon...</p>
-                  </div>
-                </div>
+                <ChatPage />
               </ProtectedRoute>
             }
           />

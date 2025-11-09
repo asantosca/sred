@@ -216,4 +216,104 @@ export const documentsApi = {
     api.patch(`/documents/${documentId}`, data),
 }
 
+// Chat API endpoints
+import type {
+  ChatRequest,
+  ChatResponse,
+  ConversationListResponse,
+  ConversationWithMessages,
+  ConversationUpdate,
+  MessageFeedback,
+  Conversation,
+} from '@/types/chat'
+
+export const chatApi = {
+  // List conversations
+  listConversations: (params?: {
+    page?: number
+    page_size?: number
+    include_archived?: boolean
+  }) =>
+    api.get<ConversationListResponse>('/chat/conversations', { params }),
+
+  // Get conversation with messages
+  getConversation: (conversationId: string) =>
+    api.get<ConversationWithMessages>(`/chat/conversations/${conversationId}`),
+
+  // Update conversation (title, pin, archive)
+  updateConversation: (conversationId: string, data: ConversationUpdate) =>
+    api.patch<Conversation>(`/chat/conversations/${conversationId}`, data),
+
+  // Delete conversation
+  deleteConversation: (conversationId: string) =>
+    api.delete(`/chat/conversations/${conversationId}`),
+
+  // Send message (non-streaming)
+  sendMessage: (data: ChatRequest) =>
+    api.post<ChatResponse>('/chat/message', data),
+
+  // Send message with streaming (returns EventSource-compatible response)
+  sendMessageStream: async (data: ChatRequest) => {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.')
+    }
+
+    const response = await fetch('/api/v1/chat/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    })
+
+    // If 401, try to refresh token and retry
+    if (response.status === 401) {
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        try {
+          // Refresh the token
+          const { data: tokenData } = await axios.post<Token>('/api/v1/auth/refresh', {
+            refresh_token: refreshToken,
+          })
+
+          // Update tokens
+          localStorage.setItem('access_token', tokenData.access_token)
+          if (tokenData.refresh_token) {
+            localStorage.setItem('refresh_token', tokenData.refresh_token)
+          }
+
+          // Retry with new token
+          return fetch('/api/v1/chat/stream', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${tokenData.access_token}`,
+            },
+            body: JSON.stringify(data),
+          })
+        } catch (refreshError) {
+          // Refresh failed, clear tokens and redirect
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          window.location.href = '/login'
+          throw new Error('Session expired. Please log in again.')
+        }
+      } else {
+        // No refresh token, redirect to login
+        window.location.href = '/login'
+        throw new Error('Session expired. Please log in again.')
+      }
+    }
+
+    return response
+  },
+
+  // Submit message feedback
+  submitFeedback: (messageId: string, feedback: MessageFeedback) =>
+    api.post(`/chat/messages/${messageId}/feedback`, feedback),
+}
+
 export default api

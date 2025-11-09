@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { mattersApi } from '@/lib/api'
-import { Matter, MatterCreate, MATTER_STATUSES } from '@/types/documents'
+import { Matter, MatterCreate } from '@/types/documents'
 import { Plus, Check, AlertCircle } from 'lucide-react'
 
 interface MatterSelectorProps {

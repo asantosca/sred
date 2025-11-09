@@ -6,7 +6,6 @@ import { documentsApi } from '@/lib/api'
 import {
   QuickDocumentUpload,
   DOCUMENT_TYPES,
-  DOCUMENT_STATUSES,
   CONFIDENTIALITY_LEVELS,
 } from '@/types/documents'
 import MatterSelector from './MatterSelector'
@@ -40,7 +39,7 @@ export default function DocumentUpload({ onSuccess, onCancel }: DocumentUploadPr
       const response = await documentsApi.upload(selectedFile, formData)
       return response.data
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       setSelectedFile(null)
       setFormData({

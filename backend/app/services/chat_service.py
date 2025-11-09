@@ -452,7 +452,7 @@ class ChatService:
             doc_query = select(Document, Matter).join(Matter).where(
                 and_(
                     Document.id == result["document_id"],
-                    Document.company_id == user.company_id
+                    Matter.company_id == user.company_id
                 )
             )
             doc_result = await self.db.execute(doc_query)
