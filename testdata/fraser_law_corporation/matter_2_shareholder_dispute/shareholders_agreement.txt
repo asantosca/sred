@@ -1,0 +1,151 @@
+UNANIMOUS SHAREHOLDERS AGREEMENT
+
+THIS AGREEMENT made March 1, 2019
+
+AMONG:
+
+DAVID KUMAR, of Vancouver, BC
+JENNIFER TAM, of Burnaby, BC
+MARCUS WILLIAMS, of Surrey, BC
+
+(collectively the "Shareholders")
+
+AND:
+
+INNOVATE TECH SOLUTIONS INC., a company incorporated under the Business Corporations Act (British Columbia)
+(the "Company")
+
+RECITALS:
+
+A. The Company was incorporated on March 1, 2019, to carry on business as a software development company.
+
+B. Each Shareholder has subscribed for 100 common shares of the Company (33.33% each).
+
+C. Each Shareholder has contributed $50,000 as initial capital.
+
+D. The Shareholders wish to set out their rights and obligations regarding the Company.
+
+AGREEMENT:
+
+1. SHARE OWNERSHIP
+
+1.1 The authorized and issued share capital is:
+    - David Kumar: 100 common shares
+    - Jennifer Tam: 100 common shares
+    - Marcus Williams: 100 common shares
+    - Total: 300 common shares
+
+2. MANAGEMENT AND VOTING
+
+2.1 The following matters require unanimous shareholder approval:
+    a) Issuance of new shares
+    b) Amendment of Articles
+    c) Sale of substantially all assets
+    d) Merger or amalgamation
+    e) Winding up or dissolution
+    f) Borrowing exceeding $100,000
+    g) Capital expenditures exceeding $50,000
+
+2.2 All other matters shall be decided by majority vote (66.67%).
+
+3. BOARD OF DIRECTORS
+
+3.1 The Board shall consist of three directors, one nominated by each Shareholder:
+    - David Kumar (or his nominee)
+    - Jennifer Tam (or her nominee)
+    - Marcus Williams (or his nominee)
+
+3.2 Board decisions require a majority vote (two directors).
+
+4. EMPLOYMENT AND COMPENSATION
+
+4.1 The Shareholders shall be employed by the Company in the following capacities:
+    - David Kumar: Chief Technology Officer
+    - Jennifer Tam: Chief Executive Officer
+    - Marcus Williams: Chief Financial Officer
+
+4.2 Initial salaries shall be $60,000 per year for each Shareholder/officer.
+
+4.3 Salary increases require unanimous Board approval.
+
+4.4 Termination of a Shareholder's employment does not affect their share ownership.
+
+5. DIVIDENDS
+
+5.1 The Company shall distribute at least 50% of annual net profits as dividends to Shareholders pro rata.
+
+5.2 Dividend declarations require majority Board approval.
+
+6. INFORMATION RIGHTS
+
+6.1 Each Shareholder is entitled to:
+    a) Annual audited financial statements
+    b) Quarterly unaudited financial statements
+    c) Monthly management reports
+    d) Access to corporate books and records upon reasonable notice
+
+7. TRANSFER RESTRICTIONS
+
+7.1 No Shareholder may transfer shares without complying with this Agreement.
+
+7.2 RIGHT OF FIRST REFUSAL: If a Shareholder wishes to sell shares, they must first offer them to the other Shareholders on the same terms.
+
+7.3 The offering Shareholder must provide written notice including the price and terms.
+
+7.4 The other Shareholders have 30 days to accept the offer pro rata to their shareholdings.
+
+8. SHOTGUN PROVISION
+
+8.1 Any Shareholder may trigger the "shotgun" provision by offering to buy all shares of another Shareholder at a specified price per share.
+
+8.2 The receiving Shareholder must either:
+    a) Sell their shares at the offered price; OR
+    b) Buy the offering Shareholder's shares at the same price per share.
+
+8.3 The receiving Shareholder has 30 days to elect their option.
+
+9. DISPUTE RESOLUTION
+
+9.1 Any dispute under this Agreement shall first be submitted to mediation.
+
+9.2 If mediation fails within 60 days, the dispute may be submitted to arbitration or court proceedings.
+
+10. DEADLOCK
+
+10.1 If the Shareholders reach a deadlock on a matter requiring unanimous approval, any Shareholder may invoke the shotgun provision.
+
+11. TERMINATION OF SHAREHOLDER EMPLOYMENT
+
+11.1 If a Shareholder's employment is terminated for cause, the other Shareholders may require them to sell their shares at fair value (determined by independent valuator).
+
+11.2 If a Shareholder's employment is terminated without cause, they retain all shareholder rights including the right to remain as a shareholder and director.
+
+12. CONFIDENTIALITY AND NON-COMPETITION
+
+12.1 Each Shareholder agrees to maintain confidentiality of Company information.
+
+12.2 While a shareholder and for 12 months after ceasing to be a shareholder, each Shareholder agrees not to compete with the Company's business.
+
+13. GENERAL
+
+13.1 This Agreement is governed by the laws of British Columbia.
+
+13.2 This Agreement constitutes the entire agreement among the parties.
+
+13.3 Amendments require unanimous written consent.
+
+IN WITNESS WHEREOF the parties have executed this Agreement.
+
+_________________________      _________________________
+David Kumar                    Jennifer Tam
+Date: March 1, 2019           Date: March 1, 2019
+
+_________________________
+Marcus Williams
+Date: March 1, 2019
+
+INNOVATE TECH SOLUTIONS INC.
+
+Per: _________________________
+     Jennifer Tam, Director
+     Date: March 1, 2019
