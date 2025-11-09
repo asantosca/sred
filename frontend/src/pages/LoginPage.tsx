@@ -1,6 +1,6 @@
 // Login page with form validation
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -30,6 +30,11 @@ export default function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
+
+  // Clear any previous errors on mount
+  useEffect(() => {
+    setError(null)
+  }, [setError])
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true)
@@ -142,7 +147,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; 2024 BC Legal Tech. All rights reserved.
+          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
         </p>
       </div>
     </div>

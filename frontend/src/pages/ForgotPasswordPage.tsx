@@ -72,10 +72,20 @@ export default function ForgotPasswordPage() {
             )}
 
             {success && (
-              <Alert variant="success" className="mb-4" title="Email sent!">
-                If the email exists, a password reset link has been sent. Please
-                check your email for instructions.
-              </Alert>
+              <>
+                <Alert variant="success" className="mb-4" title="Email sent!">
+                  If the email exists, a password reset link has been sent. Please
+                  check your email for instructions.
+                </Alert>
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full"
+                  onClick={() => setSuccess(false)}
+                >
+                  Send to a different email
+                </Button>
+              </>
             )}
 
             {!success && (
@@ -113,7 +123,7 @@ export default function ForgotPasswordPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; 2024 BC Legal Tech. All rights reserved.
+          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
         </p>
       </div>
     </div>

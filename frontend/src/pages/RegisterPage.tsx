@@ -97,10 +97,10 @@ export default function RegisterPage() {
                   Registration Successful!
                 </h3>
                 <p className="mt-4 text-base text-gray-600">
-                  We've sent a confirmation email to your inbox.
+                  Your account has been created successfully.
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Please check your email and click the confirmation link to activate your account.
+                  You can now <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">sign in</Link> to your account.
                 </p>
               </div>
             ) : (
@@ -162,11 +162,11 @@ export default function RegisterPage() {
 
                   <div className="text-xs text-gray-500">
                 By signing up, you agree to our{' '}
-                <a href="#" className="text-primary-600 hover:text-primary-500">
+                <a href="/terms" className="text-primary-600 hover:text-primary-500">
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="#" className="text-primary-600 hover:text-primary-500">
+                <a href="/privacy" className="text-primary-600 hover:text-primary-500">
                   Privacy Policy
                 </a>
                 .
@@ -201,7 +201,7 @@ export default function RegisterPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; 2024 BC Legal Tech. All rights reserved.
+          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
         </p>
       </div>
     </div>

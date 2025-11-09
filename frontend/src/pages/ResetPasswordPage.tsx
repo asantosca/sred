@@ -37,6 +37,7 @@ export default function ResetPasswordPage() {
   const [isVerifying, setIsVerifying] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tokenValid, setTokenValid] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const {
     register,
@@ -82,11 +83,16 @@ export default function ResetPasswordPage() {
         new_password: data.new_password,
       })
 
+      // Show success message first
+      setSuccess(true)
+
       // Auto-login after password reset
       setAuth(response.data)
 
-      // Redirect to dashboard
-      navigate('/dashboard')
+      // Redirect to dashboard after showing success message
+      setTimeout(() => {
+        navigate('/dashboard')
+      }, 2000)
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.detail || 'Failed to reset password. Please try again.'
@@ -138,7 +144,7 @@ export default function ResetPasswordPage() {
               </>
             )}
 
-            {!isVerifying && tokenValid && (
+            {!isVerifying && tokenValid && !success && (
               <>
                 {error && (
                   <Alert variant="error" className="mb-4">
@@ -179,6 +185,35 @@ export default function ResetPasswordPage() {
               </>
             )}
 
+            {success && (
+              <div className="py-8 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                  <svg
+                    className="h-10 w-10 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Password Reset Successful!
+                </h3>
+                <p className="mt-4 text-base text-gray-600">
+                  You're being signed in...
+                </p>
+                <p className="mt-2 text-sm text-gray-500">
+                  Redirecting to your dashboard
+                </p>
+              </div>
+            )}
+
             <div className="mt-6 text-center">
               <Link
                 to="/login"
@@ -191,7 +226,7 @@ export default function ResetPasswordPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; 2024 BC Legal Tech. All rights reserved.
+          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
         </p>
       </div>
     </div>
