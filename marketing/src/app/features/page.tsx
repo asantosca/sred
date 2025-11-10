@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function FeaturesPage() {
   return (
@@ -61,15 +62,27 @@ export default function FeaturesPage() {
                 </li>
               </ul>
             </div>
-            <div className="bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
-              <p className="text-gray-500 text-center">Search Interface Illustration</p>
-            </div>
+              <div className="bg-gray-100 rounded-lg p-8 overflow-hidden">
+                <Image
+                  src="/images/pages_semantic_search.png"
+                  alt="Document Library Interface"
+                  width={600}
+                  height={400}
+                  className="rounded-lg"
+                />
+              </div>    
           </div>
 
           {/* Feature 2: AI Chat */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
-            <div className="order-2 md:order-1 bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
-              <p className="text-gray-500 text-center">Chat Interface Illustration</p>
+              <div className="bg-gray-100 rounded-lg p-8 overflow-hidden">
+                <Image
+                  src="/images/pages_chat_interface_illustration.png"
+                  alt="Document Library Interface"
+                  width={600}
+                  height={400}
+                  className="rounded-lg"
+                />
             </div>
             <div className="order-1 md:order-2">
               <div className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-semibold mb-4">
@@ -156,15 +169,27 @@ export default function FeaturesPage() {
                 </li>
               </ul>
             </div>
-            <div className="bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
-              <p className="text-gray-500 text-center">Document Library Illustration</p>
+            <div className="bg-gray-100 rounded-lg p-8 overflow-hidden">
+                <Image
+                  src="/images/pages_document_library_interface.png"
+                  alt="Document Library Interface"
+                  width={600}
+                  height={400}
+                  className="rounded-lg"
+                />
             </div>
           </div>
 
           {/* Feature 4: Security */}
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="order-2 md:order-1 bg-gray-100 rounded-lg p-8 h-96 flex items-center justify-center">
-              <p className="text-gray-500 text-center">Security Illustration</p>
+            <div className="bg-gray-100 rounded-lg p-8 overflow-hidden">
+                <Image
+                  src="/images/pages_document_library_interface.png"
+                  alt="Document Library Interface"
+                  width={600}
+                  height={400}
+                  className="rounded-lg"
+                />
             </div>
             <div className="order-1 md:order-2">
               <div className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-semibold mb-4">
