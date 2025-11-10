@@ -1,43 +1,77 @@
 // Dashboard home page
 
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { FileText, MessageSquare, Users, TrendingUp } from 'lucide-react'
+import { FileText, MessageSquare, HardDrive, AlertCircle } from 'lucide-react'
+import { usageApi } from '@/lib/api'
+
+interface UsageSummary {
+  overall_health: string
+  plan_tier: string
+  health_details: {
+    documents: {
+      status: string
+      current: number
+      limit: number
+      percentage: number
+    }
+    storage: {
+      status: string
+      current_gb: number
+      limit_gb: number
+      percentage: number
+    }
+    ai_queries: {
+      status: string
+      current: number
+      limit: number
+      percentage: number
+    }
+  }
+  recommendations?: string[]
+}
 
 export default function DashboardPage() {
   const { user } = useAuthStore()
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const stats = [
-    {
-      name: 'Total Documents',
-      value: '0',
-      icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-    },
-    {
-      name: 'Chat Sessions',
-      value: '0',
-      icon: MessageSquare,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
-      name: 'Team Members',
-      value: '1',
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
-      name: 'Storage Used',
-      value: '0 MB',
-      icon: TrendingUp,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-    },
-  ]
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const response = await usageApi.getSummary()
+        console.log('Usage API response:', response.data)
+        setUsageSummary(response.data)
+      } catch (error) {
+        console.error('Failed to fetch usage data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsage()
+  }, [])
+
+  const getHealthColor = (health: string) => {
+    switch (health) {
+      case 'healthy':
+        return { text: 'text-green-600', bg: 'bg-green-100', bar: 'bg-green-500' }
+      case 'caution':
+        return { text: 'text-yellow-600', bg: 'bg-yellow-100', bar: 'bg-yellow-500' }
+      case 'warning':
+        return { text: 'text-orange-600', bg: 'bg-orange-100', bar: 'bg-orange-500' }
+      case 'critical':
+        return { text: 'text-red-600', bg: 'bg-red-100', bar: 'bg-red-500' }
+      default:
+        return { text: 'text-gray-600', bg: 'bg-gray-100', bar: 'bg-gray-500' }
+    }
+  }
+
+  const formatLimit = (limit: number) => {
+    return limit === -1 ? 'Unlimited' : limit.toLocaleString()
+  }
 
   return (
     <DashboardLayout>
@@ -51,21 +85,150 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.name}>
-              <CardContent className="flex items-center p-6">
-                <div className={`rounded-lg p-3 ${stat.bgColor}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Overall Health Status */}
+        {!loading && usageSummary && usageSummary.overall_health !== 'healthy' && (
+          <div className={`mb-6 rounded-lg p-4 ${
+            usageSummary.overall_health === 'critical' ? 'bg-red-50 border border-red-200' :
+            usageSummary.overall_health === 'warning' ? 'bg-orange-50 border border-orange-200' :
+            'bg-yellow-50 border border-yellow-200'
+          }`}>
+            <div className="flex items-start">
+              <AlertCircle className={`h-5 w-5 mt-0.5 ${
+                usageSummary.overall_health === 'critical' ? 'text-red-600' :
+                usageSummary.overall_health === 'warning' ? 'text-orange-600' :
+                'text-yellow-600'
+              }`} />
+              <div className="ml-3">
+                <h3 className={`text-sm font-medium ${
+                  usageSummary.overall_health === 'critical' ? 'text-red-800' :
+                  usageSummary.overall_health === 'warning' ? 'text-orange-800' :
+                  'text-yellow-800'
+                }`}>
+                  {usageSummary.overall_health === 'critical' ? 'Critical Usage Alert' :
+                   usageSummary.overall_health === 'warning' ? 'Usage Warning' :
+                   'Usage Caution'}
+                </h3>
+                <p className={`mt-1 text-sm ${
+                  usageSummary.overall_health === 'critical' ? 'text-red-700' :
+                  usageSummary.overall_health === 'warning' ? 'text-orange-700' :
+                  'text-yellow-700'
+                }`}>
+                  You're approaching your plan limits. Consider upgrading to avoid service interruption.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Usage Stats Grid */}
+        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="animate-pulse">
+                    <div className="h-12 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : usageSummary?.health_details ? (
+            <>
+              {/* Documents */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`rounded-lg p-3 ${getHealthColor(usageSummary.health_details.documents.status).bg}`}>
+                      <FileText className={`h-6 w-6 ${getHealthColor(usageSummary.health_details.documents.status).text}`} />
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Documents</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {usageSummary.health_details.documents.current.toLocaleString()}
+                    <span className="text-sm text-gray-500 font-normal">
+                      {' / '}{formatLimit(usageSummary.health_details.documents.limit)}
+                    </span>
+                  </p>
+                  {usageSummary.health_details.documents.limit !== -1 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>{usageSummary.health_details.documents.percentage.toFixed(0)}% used</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${getHealthColor(usageSummary.health_details.documents.status).bar}`}
+                          style={{ width: `${Math.min(usageSummary.health_details.documents.percentage, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Storage */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`rounded-lg p-3 ${getHealthColor(usageSummary.health_details.storage.status).bg}`}>
+                      <HardDrive className={`h-6 w-6 ${getHealthColor(usageSummary.health_details.storage.status).text}`} />
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Storage</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {usageSummary.health_details.storage.current_gb.toFixed(1)} GB
+                    <span className="text-sm text-gray-500 font-normal">
+                      {' / '}{usageSummary.health_details.storage.limit_gb === -1 ? 'Unlimited' : `${usageSummary.health_details.storage.limit_gb} GB`}
+                    </span>
+                  </p>
+                  {usageSummary.health_details.storage.limit_gb !== -1 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>{usageSummary.health_details.storage.percentage.toFixed(0)}% used</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${getHealthColor(usageSummary.health_details.storage.status).bar}`}
+                          style={{ width: `${Math.min(usageSummary.health_details.storage.percentage, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* AI Queries */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`rounded-lg p-3 ${getHealthColor(usageSummary.health_details.ai_queries.status).bg}`}>
+                      <MessageSquare className={`h-6 w-6 ${getHealthColor(usageSummary.health_details.ai_queries.status).text}`} />
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">AI Queries (Monthly)</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {usageSummary.health_details.ai_queries.current.toLocaleString()}
+                    <span className="text-sm text-gray-500 font-normal">
+                      {' / '}{formatLimit(usageSummary.health_details.ai_queries.limit)}
+                    </span>
+                  </p>
+                  {usageSummary.health_details.ai_queries.limit !== -1 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>{usageSummary.health_details.ai_queries.percentage.toFixed(0)}% used</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${getHealthColor(usageSummary.health_details.ai_queries.status).bar}`}
+                          style={{ width: `${Math.min(usageSummary.health_details.ai_queries.percentage, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
         </div>
 
         {/* Getting Started */}

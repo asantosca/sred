@@ -21,6 +21,8 @@ import ChatPage from '@/pages/ChatPage'
 import MattersPage from '@/pages/MattersPage'
 import CreateMatterPage from '@/pages/CreateMatterPage'
 import MatterDetailPage from '@/pages/MatterDetailPage'
+import { UsersPage } from '@/pages/UsersPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -136,12 +138,7 @@ function App() {
             path="/users"
             element={
               <ProtectedRoute>
-                <div className="flex h-screen items-center justify-center">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-                    <p className="mt-2 text-gray-600">Coming soon...</p>
-                  </div>
-                </div>
+                <UsersPage />
               </ProtectedRoute>
             }
           />
@@ -149,12 +146,7 @@ function App() {
             path="/settings"
             element={
               <ProtectedRoute>
-                <div className="flex h-screen items-center justify-center">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-                    <p className="mt-2 text-gray-600">Coming soon...</p>
-                  </div>
-                </div>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

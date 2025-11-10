@@ -316,4 +316,19 @@ export const chatApi = {
     api.post(`/chat/messages/${messageId}/feedback`, feedback),
 }
 
+// Usage API endpoints
+export const usageApi = {
+  // Get usage summary
+  getSummary: () =>
+    api.get('/usage/summary'),
+
+  // Get detailed usage stats
+  getStats: () =>
+    api.get('/usage/stats'),
+
+  // Get plan limits
+  getLimits: () =>
+    api.get('/usage/limits'),
+}
+
 export default api
