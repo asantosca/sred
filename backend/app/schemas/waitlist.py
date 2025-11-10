@@ -33,6 +33,8 @@ class WaitlistSignupResponse(BaseModel):
     phone: Optional[str] = None
     message: Optional[str] = None
     source: Optional[str] = None
+    consent_marketing: bool = False
+    consent_date: Optional[datetime] = None
     created_at: datetime
     converted_to_user: bool = False
 
