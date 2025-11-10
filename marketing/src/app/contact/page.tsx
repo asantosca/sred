@@ -61,7 +61,7 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Interested in BC Legal Tech? Join our waitlist to be among the first law firms to get early access.
+            Interested in BC Legal Tech? Stay updated on new features, beta programs, and exclusive offers for BC law firms.
           </p>
         </div>
       </section>
@@ -70,12 +70,12 @@ export default function ContactPage() {
       <section id="waitlist" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Join Our Waitlist</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Get Early Access</h2>
 
             {submitStatus === 'success' && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-green-800 font-semibold">Success!</p>
-                <p className="text-green-700">Thank you for joining our waitlist. We'll be in touch soon.</p>
+                <p className="text-green-700">Thank you for your interest! You'll receive updates on new features and exclusive offers.</p>
               </div>
             )}
 
