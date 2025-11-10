@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -127,17 +129,25 @@ export default function AboutPage() {
       <section className="py-20 bg-primary-700 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Join Us on This Journey
+            Ready to Get Started?
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Be among the first BC law firms to experience the future of legal document management.
+            Join BC law firms who are transforming how they manage legal documents with AI.
           </p>
-          <a
-            href="/#waitlist"
-            className="inline-block bg-white text-primary-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
-          >
-            Join Our Waitlist
-          </a>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href={`${APP_URL}/register`}
+              className="inline-block bg-white text-primary-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Start Free Trial
+            </a>
+            <Link
+              href="/contact"
+              className="inline-block bg-primary-600 text-white border-2 border-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-800 transition-colors"
+            >
+              Contact Us
+            </Link>
+          </div>
         </div>
       </section>
 

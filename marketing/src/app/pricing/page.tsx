@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -10,7 +12,7 @@ export default function PricingPage() {
             Early Access Pricing
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Join our waitlist for exclusive early access pricing and beta program benefits.
+            Simple, transparent pricing designed for BC law firms of all sizes.
           </p>
         </div>
       </section>
@@ -19,17 +21,25 @@ export default function PricingPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-primary-50 rounded-lg p-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Pricing Details Coming Soon</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Custom Pricing for Your Firm</h2>
             <p className="text-xl text-gray-600 mb-8">
-              We're finalizing our pricing tiers based on feedback from BC law firms. Join our waitlist
-              to be the first to know when pricing is announced and get exclusive early access rates.
+              We offer flexible pricing tailored to your firm's size and needs. Start your free trial today,
+              or contact us to discuss enterprise pricing and volume discounts.
             </p>
-            <a
-              href="/contact"
-              className="inline-block bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transition-colors"
-            >
-              Join Waitlist for Early Access
-            </a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href={`${APP_URL}/register`}
+                className="inline-block bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transition-colors"
+              >
+                Start Free Trial
+              </a>
+              <a
+                href="/contact"
+                className="inline-block bg-white text-primary-700 border-2 border-primary-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-50 transition-colors"
+              >
+                Contact Sales
+              </a>
+            </div>
           </div>
         </div>
       </section>

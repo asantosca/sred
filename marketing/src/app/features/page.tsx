@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -242,14 +244,22 @@ export default function FeaturesPage() {
             Ready to Transform Your Legal Document Management?
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Join BC law firms who are already experiencing the power of AI-driven document intelligence.
+            Start your free trial today. No credit card required.
           </p>
-          <a
-            href="/#waitlist"
-            className="inline-block bg-white text-primary-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
-          >
-            Join Our Waitlist
-          </a>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href={`${APP_URL}/register`}
+              className="inline-block bg-white text-primary-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Start Free Trial
+            </a>
+            <Link
+              href="/contact"
+              className="inline-block bg-primary-600 text-white border-2 border-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-800 transition-colors"
+            >
+              Contact Sales
+            </Link>
+          </div>
         </div>
       </section>
 
