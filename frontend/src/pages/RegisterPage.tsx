@@ -11,6 +11,9 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import Alert from '@/components/ui/Alert'
+import AuthLayout from '@/components/layout/AuthLayout'
+
+const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3001'
 
 const registerSchema = z.object({
   company_name: z.string().min(2, 'Company name must be at least 2 characters'),
@@ -59,16 +62,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <AuthLayout>
       <div className="w-full max-w-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">BC Legal Tech</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            AI-Powered Legal Document Intelligence
-          </p>
-        </div>
-
-        <Card className="mt-8">
+        <Card>
           {!success && (
             <CardHeader>
               <CardTitle>Create your account</CardTitle>
@@ -165,11 +161,21 @@ export default function RegisterPage() {
 
                   <div className="text-xs text-gray-500">
                 By signing up, you agree to our{' '}
-                <a href="/terms" className="text-primary-600 hover:text-primary-500">
+                <a
+                  href={`${MARKETING_URL}/terms`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-500 underline"
+                >
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="/privacy" className="text-primary-600 hover:text-primary-500">
+                <a
+                  href={`${MARKETING_URL}/privacy`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-500 underline"
+                >
                   Privacy Policy
                 </a>
                 .
@@ -202,11 +208,7 @@ export default function RegisterPage() {
             )}
           </CardContent>
         </Card>
-
-        <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
-        </p>
       </div>
-    </div>
+    </AuthLayout>
   )
 }

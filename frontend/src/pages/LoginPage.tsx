@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import Alert from '@/components/ui/Alert'
+import AuthLayout from '@/components/layout/AuthLayout'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -55,16 +56,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <AuthLayout>
       <div className="w-full max-w-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">BC Legal Tech</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            AI-Powered Legal Document Intelligence
-          </p>
-        </div>
-
-        <Card className="mt-8">
+        <Card>
           <CardHeader>
             <CardTitle>Sign in to your account</CardTitle>
             <CardDescription>
@@ -148,11 +142,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
-
-        <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
-        </p>
       </div>
-    </div>
+    </AuthLayout>
   )
 }
