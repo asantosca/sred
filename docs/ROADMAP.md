@@ -2,7 +2,7 @@
 
 AI-powered legal document intelligence platform for law firms in British Columbia.
 
-**Last Updated**: 2025-11-09 (Phase 3 complete + Sentry error tracking setup)
+**Last Updated**: 2025-11-09 (Phase 3.5 marketing site enhancements complete)
 
 ## Vision
 
@@ -599,7 +599,7 @@ Based on what we've actually built:
 
 ---
 
-### Phase 3.5: Marketing Website & Legal Compliance (1-2 weeks) [In Progress]
+### Phase 3.5: Marketing Website & Legal Compliance (1-2 weeks) [Done]
 
 **Goal**: Professional web presence and legal compliance for beta launch
 
@@ -618,14 +618,18 @@ Based on what we've actually built:
 - [x] Public FastAPI endpoint: `POST /api/v1/public/waitlist` [Done]
 - [x] Email capture with validation and duplicate prevention [Done]
 - [x] Track attribution (UTM parameters, source page) [Done]
-- [ ] Admin view to manage waitlist (internal tool)
+- [x] CASL consent tracking (consent_marketing + consent_date fields) [Done]
+- [x] Fix duplicate email error handling (proper 400 responses) [Done]
+- [ ] Admin view to manage waitlist (internal tool) [Deferred]
 
 **Legal & Compliance Pages:**
 
 - [x] Privacy Policy (BC/Canadian privacy law compliance) [Done - Template]
 - [x] Terms of Service (liability, acceptable use, account terms) [Done - Template]
 - [x] Cookie Policy with consent banner (GDPR-compliant) [Done]
-- [ ] Data Processing Agreement (for legal firms)
+- [x] CASL compliance (Canada Anti-Spam Legislation) [Done]
+- [x] Legal review checklist for lawyer (LEGAL_REVIEW_CHECKLIST.md) [Done]
+- [ ] Data Processing Agreement (for enterprise law firms) [Deferred]
 - [x] Get legal review from lawyer (critical for legal tech) [Scheduled]
 
 **Email & Analytics:**
@@ -635,9 +639,24 @@ Based on what we've actually built:
 - [ ] Analytics setup (Plausible or GA4 with consent)
 - [x] Cookie consent management [Done]
 
+**Cross-Site Navigation:**
+
+- [x] AuthLayout for login/register pages with header/footer [Done]
+- [x] Marketing site header with Login/Get Started buttons [Done]
+- [x] App logout redirects to marketing site [Done]
+- [x] Environment variables for cross-site URLs [Done]
+- [x] Legal document links point to marketing site [Done]
+
+**UI/UX Improvements:**
+
+- [x] Remove duplicate headers from all marketing pages [Done]
+- [x] Update CTAs from "Join Waitlist" to "Start Free Trial" [Done]
+- [x] Consistent messaging across all marketing pages [Done]
+- [x] Fix React Router future flag warnings [Done]
+
 **Deployment:**
 
-- [ ] AWS Amplify deployment from GitHub (`/marketing` folder)
+- [ ] AWS Amplify deployment from GitHub (`/marketing` folder) [Ready]
 - [ ] Custom domain setup (www.bclegaltech.ca)
 - [ ] SSL certificate configuration (AWS ACM)
 - [ ] CloudFront CDN for global distribution
@@ -658,6 +677,8 @@ bc-legal-tech/ (monorepo)
 ```
 
 **Deliverable**: Professional marketing website with waitlist capture and legal compliance pages
+
+**Status**: [Done] **COMPLETE** - Marketing site fully functional with all legal pages, CASL compliance, cross-site navigation, and consistent branding. Ready for AWS Amplify deployment.
 
 **Why This Matters**: Law firms need to see privacy policy, terms, and professional branding before trusting you with confidential legal documents. This is non-negotiable for beta launch.
 
@@ -786,9 +807,9 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed This Session (November 9, 2025 - Phase 3.5 Start):**
+**Completed This Session (November 9, 2025 - Phase 3.5 Complete):**
 
-- [Done] **Phase 3.5 Started**: Marketing website and legal compliance pages
+- [Done] **Phase 3.5 Complete**: Marketing website with full legal compliance and cross-site navigation
 - [Done] **Marketing Site Infrastructure**: Next.js 14 marketing site in `/marketing` folder (monorepo)
   - Landing page with hero, features, and waitlist form
   - Features page with detailed product capabilities
@@ -810,6 +831,34 @@ What makes BC Legal Tech unique:
   - Cookie Consent Banner: GDPR-compliant banner with granular preferences
 - [Done] **Repository Organization**: Docs moved to `/docs` folder for better structure
 - [Done] **AWS Amplify Configuration**: Created amplify.yml for `/marketing` folder deployment
+- [Done] **CASL Compliance Implementation**: Full Canada Anti-Spam Legislation compliance
+  - Added consent_marketing and consent_date fields to waitlist_signups table
+  - Database migration for CASL tracking fields
+  - Updated Pydantic schemas with consent fields
+  - Explicit checkbox on waitlist form with clear language
+  - Consent timestamp recording in database
+  - Legal review checklist includes CASL compliance section
+- [Done] **Waitlist Error Handling Fixes**: Proper HTTP status codes for duplicate emails
+  - Fixed HTTPException handling to return 400 instead of 500
+  - Added consent fields to WaitlistSignupResponse schema
+  - Updated CORS to allow marketing site (localhost:3001)
+- [Done] **Cross-Site Navigation System**: Seamless navigation between marketing and app
+  - Created AuthLayout component with header/footer for login/register pages
+  - Added Header component to marketing site with Login/Get Started buttons
+  - Environment variables for app URL (localhost:3000 dev, app.bclegaltech.ca prod)
+  - Logout from app redirects to marketing site
+  - Legal links in registration form point to marketing site
+- [Done] **Marketing Site UI/UX Improvements**: Professional, consistent branding
+  - Removed duplicate navigation headers from all marketing pages
+  - Updated all CTAs from "Join Waitlist" to "Start Free Trial"
+  - Consistent messaging across features, pricing, about, and contact pages
+  - Fixed React Router future flag warnings in main app
+  - Adjusted contact form spacing and messaging
+- [Done] **Legal Review Documentation**: Comprehensive checklist for lawyer review
+  - Created LEGAL_REVIEW_CHECKLIST.md with 16 questions
+  - Documented all BC/Canadian specific legal requirements
+  - Identified high-priority legal risks and considerations
+  - Technical context for lawyer understanding data flow
 
 **Completed Earlier This Session (November 9, 2025 - Phase 3 Complete):**
 
