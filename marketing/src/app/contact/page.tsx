@@ -11,6 +11,7 @@ interface WaitlistFormData {
   company_name?: string
   phone?: string
   message?: string
+  consent_marketing: boolean
 }
 
 export default function ContactPage() {
@@ -194,6 +195,37 @@ export default function ContactPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Tell us about your needs or ask any questions..."
                 />
+              </div>
+
+              {/* CASL Consent Checkbox */}
+              <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="consent_marketing"
+                      type="checkbox"
+                      {...register('consent_marketing', {
+                        required: 'You must consent to receive updates to join the waitlist'
+                      })}
+                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label htmlFor="consent_marketing" className="text-sm text-gray-700">
+                      <span className="font-medium">I consent to receive commercial electronic messages</span> from BC Legal Tech,
+                      including product updates, beta program invitations, feature announcements, and promotional offers.
+                      I understand I can unsubscribe at any time by clicking the unsubscribe link in any email.{' '}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    {errors.consent_marketing && (
+                      <p className="mt-1 text-sm text-red-600">{errors.consent_marketing.message}</p>
+                    )}
+                    <p className="mt-2 text-xs text-gray-500">
+                      This consent is required under Canada's Anti-Spam Legislation (CASL).
+                      Transactional emails (password resets, account notifications) do not require consent.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Submit Button */}

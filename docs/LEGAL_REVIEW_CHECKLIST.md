@@ -85,7 +85,52 @@ All legal documents are located in `/marketing/src/app/`:
 - Is our cookie consent implementation GDPR-compliant?
 - Do we need separate consent for analytics vs. functional cookies?
 
-### 4. Data Processing Agreement (TO BE CREATED)
+### 4. CASL Compliance (Canada's Anti-Spam Legislation)
+
+**Express Consent Implementation:**
+- [x] Explicit checkbox for commercial electronic messages (CEMs)
+- [x] Clear description of what emails they'll receive
+- [x] Unsubscribe mechanism disclosure
+- [x] Consent timestamp tracking in database
+- [x] Separate consent from general Privacy Policy acceptance
+
+**Waitlist Form CASL Consent:**
+The waitlist form now includes:
+- Required checkbox for marketing emails
+- Clear language: "I consent to receive commercial electronic messages from BC Legal Tech, including product updates, beta program invitations, feature announcements, and promotional offers"
+- Explicit mention of unsubscribe rights
+- CASL explanation note
+- Database tracking of `consent_marketing` (boolean) and `consent_date` (timestamp)
+
+**What's Covered:**
+✅ Express consent for marketing emails
+✅ Clear identification of sender (BC Legal Tech)
+✅ Unsubscribe mechanism (mentioned in consent, needs implementation in emails)
+✅ Purpose clearly stated (product updates, beta invites, features, promos)
+✅ Record of consent (timestamp in database)
+
+**What's NOT Covered (Needs Implementation):**
+- [ ] Unsubscribe link in actual marketing emails
+- [ ] Preference center for email types
+- [ ] Consent withdrawal mechanism in account settings
+- [ ] Confirmation email after signup (transactional, exempt from CASL)
+
+**Transactional Emails (Exempt from CASL consent):**
+- Password reset emails
+- Account activation/verification emails
+- Billing/invoice emails
+- Service status notifications
+- Security alerts
+
+These do NOT require consent and should be sent even if user hasn't consented to marketing.
+
+**Key Questions:**
+- Is our consent language sufficiently clear?
+- Should we provide granular consent options (e.g., separate consent for different email types)?
+- Do we need a double opt-in confirmation email?
+- Should we include consent withdrawal instructions in Privacy Policy?
+
+### 5. Data Processing Agreement (TO BE CREATED)
 
 **Enterprise Requirements:**
 - [ ] Data processor vs. controller definitions

@@ -14,6 +14,9 @@ class WaitlistSignupCreate(BaseModel):
     phone: Optional[str] = None
     message: Optional[str] = None
 
+    # CASL Consent (Canada Anti-Spam Legislation)
+    consent_marketing: bool = False  # Express consent for commercial electronic messages
+
     # Tracking parameters (usually from frontend)
     source: Optional[str] = None  # 'landing_page', 'contact_page', etc.
     utm_source: Optional[str] = None

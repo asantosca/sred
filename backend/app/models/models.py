@@ -366,6 +366,10 @@ class WaitlistSignup(Base):
     utm_medium = Column(String(100), nullable=True)
     utm_campaign = Column(String(100), nullable=True)
 
+    # CASL Consent Tracking (Canada Anti-Spam Legislation)
+    consent_marketing = Column(Boolean, default=False, nullable=False)  # Express consent for CEMs
+    consent_date = Column(DateTime(timezone=True), nullable=True)  # When consent was given
+
     # Conversion tracking
     converted_to_user = Column(Boolean, default=False, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)

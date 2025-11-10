@@ -43,6 +43,8 @@ async def create_waitlist_signup(
             )
 
         # Create new waitlist signup
+        from datetime import datetime, timezone
+
         db_signup = WaitlistSignup(
             email=signup.email,
             full_name=signup.full_name,
@@ -53,6 +55,8 @@ async def create_waitlist_signup(
             utm_source=signup.utm_source,
             utm_medium=signup.utm_medium,
             utm_campaign=signup.utm_campaign,
+            consent_marketing=signup.consent_marketing,
+            consent_date=datetime.now(timezone.utc) if signup.consent_marketing else None,
         )
 
         db.add(db_signup)
