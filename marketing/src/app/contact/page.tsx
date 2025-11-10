@@ -54,34 +54,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary-700">BC Legal Tech</span>
-            </Link>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/features" className="text-gray-700 hover:text-primary-700">
-                Features
-              </Link>
-              <Link href="/about" className="text-gray-700 hover:text-primary-700">
-                About
-              </Link>
-              <Link href="/contact" className="text-primary-700 font-semibold">
-                Contact
-              </Link>
-              <a
-                href="#waitlist"
-                className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
-              >
-                Join Waitlist
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero */}
       <section className="pt-16 pb-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary-50 to-white">
         <div className="max-w-7xl mx-auto text-center">
