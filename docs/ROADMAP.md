@@ -626,7 +626,7 @@ Based on what we've actually built:
 - [x] Terms of Service (liability, acceptable use, account terms) [Done - Template]
 - [x] Cookie Policy with consent banner (GDPR-compliant) [Done]
 - [ ] Data Processing Agreement (for legal firms)
-- [ ] Get legal review from lawyer (critical for legal tech)
+- [x] Get legal review from lawyer (critical for legal tech) [Scheduled]
 
 **Email & Analytics:**
 
