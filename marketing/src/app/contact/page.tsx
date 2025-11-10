@@ -67,10 +67,9 @@ export default function ContactPage() {
       </section>
 
       {/* Waitlist Form */}
-      <section id="waitlist" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="waitlist" className="py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Get Early Access</h2>
 
             {submitStatus === 'success' && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
