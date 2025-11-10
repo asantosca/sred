@@ -67,6 +67,9 @@ async def create_waitlist_signup(
 
         return db_signup
 
+    except HTTPException:
+        # Re-raise HTTPExceptions (like duplicate email check) without modification
+        raise
     except IntegrityError as e:
         await db.rollback()
         logger.error(f"Database integrity error during waitlist signup: {e}")
