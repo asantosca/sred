@@ -21,6 +21,8 @@ interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
+const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3001'
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, company, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -28,7 +30,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     await logout()
-    navigate('/login')
+    // Redirect to marketing site after logout
+    window.location.href = MARKETING_URL
   }
 
   const navigation = [

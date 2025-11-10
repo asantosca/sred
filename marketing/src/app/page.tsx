@@ -1,35 +1,10 @@
 import Link from 'next/link'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <span className="text-2xl font-bold text-primary-700">BC Legal Tech</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/features" className="text-gray-700 hover:text-primary-700">
-                Features
-              </Link>
-              <Link href="/about" className="text-gray-700 hover:text-primary-700">
-                About
-              </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-primary-700">
-                Contact
-              </Link>
-              <a
-                href="#waitlist"
-                className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
-              >
-                Join Waitlist
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="pt-20 pb-32 px-4 sm:px-6 lg:px-8">
@@ -42,10 +17,10 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="#waitlist"
+              href={`${APP_URL}/register`}
               className="bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transition-colors"
             >
-              Get Early Access
+              Start Free Trial
             </a>
             <Link
               href="/features"
@@ -109,9 +84,9 @@ export default function HomePage() {
       {/* Waitlist Section */}
       <section id="waitlist" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">Join Our Waitlist</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">Stay Updated on Our Launch</h2>
           <p className="text-xl text-gray-600 mb-8">
-            Be among the first BC law firms to experience AI-powered legal document management.
+            Get notified about new features, beta programs, and exclusive offers for BC law firms.
           </p>
           <div className="bg-gray-50 p-8 rounded-lg">
             <form className="space-y-4">
