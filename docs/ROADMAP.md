@@ -141,7 +141,7 @@ Upload → Extract Text → Chunk → Generate Embeddings → Store Vectors → 
 - Semantic search alone works well (hybrid search not critical for MVP)
 - Citation tracking already implemented (document metadata + page numbers in results)
 - OpenAI text-embedding-3-small (1536 dims) performs well for legal documents
-- Celery + Redis provides robust background processing for document pipeline
+- Celery + Valkey provides robust background processing for document pipeline
 
 **Status**: Milestone 3 complete! Ready for production deployment.
 
@@ -336,7 +336,7 @@ Deploy to production environment.
 **Database & Storage:**
 
 1. [ ] Production PostgreSQL (AWS RDS with backups)
-2. [ ] Redis cluster for caching
+2. [ ] Valkey cluster for caching and task queue (AWS ElastiCache)
 3. [ ] S3 buckets with IAM policies
 
 **Application Deployment:** 4. [ ] Backend deployment (AWS ECS) 5. [ ] Frontend deployment (CloudFront) 6. [ ] Environment configuration (Secrets Manager) 7. [ ] SSL certificates and domain setup
@@ -511,9 +511,9 @@ Based on what we've actually built:
 - **Framework**: FastAPI (Python) with async support
 - **Database**: PostgreSQL 15 with PGvector extension (bc_legal_ds schema)
 - **ORM**: SQLAlchemy 2.0 (async)
-- **Cache**: Redis
+- **Cache**: Valkey (Redis-compatible, open source)
 - **Storage**: AWS S3 (LocalStack for local dev)
-- **Background Jobs**: Celery + Redis [Done]
+- **Background Jobs**: Celery + Valkey [Done]
 - **Migrations**: Alembic with single consolidated initial migration
 
 ### AI/ML
@@ -550,7 +550,7 @@ Based on what we've actually built:
 
 **Goal**: Automatic document processing
 
-- [x] Background task queue (Celery + Redis) [Done]
+- [x] Background task queue (Celery + Valkey) [Done]
 - [x] Document processing status tracking [Done]
 - [x] Rate limiting [Done]
 - [x] Input validation [Done]
@@ -634,6 +634,13 @@ Based on what we've actually built:
 
 **Email & Analytics:**
 
+- [ ] Create required email accounts (@bclegaltech.ca domain)
+  - [ ] noreply@bclegaltech.ca - transactional emails (password resets, confirmations)
+  - [ ] hello@bclegaltech.ca - general inquiries (marketing site)
+  - [ ] support@bclegaltech.ca - customer support (marketing site)
+  - [ ] privacy@bclegaltech.ca - privacy inquiries (privacy policy, cookie policy)
+  - [ ] legal@bclegaltech.ca - legal inquiries (terms of service)
+  - Note: Currently only alexandre@bclegaltech.ca exists
 - [ ] AWS SES setup for transactional emails (@bclegaltech.ca)
 - [ ] Welcome email for waitlist signups
 - [ ] Analytics setup (Plausible or GA4 with consent)
@@ -691,7 +698,7 @@ bc-legal-tech/ (monorepo)
 **Infrastructure Setup:**
 
 - [ ] Production PostgreSQL (AWS RDS with automated backups)
-- [ ] Production Redis cluster (AWS ElastiCache)
+- [ ] Production Valkey cluster (AWS ElastiCache - 20-33% cheaper than Redis)
 - [ ] Production S3 buckets with IAM policies
 - [ ] Backend deployment (AWS ECS or App Runner from GitHub)
 - [ ] Frontend deployment (AWS Amplify: app.bclegaltech.ca)
@@ -807,7 +814,27 @@ What makes BC Legal Tech unique:
 
 ## What Changed From v1
 
-**Completed This Session (November 9, 2025 - Phase 3.5 Complete):**
+**Completed This Session (November 22, 2025 - Valkey Migration):**
+
+- [Done] **Valkey Migration Complete**: Migrated from Redis to Valkey across entire codebase
+  - Updated docker-compose.yml to use valkey/valkey:8-alpine
+  - Updated all configuration files (config.py, .env.example)
+  - Updated all documentation (14 files total)
+  - Created comprehensive VALKEY_DECISION.md explaining rationale and cost savings
+  - Zero code changes required (100% Redis-compatible)
+  - Tested locally: all services running successfully
+- [Done] **Cost Optimization**: Infrastructure decision for 20-33% AWS cost savings
+  - Documented serverless vs node-based pricing models
+  - Recommended ElastiCache Serverless for current stage (~$6-50/month)
+  - Projected savings: $15K-25K/year for production workload
+- [Done] **Documentation Updates**: Complete consistency across all docs
+  - README.md, backend/README.md
+  - ROADMAP.md, COST_CONTROLS.md, RUNNING-BACKEND.md, TESTING-GUIDE.md
+  - BACKGROUND_PROCESSING.md
+  - Claude Code context files (.claude/context/, .claude/commands/)
+  - All references now mention Valkey with cost savings notes
+
+**Completed Earlier (November 9, 2025 - Phase 3.5 Complete):**
 
 - [Done] **Phase 3.5 Complete**: Marketing website with full legal compliance and cross-site navigation
 - [Done] **Marketing Site Infrastructure**: Next.js 14 marketing site in `/marketing` folder (monorepo)
@@ -876,6 +903,7 @@ What makes BC Legal Tech unique:
 - [Done] **Document Processing Pipeline**: Added missing text extraction step (Extract → Chunk → Embed)
 - [Done] **Asyncio Event Loop Fix**: Changed from `asyncio.run()` to `loop.run_until_complete()` for Celery compatibility
 - [Done] **Environment Configuration**: Created Docker-compatible environment variable setup with root .env file
+- [Done] **Valkey Migration**: Migrated from Redis to Valkey for cost savings (20-33% cheaper on AWS ElastiCache)
 - [Done] **AWS Endpoint Configuration**: Fixed hardcoded localhost to use proper Docker service hostnames
 - [Done] **Chat Service Model Fixes**: Fixed attribute mismatches (doc.title → doc.document_title, matter.name → matter.matter_number)
 - [Done] **Docker Containerization**: Created Dockerfile and .dockerignore for Celery worker deployment
@@ -909,7 +937,7 @@ What makes BC Legal Tech unique:
 
 **Previously Completed (November 6, 2025):**
 
-- [Done] Background task queue (Celery + Redis) for document processing
+- [Done] Background task queue (Celery + Valkey) for document processing
 - [Done] Rate limiting middleware for API protection
 - [Done] Input validation middleware for security
 - [Done] Chat API with full CRUD endpoints

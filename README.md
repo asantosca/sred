@@ -41,7 +41,7 @@ bc-legal-tech/
 1. Backend runs on http://localhost:8000
 2. Frontend runs on http://localhost:5173
 3. PostgreSQL with PGvector on localhost:5432
-4. Redis cache on localhost:6379
+4. Valkey cache on localhost:6379
 5. LocalStack S3 on localhost:4566
 
 ## Next Steps

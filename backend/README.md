@@ -20,7 +20,7 @@ The backend is built with:
 - **asyncpg** - High-performance PostgreSQL driver
 - **OpenAI** - Embedding generation for semantic search
 - **LocalStack S3** - Document storage (development) / AWS S3 (production)
-- **Redis** - Caching and session management
+- **Valkey** - Caching and task queue (Redis-compatible, 20-33% cheaper on AWS)
 
 ## Hybrid Database Architecture
 
@@ -223,7 +223,7 @@ Create a `.env` file in the backend directory:
 # Database
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_db
 
-# Redis
+# Valkey (Redis-compatible cache/queue - 20-33% cheaper on AWS)
 REDIS_URL=redis://localhost:6379
 
 # S3 Storage

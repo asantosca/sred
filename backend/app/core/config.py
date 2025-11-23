@@ -61,7 +61,8 @@ class Settings:
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
     ANTHROPIC_MAX_TOKENS: int = int(os.getenv("ANTHROPIC_MAX_TOKENS", "8192"))
 
-    # Redis settings (for Celery broker and result backend)
+    # Valkey settings (Redis-compatible, for Celery broker and result backend)
+    # Note: Using Valkey instead of Redis for 20-33% cost savings on AWS ElastiCache
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
 
     # Celery settings

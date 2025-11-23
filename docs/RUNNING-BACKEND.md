@@ -10,7 +10,7 @@ docker-compose up -d
 
 This starts:
 - PostgreSQL (port 5432)
-- Redis (port 6379)
+- Valkey (port 6379)
 - LocalStack/S3 (port 4566)
 - MailHog (ports 1025, 8025)
 
@@ -135,7 +135,7 @@ You should see:
 ```
 CONTAINER ID   IMAGE                      STATUS   PORTS
 xxxxx          pgvector/pgvector:pg15     Up       0.0.0.0:5432->5432/tcp
-xxxxx          redis:7-alpine             Up       0.0.0.0:6379->6379/tcp
+xxxxx          valkey/valkey:8-alpine     Up       0.0.0.0:6379->6379/tcp
 xxxxx          localstack/localstack      Up       0.0.0.0:4566->4566/tcp
 xxxxx          mailhog/mailhog           Up       0.0.0.0:1025->1025/tcp, 0.0.0.0:8025->8025/tcp
 ```
@@ -291,7 +291,7 @@ docker-compose logs -f
 | ReDoc | http://localhost:8000/redoc | Alternative API docs |
 | MailHog UI | http://localhost:8025 | View sent emails |
 | PostgreSQL | localhost:5432 | Database |
-| Redis | localhost:6379 | Cache/sessions |
+| Valkey | localhost:6379 | Cache/task queue |
 | LocalStack/S3 | localhost:4566 | S3 storage |
 
 ### Database Connection

@@ -11,7 +11,7 @@ This guide shows you how to test all implemented features end-to-end.
 ### 1. Start All Services
 
 ```bash
-# Start Docker services (PostgreSQL, Redis, LocalStack, MailHog)
+# Start Docker services (PostgreSQL, Valkey, LocalStack, MailHog)
 docker-compose up -d
 
 # Wait a few seconds for services to start
@@ -20,7 +20,7 @@ docker ps
 
 You should see:
 - ✅ PostgreSQL (port 5432)
-- ✅ Redis (port 6379)
+- ✅ Valkey (port 6379)
 - ✅ LocalStack/S3 (port 4566)
 - ✅ MailHog SMTP (port 1025) + Web UI (port 8025)
 

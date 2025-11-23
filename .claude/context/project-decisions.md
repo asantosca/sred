@@ -84,14 +84,14 @@ This document captures key decisions, rationale, and context from project discus
 **Cloud Provider**: AWS
 - **Storage**: S3 for documents
 - **Database**: RDS PostgreSQL with PGvector
-- **Cache**: ElastiCache Redis
+- **Cache**: ElastiCache Valkey (20-33% cheaper than Redis)
 - **IaC**: Terraform
 
 **Local Development**:
 - Docker Compose working ✅
 - LocalStack for S3
 - PostgreSQL with PGvector
-- Redis
+- Valkey (Redis-compatible)
 
 ---
 

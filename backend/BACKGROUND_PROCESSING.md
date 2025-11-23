@@ -10,36 +10,41 @@ Documents uploaded to BC Legal Tech are now automatically processed through the 
 3. **Embedding Generation** - Generate vector embeddings using OpenAI
 4. **Vector Storage** - Store embeddings in PostgreSQL with pgvector
 
-This processing happens **automatically in the background** after upload, powered by **Celery** and **Redis**.
+This processing happens **automatically in the background** after upload, powered by **Celery** and **Valkey**.
 
 ---
 
 ## Prerequisites
 
-### 1. Redis Installation
+### 1. Valkey Installation
 
-**Windows:**
-- Download Redis for Windows from: https://github.com/microsoftarchive/redis/releases
-- Or use Windows Subsystem for Linux (WSL) and install Redis via `sudo apt-get install redis-server`
-- Or use Docker: `docker run --name redis -p 6379:6379 -d redis`
-
-**Mac:**
+**Recommended: Docker (Cross-Platform)**
 ```bash
-brew install redis
-brew services start redis
+docker run --name valkey -p 6379:6379 -d valkey/valkey:8-alpine
+```
+
+**Mac (using Homebrew):**
+```bash
+brew install valkey
+brew services start valkey
 ```
 
 **Linux:**
 ```bash
-sudo apt-get install redis-server
-sudo systemctl start redis-server
+# Valkey is Redis-compatible, so Redis clients work
+# For production, use docker-compose.yml (already configured)
+docker-compose up -d valkey
 ```
 
-### 2. Verify Redis is Running
+**Windows:**
+- Use Docker Desktop with the command above
+- Or use Windows Subsystem for Linux (WSL) with Docker
 
-Test connection:
+### 2. Verify Valkey is Running
+
+Test connection (Valkey uses Redis protocol):
 ```bash
-redis-cli ping
+docker exec -it valkey valkey-cli ping
 # Should return: PONG
 ```
 
@@ -150,9 +155,9 @@ If a task fails 3 times, it's marked as `failed` and can be retried manually by 
 ### Running Locally
 
 1. **Terminal 1** - Start PostgreSQL (Docker or local)
-2. **Terminal 2** - Start Redis
+2. **Terminal 2** - Start Valkey
    ```bash
-   redis-server
+   docker-compose up -d valkey
    ```
 3. **Terminal 3** - Start FastAPI server
    ```cmd
@@ -181,15 +186,16 @@ If a task fails 3 times, it's marked as `failed` and can be retried manually by 
 ### Deployment
 
 **Option 1: Managed Services**
-- Use managed Redis (AWS ElastiCache, Redis Cloud, Upstash)
+- Use AWS ElastiCache for Valkey (20-33% cheaper than Redis)
+- ElastiCache Serverless for variable workloads (~$6-50/month)
 - Deploy Celery workers as separate containers/instances
 - Scale workers horizontally based on queue depth
 
 **Option 2: Docker Compose**
 ```yaml
 services:
-  redis:
-    image: redis:7-alpine
+  valkey:
+    image: valkey/valkey:8-alpine
     ports:
       - "6379:6379"
 
@@ -197,10 +203,10 @@ services:
     build: ./backend
     command: celery -A app.core.celery_app worker --loglevel=info --queues=document_processing
     depends_on:
-      - redis
+      - valkey
       - postgres
     environment:
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://valkey:6379
       - DATABASE_URL=postgresql+asyncpg://...
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 ```
@@ -224,7 +230,7 @@ services:
    - High failure rate (> 10%)
    - Long queue depth (> 100 tasks)
    - Worker crashes
-   - Redis unavailable
+   - Valkey unavailable
 
 ### Scaling
 
@@ -243,9 +249,9 @@ services:
 - **Fix**: Ensure you're in the `backend/` directory when starting worker
 - **Fix**: Check that `PYTHONPATH` is set correctly
 
-**Error**: `ConnectionError: Error connecting to Redis`
-- **Fix**: Verify Redis is running (`redis-cli ping`)
-- **Fix**: Check `REDIS_URL` in `.env` file
+**Error**: `ConnectionError: Error connecting to Valkey`
+- **Fix**: Verify Valkey is running (`docker ps` or `docker exec -it valkey valkey-cli ping`)
+- **Fix**: Check `REDIS_URL` in `.env` file (should be `redis://localhost:6379`)
 - **Fix**: Check firewall isn't blocking port 6379
 
 ### Tasks Not Processing
@@ -284,10 +290,10 @@ services:
 Add to `.env` file:
 
 ```bash
-# Redis
+# Valkey (Redis-compatible cache/queue - 20-33% cheaper on AWS)
 REDIS_URL=redis://localhost:6379
 
-# Celery
+# Celery (uses Valkey as broker and result backend)
 CELERY_BROKER_URL=redis://localhost:6379
 CELERY_RESULT_BACKEND=redis://localhost:6379
 ```

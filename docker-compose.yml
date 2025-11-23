@@ -15,8 +15,8 @@ services:
     networks:
       - bc-legal-network
 
-  redis:
-    image: redis:7-alpine
+  valkey:
+    image: valkey/valkey:8-alpine
     ports:
       - "6379:6379"
     networks:
@@ -56,7 +56,7 @@ services:
     command: celery -A app.core.celery_app worker --loglevel=info
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/bc_legal_db
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://valkey:6379/0
       AWS_ENDPOINT_URL: http://localstack-minimal:4566
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -68,7 +68,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     depends_on:
       - postgres
-      - redis
+      - valkey
       - localstack-minimal
     networks:
       - bc-legal-network

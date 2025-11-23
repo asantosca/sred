@@ -47,8 +47,8 @@ Protection against runaway AWS/AI API costs during development and beta testing.
 
 6. **RDS PostgreSQL**
    - Cost: Fixed (LocalStack free in dev)
-7. **Redis**
-   - Cost: Fixed (LocalStack free in dev)
+7. **Valkey**
+   - Cost: Fixed (20-33% cheaper than Redis on AWS ElastiCache)
 
 ---
 
