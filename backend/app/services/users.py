@@ -16,10 +16,50 @@ logger = logging.getLogger(__name__)
 
 class UserService:
     """Service for managing users within a company"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
+    async def count_users(self, company_id: uuid.UUID) -> int:
+        """Count total users in a company"""
+        result = await self.db.execute(
+            select(func.count(User.id)).where(User.company_id == company_id)
+        )
+        return result.scalar() or 0
+
+    async def check_user_limit(self, company_id: uuid.UUID) -> tuple[bool, int, int]:
+        """
+        Check if company can add more users.
+
+        Returns:
+            tuple[bool, int, int]: (can_add, current_count, max_allowed)
+            max_allowed of -1 means unlimited
+        """
+        from sqlalchemy import text
+
+        query = text("""
+            SELECT
+                (SELECT COUNT(*) FROM bc_legal_ds.users WHERE company_id = :company_id) as user_count,
+                pl.max_users
+            FROM bc_legal_ds.companies c
+            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            WHERE c.id = :company_id
+        """)
+
+        result = await self.db.execute(query, {"company_id": str(company_id)})
+        row = result.first()
+
+        if not row:
+            return False, 0, 0
+
+        current_count, max_users = row
+
+        # -1 means unlimited
+        if max_users == -1:
+            return True, current_count, max_users
+
+        return current_count < max_users, current_count, max_users
+
     async def invite_user(
         self,
         user_invite: UserInvite,
@@ -32,6 +72,14 @@ class UserService:
         Returns:
             tuple[User, str]: The created user and the password reset token for invitation
         """
+
+        # Check user limit for the company's plan
+        can_add, current_count, max_users = await self.check_user_limit(company_id)
+        if not can_add:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User limit reached. Your plan allows {max_users} users (currently {current_count}). Please upgrade to add more users."
+            )
 
         # Check if email already exists in this company
         existing_user = await self.db.execute(

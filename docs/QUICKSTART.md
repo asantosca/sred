@@ -18,6 +18,7 @@ Get up and running in 5 minutes!
 ```
 
 This will:
+
 1. ✅ Check Docker is running
 2. ✅ Start all Docker services
 3. ✅ Run database migrations
@@ -60,6 +61,7 @@ uvicorn app.main:app --reload --port 8000
 ### 3. Test Endpoints
 
 **Quick Test Sequence**:
+
 1. Health Check ✓
 2. Register Company ✓ (saves tokens automatically)
 3. Get Current User ✓
@@ -91,6 +93,7 @@ http://localhost:8000/docs
 5. See response below
 
 **For Protected Endpoints** (like `/auth/me`):
+
 1. First run `/auth/register` or `/auth/login`
 2. Copy `access_token` from response
 3. Click 🔓 **"Authorize"** button at top
@@ -100,43 +103,14 @@ http://localhost:8000/docs
 
 ---
 
-## What Can You Test?
-
-### ✅ Already Working
-
-1. **Authentication**
-   - Register company with admin user
-   - Login with email/password
-   - Get current user info (JWT protected)
-   - Logout
-
-2. **Token Management**
-   - Refresh access tokens
-   - Token rotation (security)
-   - Token revocation
-
-3. **Password Reset**
-   - Request password reset (sends email)
-   - Verify reset token
-   - Confirm password reset
-   - Auto-login after reset
-
-4. **Email Service**
-   - Password reset emails
-   - User invitations
-   - Welcome emails
-   - View all in MailHog UI
-
----
-
 ## Important URLs
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Backend API** | http://localhost:8000 | Main API server |
-| **Swagger Docs** | http://localhost:8000/docs | Interactive API testing |
-| **MailHog UI** | http://localhost:8025 | View sent emails |
-| **ReDoc** | http://localhost:8000/redoc | Alternative API docs |
+| Service          | URL                         | Purpose                 |
+| ---------------- | --------------------------- | ----------------------- |
+| **Backend API**  | http://localhost:8000       | Main API server         |
+| **Swagger Docs** | http://localhost:8000/docs  | Interactive API testing |
+| **MailHog UI**   | http://localhost:8025       | View sent emails        |
+| **ReDoc**        | http://localhost:8000/redoc | Alternative API docs    |
 
 ---
 
@@ -264,10 +238,12 @@ pip install -r requirements.txt
 ### Continue Development
 
 **Complete Milestone 1** (2 tasks remaining):
+
 - [ ] User profile update endpoint
 - [ ] User avatar upload
 
 **Start Milestone 2** (Document Management):
+
 - [ ] Document upload API
 - [ ] Document listing
 - [ ] Document download/preview
@@ -278,17 +254,20 @@ pip install -r requirements.txt
 ## Documentation
 
 **Getting Started**:
+
 - 📖 [Running Backend](docs/RUNNING-BACKEND.md) - Detailed setup guide
 - 📖 [Testing Guide](docs/TESTING-GUIDE.md) - Complete testing walkthrough
 - 📖 [Postman Guide](postman/README.md) - Postman collection usage
 
 **Features**:
+
 - 📖 [Refresh Tokens](docs/refresh-token-implementation.md)
 - 📖 [Password Reset](docs/password-reset-implementation.md)
 - 📖 [Email Service](docs/email-service-setup.md)
 - 📖 [Email Quick Start](docs/QUICKSTART-EMAIL.md)
 
 **Project**:
+
 - 📖 [Implementation Status](docs/IMPLEMENTATION-STATUS.md) - What's built
 - 📖 [Roadmap](ROADMAP.md) - Full project plan
 
@@ -327,6 +306,7 @@ cd backend && python test_email.py
 ## Support
 
 **Issues?** Check these first:
+
 1. Is Docker running? → `docker ps`
 2. Are services up? → `docker-compose ps`
 3. Is backend running? → `curl http://localhost:8000/health`

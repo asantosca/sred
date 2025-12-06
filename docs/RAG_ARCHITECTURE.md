@@ -1,10 +1,13 @@
 # BC Legal Tech - RAG Pipeline Architecture
 
+---
+
 Complete database schema and implementation guide for the RAG (Retrieval-Augmented Generation) pipeline.
 
 ---
 
 ## Table of Contents
+
 1. [Database Schema Overview](#database-schema-overview)
 2. [RAG Pipeline Flow](#rag-pipeline-flow)
 3. [Version Control System](#version-control-system)
@@ -18,9 +21,11 @@ Complete database schema and implementation guide for the RAG (Retrieval-Augment
 ### Core Tables
 
 #### 1. **documents** (Existing - 65+ columns)
+
 Main document storage with comprehensive metadata.
 
 **Key Fields for RAG:**
+
 ```sql
 - id (UUID) - Primary key
 - matter_id (UUID) - Links to matter/case
@@ -42,6 +47,7 @@ Main document storage with comprehensive metadata.
 ```
 
 #### 2. **document_chunks** (NEW - RAG Core)
+
 Stores document text split into semantic chunks with vector embeddings.
 
 **Purpose:** Enable semantic search and context retrieval for AI responses.
@@ -70,11 +76,13 @@ CREATE INDEX idx_chunks_embedding ON document_chunks USING ivfflat(embedding) WI
 ```
 
 **Embedding Options:**
+
 - **OpenAI text-embedding-3-large**: 3072 dimensions (high accuracy)
 - **OpenAI text-embedding-3-small**: 1536 dimensions (default, fast)
 - **Voyage AI voyage-law-2**: 1024 dimensions (legal-specific, recommended)
 
 **Metadata Structure:**
+
 ```json
 {
   "page_number": 5,
@@ -86,6 +94,7 @@ CREATE INDEX idx_chunks_embedding ON document_chunks USING ivfflat(embedding) WI
 ```
 
 #### 3. **document_relationships** (NEW - Version Control & Links)
+
 Tracks relationships between documents.
 
 **Purpose:** Version tracking, document dependencies, exhibit links.
@@ -106,6 +115,7 @@ CREATE TABLE document_relationships (
 ```
 
 **Relationship Types:**
+
 - `amendment` - Target amends source
 - `supersedes` - Target replaces source (version control)
 - `exhibit` - Target is exhibit to source
@@ -114,6 +124,7 @@ CREATE TABLE document_relationships (
 - `version_of` - Explicit version link
 
 #### 4. **document_processing_queue** (NEW - Async Task Queue)
+
 Background job queue for document processing.
 
 **Purpose:** Async text extraction, embedding generation, OCR processing.
@@ -139,6 +150,7 @@ CREATE TABLE document_processing_queue (
 ```
 
 **Task Types:**
+
 - `extract_text` - Extract text from PDF/DOCX
 - `generate_embeddings` - Create vector embeddings
 - `ocr` - OCR for scanned documents
@@ -146,6 +158,7 @@ CREATE TABLE document_processing_queue (
 - `reprocess` - Re-run failed task
 
 **Status Values:**
+
 - `pending` - Waiting to be processed
 - `processing` - Currently being processed
 - `completed` - Successfully completed
@@ -342,6 +355,7 @@ Root Document (v1)              Document v2                Document v3 (Current)
 ### Version Control Queries
 
 **Get Current Version:**
+
 ```sql
 SELECT * FROM documents
 WHERE matter_id = ?
@@ -350,6 +364,7 @@ WHERE matter_id = ?
 ```
 
 **Get All Versions (History):**
+
 ```sql
 SELECT * FROM documents
 WHERE root_document_id = ?
@@ -357,6 +372,7 @@ ORDER BY version_number ASC;
 ```
 
 **Get Version Chain:**
+
 ```sql
 WITH RECURSIVE version_chain AS (
   -- Start with root document
@@ -370,6 +386,7 @@ SELECT * FROM version_chain ORDER BY version_number;
 ```
 
 **Compare Versions:**
+
 ```sql
 SELECT
   d1.id as old_version,
@@ -392,11 +409,13 @@ WHERE d1.id = ?;
 ### 1. Semantic Chunking Strategy
 
 **Why NOT Fixed-Size Chunking?**
+
 - Breaks mid-sentence
 - Loses context (headers, section structure)
 - Poor for legal documents with clauses, subsections
 
 **Intelligent Chunking Approach:**
+
 ```python
 def semantic_chunk(text: str, max_tokens: int = 600) -> List[Chunk]:
     chunks = []
@@ -440,6 +459,7 @@ def semantic_chunk(text: str, max_tokens: int = 600) -> List[Chunk]:
 ### 2. Hybrid Search Implementation
 
 **Combine Vector + Keyword for Best Results:**
+
 ```python
 async def hybrid_search(query: str, matter_id: UUID, limit: int = 10):
     # 1. Vector Similarity (Semantic)
@@ -488,6 +508,7 @@ async def hybrid_search(query: str, matter_id: UUID, limit: int = 10):
 ### 3. Confidence Scoring
 
 **When to Say "I Don't Know":**
+
 ```python
 def should_answer(search_results: List[Chunk], query: str) -> bool:
     # No relevant documents found
@@ -512,6 +533,7 @@ def should_answer(search_results: List[Chunk], query: str) -> bool:
 ## Anti-Hallucination Strategy
 
 ### 1. Always Cite Sources
+
 ```python
 SYSTEM_PROMPT = """
 You are a legal document assistant. Follow these rules:
@@ -526,9 +548,11 @@ You are a legal document assistant. Follow these rules:
 ```
 
 ### 2. Show Retrieved Context
+
 Return both the AI answer AND the source chunks so lawyers can verify.
 
 ### 3. Confidence Indicators
+
 ```json
 {
   "answer": "The contract term is 12 months...",
@@ -546,7 +570,9 @@ Return both the AI answer AND the source chunks so lawyers can verify.
 ```
 
 ### 4. Highlight Gaps
+
 If the query asks multiple questions but only some are answerable:
+
 ```
 Answer: "Based on the available documents:
 
@@ -560,26 +586,31 @@ Answer: "Based on the available documents:
 ## Next Implementation Steps
 
 1. **Text Extraction Service** (`backend/app/services/text_extraction.py`)
+
    - PDF: pdfplumber or PyMuPDF
    - DOCX: python-docx
    - TXT: direct read
 
 2. **Chunking Service** (`backend/app/services/chunking.py`)
+
    - Semantic paragraph-aware splitting
    - Metadata extraction
    - Overlap handling
 
 3. **Embedding Service** (`backend/app/services/embeddings.py`)
+
    - OpenAI or Voyage AI integration
    - Batch processing
    - Rate limiting
 
 4. **Celery Tasks** (`backend/app/tasks/`)
+
    - Background workers
    - Queue management
    - Retry logic
 
 5. **Search Service** (`backend/app/services/search.py`)
+
    - Hybrid search implementation
    - Re-ranking algorithm
    - Citation tracking

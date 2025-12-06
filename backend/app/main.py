@@ -13,6 +13,7 @@ from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from app.api.v1.api import api_router
 from app.middleware.auth import JWTAuthMiddleware
 from app.middleware.validation import InputValidationMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.core.rate_limit import limiter
 from app.core.config import settings
 
@@ -70,6 +71,9 @@ app.add_middleware(InputValidationMiddleware)
 
 # Add JWT Authentication middleware
 app.add_middleware(JWTAuthMiddleware)
+
+# Add Security Headers middleware (runs on every response)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
