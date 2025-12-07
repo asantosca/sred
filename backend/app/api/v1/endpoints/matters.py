@@ -14,7 +14,7 @@ from app.schemas.matters import (
     MatterListResponse, MatterAccess, MatterAccessCreate, 
     MatterAccessUpdate, MatterAccessWithDetails, MatterAccessListResponse
 )
-from app.models.models import Matter as MatterModel, MatterAccess as MatterAccessModel, User
+from app.models.models import Matter as MatterModel, MatterAccess as MatterAccessModel, User, Conversation, BillableSession
 from app.api.deps import get_current_user, verify_company_access
 
 router = APIRouter()
@@ -158,8 +158,8 @@ async def get_matter(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific matter by ID."""
-    # Check if user has access to this matter
+    """Get a specific matter by ID with current user's permissions."""
+    # Check if user has access to this matter and get their permissions
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.matter_id == matter_id,
@@ -167,33 +167,38 @@ async def get_matter(
         )
     )
     access_result = await db.execute(access_query)
-    if not access_result.scalar():
+    user_access = access_result.scalar()
+
+    if not user_access:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Matter not found or access denied"
         )
-    
+
     # Get matter with details
     query = select(MatterModel).where(MatterModel.id == matter_id)
     result = await db.execute(query)
     matter = result.scalar()
-    
+
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Matter not found"
         )
-    
-    # Add additional details
+
+    # Add additional details including user's permissions
     matter_dict = {
         **matter.__dict__,
         "lead_attorney_name": None,
         "created_by_name": "Unknown",
-        "updated_by_name": "Unknown", 
+        "updated_by_name": "Unknown",
         "document_count": 0,
-        "team_member_count": 0
+        "team_member_count": 0,
+        "user_can_upload": user_access.can_upload,
+        "user_can_edit": user_access.can_edit,
+        "user_can_delete": user_access.can_delete,
     }
-    
+
     return MatterWithDetails(**matter_dict)
 
 @router.put("/{matter_id}", response_model=Matter)
@@ -248,7 +253,12 @@ async def delete_matter(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Delete a matter. Requires delete access."""
+    """
+    Delete a matter. Requires delete access.
+
+    Cannot delete matters that have linked conversations or billable sessions.
+    User must first delete or unlink those resources.
+    """
     # Check if user has delete access to this matter
     access_query = select(MatterAccessModel).where(
         and_(
@@ -263,19 +273,41 @@ async def delete_matter(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No delete access to this matter"
         )
-    
+
     # Get matter
     query = select(MatterModel).where(MatterModel.id == matter_id)
     result = await db.execute(query)
     matter = result.scalar()
-    
+
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Matter not found"
         )
-    
-    # Delete matter (cascade will handle related records)
+
+    # Check for linked conversations
+    conv_count_query = select(func.count()).where(Conversation.matter_id == matter_id)
+    conv_result = await db.execute(conv_count_query)
+    conv_count = conv_result.scalar() or 0
+
+    if conv_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot delete matter: {conv_count} conversation(s) are linked to this matter. Please delete or unlink them first."
+        )
+
+    # Check for linked billable sessions
+    session_count_query = select(func.count()).where(BillableSession.matter_id == matter_id)
+    session_result = await db.execute(session_count_query)
+    session_count = session_result.scalar() or 0
+
+    if session_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot delete matter: {session_count} billable session(s) are linked to this matter. Please delete or unlink them first."
+        )
+
+    # Delete matter (cascade will handle documents and matter_access)
     await db.delete(matter)
     await db.commit()
 

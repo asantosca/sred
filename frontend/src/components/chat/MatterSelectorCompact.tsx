@@ -26,7 +26,6 @@ export default function MatterSelectorCompact({
   })
 
   const matters = mattersResponse?.matters || []
-  const selectedMatter = matters.find((m: Matter) => m.id === value)
 
   if (isLoading) {
     return (

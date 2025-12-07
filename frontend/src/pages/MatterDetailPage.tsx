@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi, documentsApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
@@ -18,6 +18,9 @@ export default function MatterDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     if (matterId) {
@@ -51,6 +54,21 @@ export default function MatterDetailPage() {
   const handleUploadSuccess = () => {
     setShowUpload(false)
     fetchMatterDocuments()
+  }
+
+  const handleDeleteMatter = async () => {
+    if (!matterId) return
+
+    try {
+      setDeleting(true)
+      setDeleteError(null)
+      await mattersApi.delete(matterId)
+      navigate('/matters', { replace: true })
+    } catch (err: any) {
+      const errorDetail = err.response?.data?.detail || 'Failed to delete matter'
+      setDeleteError(errorDetail)
+      setDeleting(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -137,15 +155,77 @@ export default function MatterDetailPage() {
               <p className="text-sm text-gray-500 mt-1">Matter #{matter.matter_number}</p>
             </div>
 
-            <Button
-              variant="primary"
-              onClick={() => setShowUpload(!showUpload)}
-              icon={showUpload ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-            >
-              {showUpload ? 'Cancel' : 'Upload Document'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                onClick={() => setShowUpload(!showUpload)}
+                icon={showUpload ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
+              >
+                {showUpload ? 'Cancel' : 'Upload Document'}
+              </Button>
+
+              {matter.user_can_delete && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  icon={<Trash2 className="h-4 w-4" />}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Matter</h3>
+              </div>
+
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete <strong>{matter.client_name}</strong> (Matter #{matter.matter_number})?
+              </p>
+
+              <p className="text-sm text-gray-500 mb-4">
+                This will permanently delete all documents associated with this matter. This action cannot be undone.
+              </p>
+
+              {deleteError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 mb-4 text-sm">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setDeleteError(null)
+                  }}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleDeleteMatter}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Matter'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Upload Section */}
         {showUpload && (

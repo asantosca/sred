@@ -47,12 +47,16 @@ class Matter(MatterInDB):
     pass
 
 class MatterWithDetails(Matter):
-    """Matter with additional details like user names"""
+    """Matter with additional details like user names and current user's permissions"""
     lead_attorney_name: Optional[str] = None
     created_by_name: str
     updated_by_name: str
     document_count: int = 0
     team_member_count: int = 0
+    # Current user's permissions for this matter
+    user_can_upload: bool = False
+    user_can_edit: bool = False
+    user_can_delete: bool = False
 
 # Matter Access Schemas
 class MatterAccessBase(BaseModel):

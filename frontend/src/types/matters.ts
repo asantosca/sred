@@ -15,6 +15,10 @@ export interface Matter {
   created_by: string
   updated_at: string | null
   updated_by: string
+  // Current user's permissions (from MatterWithDetails)
+  user_can_upload?: boolean
+  user_can_edit?: boolean
+  user_can_delete?: boolean
 }
 
 export interface MatterCreate {

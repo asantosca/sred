@@ -1,7 +1,7 @@
 // Dashboard Layout with navigation and user menu
 
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
 import {
@@ -26,7 +26,6 @@ const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:30
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, company, logout } = useAuthStore()
-  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = async () => {
