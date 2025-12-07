@@ -57,14 +57,16 @@ async def semantic_search(
                 detail="Failed to generate query embedding"
             )
 
-        # Perform vector similarity search
+        # Perform vector similarity search (filtered by company_id at database level)
         logger.info(
-            f"Searching with matter_id={request.matter_id}, "
+            f"Searching with company_id={current_user.company_id}, "
+            f"matter_id={request.matter_id}, "
             f"limit={request.limit}, threshold={request.similarity_threshold}"
         )
 
         search_results = await vector_storage_service.similarity_search(
             query_embedding=query_embedding,
+            company_id=current_user.company_id,
             matter_id=request.matter_id,
             limit=request.limit,
             similarity_threshold=request.similarity_threshold
@@ -120,12 +122,14 @@ async def _enrich_search_results(
     document_ids = list(set(result["document_id"] for result in search_results))
 
     # Fetch document and matter metadata in batch
+    # Note: Results are already filtered by company_id in vector_storage.similarity_search()
+    # This is a belt-and-suspenders check to ensure no cross-tenant data leakage
     query = (
         select(Document, Matter, DocumentChunk)
         .join(Matter, Document.matter_id == Matter.id)
         .join(DocumentChunk, DocumentChunk.document_id == Document.id)
         .where(Document.id.in_(document_ids))
-        .where(Document.company_id == current_user.company_id)  # Access control
+        .where(Matter.company_id == current_user.company_id)  # Belt-and-suspenders check
     )
 
     result = await db.execute(query)

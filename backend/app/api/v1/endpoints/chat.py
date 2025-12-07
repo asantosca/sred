@@ -129,6 +129,7 @@ async def list_conversations(
         chat_service = ChatService(db)
         conversations = await chat_service.list_conversations(
             user_id=current_user.id,
+            company_id=current_user.company_id,
             page=page,
             page_size=page_size,
             include_archived=include_archived
@@ -161,6 +162,7 @@ async def search_conversations(
         chat_service = ChatService(db)
         conversations = await chat_service.search_conversations(
             user_id=current_user.id,
+            company_id=current_user.company_id,
             query=q,
             page=page,
             page_size=page_size

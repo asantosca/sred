@@ -100,8 +100,9 @@ _Foundation is ready_
 
 _Must complete before deploying to AWS_
 
-- [ ] Security scanning and vulnerability assessment
-- [ ] SQL injection audit (verify ORM usage)
+- [x] Security scanning and vulnerability assessment
+- [x] SQL injection audit (verify ORM usage)
+- [x] Tenant isolation audit (company_id filtering on all queries)
 - [x] CORS configuration review (add production domains)
 - [ ] CI/CD pipeline from GitHub (GitHub Actions)
 - [ ] Database query optimization

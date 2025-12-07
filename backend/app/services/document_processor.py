@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Document, DocumentChunk
+from app.models.models import Document, DocumentChunk, Matter
 from app.services.text_extraction import text_extraction_service
 from app.services.storage import storage_service
 from app.services.chunking import chunking_service
@@ -29,24 +29,30 @@ class DocumentProcessor:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def process_text_extraction(self, document_id: UUID) -> bool:
+    async def process_text_extraction(self, document_id: UUID, company_id: UUID) -> bool:
         """
         Extract text from a document and store it in the database.
 
         Args:
             document_id: UUID of the document to process
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             True if extraction succeeded, False otherwise
         """
         try:
-            # Get document from database
-            query = select(Document).where(Document.id == document_id)
+            # Get document from database with tenant isolation
+            query = (
+                select(Document)
+                .join(Matter, Document.matter_id == Matter.id)
+                .where(Document.id == document_id)
+                .where(Matter.company_id == company_id)  # Tenant isolation
+            )
             result = await self.db.execute(query)
             document = result.scalar_one_or_none()
 
             if not document:
-                logger.error(f"Document {document_id} not found")
+                logger.error(f"Document {document_id} not found or access denied for company {company_id}")
                 return False
 
             # Check if already extracted
@@ -142,24 +148,30 @@ class DocumentProcessor:
         await self.db.commit()
         await self.db.refresh(document)
 
-    async def process_chunking(self, document_id: UUID) -> bool:
+    async def process_chunking(self, document_id: UUID, company_id: UUID) -> bool:
         """
         Create semantic chunks from document text.
 
         Args:
             document_id: UUID of the document to chunk
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             True if chunking succeeded, False otherwise
         """
         try:
-            # Get document from database
-            query = select(Document).where(Document.id == document_id)
+            # Get document from database with tenant isolation
+            query = (
+                select(Document)
+                .join(Matter, Document.matter_id == Matter.id)
+                .where(Document.id == document_id)
+                .where(Matter.company_id == company_id)  # Tenant isolation
+            )
             result = await self.db.execute(query)
             document = result.scalar_one_or_none()
 
             if not document:
-                logger.error(f"Document {document_id} not found")
+                logger.error(f"Document {document_id} not found or access denied for company {company_id}")
                 return False
 
             # Check if text has been extracted
@@ -221,7 +233,7 @@ class DocumentProcessor:
             await self.db.rollback()
             return False
 
-    async def process_embeddings(self, document_id: UUID) -> bool:
+    async def process_embeddings(self, document_id: UUID, company_id: UUID) -> bool:
         """
         Generate embeddings for all chunks of a document.
 
@@ -229,18 +241,24 @@ class DocumentProcessor:
 
         Args:
             document_id: UUID of the document to generate embeddings for
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             True if embedding generation succeeded, False otherwise
         """
         try:
-            # Get document from database (ORM)
-            query = select(Document).where(Document.id == document_id)
+            # Get document from database with tenant isolation (ORM)
+            query = (
+                select(Document)
+                .join(Matter, Document.matter_id == Matter.id)
+                .where(Document.id == document_id)
+                .where(Matter.company_id == company_id)  # Tenant isolation
+            )
             result = await self.db.execute(query)
             document = result.scalar_one_or_none()
 
             if not document:
-                logger.error(f"Document {document_id} not found")
+                logger.error(f"Document {document_id} not found or access denied for company {company_id}")
                 return False
 
             # Check if document has been chunked
@@ -298,7 +316,8 @@ class DocumentProcessor:
             await vector_storage_service.store_embeddings(
                 chunk_ids=chunk_ids,
                 embeddings=embeddings,
-                model=embedding_model
+                model=embedding_model,
+                company_id=company_id  # Tenant isolation
             )
 
             # Update document status (ORM)
@@ -320,14 +339,23 @@ class DocumentProcessor:
             await self.db.rollback()
             return False
 
-    async def get_document_status(self, document_id: UUID) -> Optional[dict]:
+    async def get_document_status(self, document_id: UUID, company_id: UUID) -> Optional[dict]:
         """
-        Get processing status for a document.
+        Get processing status for a document with tenant isolation.
+
+        Args:
+            document_id: UUID of the document
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             Dictionary with processing status information
         """
-        query = select(Document).where(Document.id == document_id)
+        query = (
+            select(Document)
+            .join(Matter, Document.matter_id == Matter.id)
+            .where(Document.id == document_id)
+            .where(Matter.company_id == company_id)  # Tenant isolation
+        )
         result = await self.db.execute(query)
         document = result.scalar_one_or_none()
 

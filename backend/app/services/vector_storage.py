@@ -52,21 +52,24 @@ class VectorStorageService:
         self,
         chunk_ids: List[UUID],
         embeddings: List[List[float]],
-        model: str
+        model: str,
+        company_id: UUID
     ) -> int:
         """
-        Store embeddings for document chunks using raw SQL.
+        Store embeddings for document chunks using raw SQL with tenant isolation.
 
         Args:
             chunk_ids: List of chunk UUIDs
             embeddings: List of embedding vectors (must match chunk_ids length)
             model: Name of the embedding model used
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             Number of chunks updated
 
         Raises:
             ValueError: If chunk_ids and embeddings lengths don't match
+            ValueError: If any chunks don't belong to the specified company
         """
         if len(chunk_ids) != len(embeddings):
             raise ValueError(
@@ -81,8 +84,32 @@ class VectorStorageService:
 
         try:
             async with pool.acquire() as conn:
+                # First, verify all chunks belong to the specified company
+                # This prevents cross-tenant embedding manipulation
+                verification_query = """
+                    SELECT dc.id
+                    FROM bc_legal_ds.document_chunks dc
+                    JOIN bc_legal_ds.documents d ON d.id = dc.document_id
+                    JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                    WHERE dc.id = ANY($1::uuid[])
+                    AND m.company_id = $2
+                """
+                valid_chunks = await conn.fetch(
+                    verification_query,
+                    chunk_ids,
+                    company_id
+                )
+                valid_chunk_ids = {row["id"] for row in valid_chunks}
+
+                # Check if all requested chunks are valid
+                invalid_chunks = set(chunk_ids) - valid_chunk_ids
+                if invalid_chunks:
+                    raise ValueError(
+                        f"Chunks do not belong to company or do not exist: {invalid_chunks}"
+                    )
+
                 # Batch update all chunks with their embeddings
-                updated = await conn.executemany(
+                await conn.executemany(
                     """
                     UPDATE bc_legal_ds.document_chunks
                     SET embedding = $1::vector(1536),
@@ -94,7 +121,7 @@ class VectorStorageService:
                 )
 
                 logger.info(
-                    f"Stored {len(chunk_ids)} embeddings for model {model}"
+                    f"Stored {len(chunk_ids)} embeddings for model {model} (company: {company_id})"
                 )
                 return len(chunk_ids)
 
@@ -104,13 +131,15 @@ class VectorStorageService:
 
     async def get_embeddings(
         self,
-        document_id: UUID
+        document_id: UUID,
+        company_id: UUID
     ) -> List[dict]:
         """
-        Retrieve all embeddings for a document.
+        Retrieve all embeddings for a document with tenant isolation.
 
         Args:
             document_id: UUID of the document
+            company_id: Company ID for tenant isolation (REQUIRED)
 
         Returns:
             List of dicts with chunk_id, embedding, and embedding_model
@@ -119,15 +148,20 @@ class VectorStorageService:
 
         try:
             async with pool.acquire() as conn:
+                # Join through documents and matters to verify company ownership
                 rows = await conn.fetch(
                     """
-                    SELECT id, embedding, embedding_model
-                    FROM bc_legal_ds.document_chunks
-                    WHERE document_id = $1
-                    AND embedding IS NOT NULL
-                    ORDER BY chunk_index
+                    SELECT dc.id, dc.embedding, dc.embedding_model
+                    FROM bc_legal_ds.document_chunks dc
+                    JOIN bc_legal_ds.documents d ON d.id = dc.document_id
+                    JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                    WHERE dc.document_id = $1
+                    AND m.company_id = $2
+                    AND dc.embedding IS NOT NULL
+                    ORDER BY dc.chunk_index
                     """,
-                    document_id
+                    document_id,
+                    company_id
                 )
 
                 return [
@@ -149,6 +183,7 @@ class VectorStorageService:
     async def similarity_search(
         self,
         query_embedding: List[float],
+        company_id: UUID,
         matter_id: Optional[UUID] = None,
         limit: int = 10,
         similarity_threshold: float = 0.8
@@ -158,7 +193,8 @@ class VectorStorageService:
 
         Args:
             query_embedding: The query vector to search for
-            matter_id: Optional matter ID to filter results
+            company_id: Company ID for tenant isolation (REQUIRED)
+            matter_id: Optional matter ID to further filter results
             limit: Maximum number of results to return
             similarity_threshold: Minimum similarity score (0-1, where 1 is identical)
 
@@ -175,6 +211,7 @@ class VectorStorageService:
                 max_distance = (1 - similarity_threshold) * 2
 
                 if matter_id:
+                    # Filter by both company_id AND matter_id
                     query = """
                         SELECT
                             dc.id,
@@ -184,30 +221,38 @@ class VectorStorageService:
                             1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
                         FROM bc_legal_ds.document_chunks dc
                         JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                        WHERE d.matter_id = $2
+                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        WHERE m.company_id = $2
+                        AND d.matter_id = $3
+                        AND dc.embedding IS NOT NULL
+                        AND dc.embedding <=> $1::vector(1536) < $4
+                        ORDER BY dc.embedding <=> $1::vector(1536)
+                        LIMIT $5
+                    """
+                    rows = await conn.fetch(
+                        query, query_embedding, company_id, matter_id, max_distance, limit
+                    )
+                else:
+                    # Filter by company_id only (search across all company's documents)
+                    query = """
+                        SELECT
+                            dc.id,
+                            dc.document_id,
+                            dc.content,
+                            dc.chunk_index,
+                            1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
+                        FROM bc_legal_ds.document_chunks dc
+                        JOIN bc_legal_ds.documents d ON d.id = dc.document_id
+                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        WHERE m.company_id = $2
                         AND dc.embedding IS NOT NULL
                         AND dc.embedding <=> $1::vector(1536) < $3
                         ORDER BY dc.embedding <=> $1::vector(1536)
                         LIMIT $4
                     """
                     rows = await conn.fetch(
-                        query, query_embedding, matter_id, max_distance, limit
+                        query, query_embedding, company_id, max_distance, limit
                     )
-                else:
-                    query = """
-                        SELECT
-                            id,
-                            document_id,
-                            content,
-                            chunk_index,
-                            1 - (embedding <=> $1::vector(1536)) / 2 as similarity
-                        FROM bc_legal_ds.document_chunks
-                        WHERE embedding IS NOT NULL
-                        AND embedding <=> $1::vector(1536) < $2
-                        ORDER BY embedding <=> $1::vector(1536)
-                        LIMIT $3
-                    """
-                    rows = await conn.fetch(query, query_embedding, max_distance, limit)
 
                 return [
                     {

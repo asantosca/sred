@@ -566,7 +566,7 @@ async def _process_document_upload(
 
         # Trigger background task for full RAG pipeline (text extraction → chunking → embedding)
         try:
-            task = process_document_pipeline.delay(str(document.id))
+            task = process_document_pipeline.delay(str(document.id), str(current_user.company_id))
             logger.info(f"Triggered background processing for document {document.id}, task ID: {task.id}")
         except Exception as task_error:
             # Log error but don't fail the upload - can be retried manually later
@@ -1273,12 +1273,17 @@ async def get_document_processing_status(
     
     Returns processing status, whether it's indexed for search, and any error information.
     """
-    # Get document and verify access
+    # Get document and verify access with tenant isolation
     document_query = select(DocumentModel).join(
         MatterAccess, and_(
             MatterAccess.matter_id == DocumentModel.matter_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_view == True
+        )
+    ).join(
+        Matter, and_(
+            Matter.id == DocumentModel.matter_id,
+            Matter.company_id == current_user.company_id  # Tenant isolation
         )
     ).where(DocumentModel.id == document_id)
     

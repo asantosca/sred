@@ -40,12 +40,13 @@ class BillableService:
         Calculates duration from message timestamps and optionally
         generates an AI description of the work performed.
         """
-        # Get the conversation
+        # Get the conversation with tenant isolation
         conv_result = await self.db.execute(
             select(Conversation).where(
                 and_(
                     Conversation.id == conversation_id,
-                    Conversation.user_id == current_user.id
+                    Conversation.user_id == current_user.id,
+                    Conversation.company_id == current_user.company_id  # Tenant isolation
                 )
             )
         )
@@ -134,12 +135,13 @@ Generate ONLY the billing description, nothing else:"""
         current_user: User
     ) -> str:
         """Regenerate the AI description for an existing session."""
-        # Get the session
+        # Get the session with tenant isolation
         session_result = await self.db.execute(
             select(BillableSession).where(
                 and_(
                     BillableSession.id == session_id,
-                    BillableSession.user_id == current_user.id
+                    BillableSession.user_id == current_user.id,
+                    BillableSession.company_id == current_user.company_id  # Tenant isolation
                 )
             )
         )
@@ -172,10 +174,13 @@ Generate ONLY the billing description, nothing else:"""
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> BillableSessionListResponse:
-        """List billable sessions for the current user."""
-        # Build query
+        """List billable sessions for the current user with tenant isolation."""
+        # Build query with tenant isolation
         query = select(BillableSession).where(
-            BillableSession.user_id == current_user.id
+            and_(
+                BillableSession.user_id == current_user.id,
+                BillableSession.company_id == current_user.company_id  # Tenant isolation
+            )
         )
 
         if matter_id:
@@ -247,12 +252,13 @@ Generate ONLY the billing description, nothing else:"""
         session_id: UUID,
         current_user: User
     ) -> BillableSessionResponse:
-        """Get a single billable session."""
+        """Get a single billable session with tenant isolation."""
         result = await self.db.execute(
             select(BillableSession).where(
                 and_(
                     BillableSession.id == session_id,
-                    BillableSession.user_id == current_user.id
+                    BillableSession.user_id == current_user.id,
+                    BillableSession.company_id == current_user.company_id  # Tenant isolation
                 )
             )
         )
@@ -288,12 +294,13 @@ Generate ONLY the billing description, nothing else:"""
         updates: BillableSessionUpdate,
         current_user: User
     ) -> BillableSession:
-        """Update a billable session."""
+        """Update a billable session with tenant isolation."""
         result = await self.db.execute(
             select(BillableSession).where(
                 and_(
                     BillableSession.id == session_id,
-                    BillableSession.user_id == current_user.id
+                    BillableSession.user_id == current_user.id,
+                    BillableSession.company_id == current_user.company_id  # Tenant isolation
                 )
             )
         )
@@ -325,12 +332,13 @@ Generate ONLY the billing description, nothing else:"""
         session_id: UUID,
         current_user: User
     ) -> bool:
-        """Delete a billable session."""
+        """Delete a billable session with tenant isolation."""
         result = await self.db.execute(
             select(BillableSession).where(
                 and_(
                     BillableSession.id == session_id,
-                    BillableSession.user_id == current_user.id
+                    BillableSession.user_id == current_user.id,
+                    BillableSession.company_id == current_user.company_id  # Tenant isolation
                 )
             )
         )
@@ -350,12 +358,13 @@ Generate ONLY the billing description, nothing else:"""
         session_ids: List[UUID],
         current_user: User
     ) -> List[BillableSession]:
-        """Mark multiple sessions as exported."""
+        """Mark multiple sessions as exported with tenant isolation."""
         result = await self.db.execute(
             select(BillableSession).where(
                 and_(
                     BillableSession.id.in_(session_ids),
                     BillableSession.user_id == current_user.id,
+                    BillableSession.company_id == current_user.company_id,  # Tenant isolation
                     BillableSession.is_exported == False
                 )
             )

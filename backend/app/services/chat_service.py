@@ -228,13 +228,19 @@ class ChatService:
     async def list_conversations(
         self,
         user_id: UUID,
+        company_id: UUID,
         page: int = 1,
         page_size: int = 20,
         include_archived: bool = False
     ) -> ConversationListResponse:
-        """List user's conversations with pagination"""
-        # Build query
-        query = select(Conversation).where(Conversation.user_id == user_id)
+        """List user's conversations with pagination and tenant isolation"""
+        # Build query with tenant isolation
+        query = select(Conversation).where(
+            and_(
+                Conversation.user_id == user_id,
+                Conversation.company_id == company_id  # Tenant isolation
+            )
+        )
 
         if not include_archived:
             query = query.where(Conversation.is_archived == False)
@@ -330,6 +336,7 @@ class ChatService:
     async def search_conversations(
         self,
         user_id: UUID,
+        company_id: UUID,
         query: str,
         page: int = 1,
         page_size: int = 20
@@ -341,12 +348,13 @@ class ChatService:
         from sqlalchemy import text
 
         # First, generate summaries for conversations without them (up to 5 at a time)
-        await self._generate_missing_summaries(user_id, limit=5)
+        await self._generate_missing_summaries(user_id, company_id, limit=5)
 
-        # Full-text search query
+        # Full-text search query with tenant isolation
         search_query = select(Conversation).where(
             and_(
                 Conversation.user_id == user_id,
+                Conversation.company_id == company_id,  # Tenant isolation
                 text("""
                     to_tsvector('english', COALESCE(summary, '') || ' ' || COALESCE(title, ''))
                     @@ plainto_tsquery('english', :query)
@@ -401,12 +409,13 @@ class ChatService:
             page_size=page_size
         )
 
-    async def _generate_missing_summaries(self, user_id: UUID, limit: int = 5) -> None:
+    async def _generate_missing_summaries(self, user_id: UUID, company_id: UUID, limit: int = 5) -> None:
         """Generate summaries for conversations that don't have them (lazy generation)."""
-        # Find conversations without summaries that have messages
+        # Find conversations without summaries that have messages (with tenant isolation)
         query = select(Conversation).where(
             and_(
                 Conversation.user_id == user_id,
+                Conversation.company_id == company_id,  # Tenant isolation
                 Conversation.summary.is_(None)
             )
         ).order_by(Conversation.updated_at.desc()).limit(limit)
@@ -473,12 +482,13 @@ Summary:"""
         feedback: MessageFeedback,
         current_user: User
     ) -> Message:
-        """Submit rating/feedback for a message"""
-        # Get message and verify access
+        """Submit rating/feedback for a message with tenant isolation"""
+        # Get message and verify access with tenant isolation
         message_query = select(Message).join(Conversation).where(
             and_(
                 Message.id == message_id,
-                Conversation.user_id == current_user.id
+                Conversation.user_id == current_user.id,
+                Conversation.company_id == current_user.company_id  # Tenant isolation
             )
         )
         result = await self.db.execute(message_query)
@@ -498,11 +508,12 @@ Summary:"""
     # Helper methods
 
     async def _get_conversation(self, conversation_id: UUID, user: User) -> Conversation:
-        """Get conversation and verify access"""
+        """Get conversation and verify access with tenant isolation"""
         query = select(Conversation).where(
             and_(
                 Conversation.id == conversation_id,
-                Conversation.user_id == user.id
+                Conversation.user_id == user.id,
+                Conversation.company_id == user.company_id  # Tenant isolation
             )
         )
         result = await self.db.execute(query)
@@ -594,9 +605,10 @@ Summary:"""
             logger.warning("Failed to generate query embedding, proceeding without context")
             return [], []
 
-        # Perform vector similarity search
+        # Perform vector similarity search (filtered by company_id at database level)
         search_results = await vector_storage_service.similarity_search(
             query_embedding=query_embedding,
+            company_id=user.company_id,
             matter_id=matter_id,
             limit=max_chunks,
             similarity_threshold=similarity_threshold
@@ -610,7 +622,7 @@ Summary:"""
             doc_query = select(Document, Matter).join(Matter).where(
                 and_(
                     Document.id == result["document_id"],
-                    Matter.company_id == user.company_id
+                    Matter.company_id == user.company_id  # Belt-and-suspenders check
                 )
             )
             doc_result = await self.db.execute(doc_query)

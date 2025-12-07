@@ -8,7 +8,7 @@ from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.db.session import async_session_factory
 from app.services.document_processor import DocumentProcessor
-from app.models.models import Document
+from app.models.models import Document, Matter
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ STATUS_FAILED = "failed"
 
 
 @celery_app.task(name="process_document_pipeline", bind=True, max_retries=3)
-def process_document_pipeline(self, document_id: str) -> dict:
+def process_document_pipeline(self, document_id: str, company_id: str) -> dict:
     """
     Background task to process a document through the full RAG pipeline:
     1. Text extraction
@@ -31,13 +31,14 @@ def process_document_pipeline(self, document_id: str) -> dict:
     Args:
         self: Celery task instance (for retry)
         document_id: UUID of the document to process
+        company_id: Company ID for tenant isolation (REQUIRED)
 
     Returns:
         dict: Processing result with status and details
     """
     import asyncio
 
-    logger.info(f"Starting document processing pipeline for document {document_id}")
+    logger.info(f"Starting document processing pipeline for document {document_id} (company: {company_id})")
 
     try:
         # Get or create event loop for this thread
@@ -51,7 +52,7 @@ def process_document_pipeline(self, document_id: str) -> dict:
             asyncio.set_event_loop(loop)
 
         # Run async processing in sync context
-        result = loop.run_until_complete(_process_document_async(document_id))
+        result = loop.run_until_complete(_process_document_async(document_id, company_id))
 
         logger.info(f"Document {document_id} processed successfully")
         return result
@@ -74,17 +75,19 @@ def process_document_pipeline(self, document_id: str) -> dict:
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
 
 
-async def _process_document_async(document_id: str) -> dict:
+async def _process_document_async(document_id: str, company_id: str) -> dict:
     """
-    Async helper to process document through pipeline.
+    Async helper to process document through pipeline with tenant isolation.
 
     Args:
         document_id: UUID of document to process
+        company_id: Company ID for tenant isolation
 
     Returns:
         dict: Processing result
     """
     doc_uuid = UUID(document_id)
+    company_uuid = UUID(company_id)
 
     async with async_session_factory() as session:
         processor = DocumentProcessor(session)
@@ -94,7 +97,7 @@ async def _process_document_async(document_id: str) -> dict:
 
         # Step 1: Extract text from document
         logger.info(f"Extracting text from document {document_id}")
-        extraction_success = await processor.process_text_extraction(doc_uuid)
+        extraction_success = await processor.process_text_extraction(doc_uuid, company_uuid)
 
         if not extraction_success:
             logger.error(f"Text extraction failed for document {document_id}")
@@ -107,7 +110,7 @@ async def _process_document_async(document_id: str) -> dict:
 
         # Step 2: Process chunking
         logger.info(f"Processing chunking for document {document_id}")
-        chunking_success = await processor.process_chunking(doc_uuid)
+        chunking_success = await processor.process_chunking(doc_uuid, company_uuid)
 
         if not chunking_success:
             logger.error(f"Chunking failed for document {document_id}")
@@ -123,7 +126,7 @@ async def _process_document_async(document_id: str) -> dict:
 
         # Step 3: Generate embeddings
         logger.info(f"Generating embeddings for document {document_id}")
-        embedding_success = await processor.process_embeddings(doc_uuid)
+        embedding_success = await processor.process_embeddings(doc_uuid, company_uuid)
 
         if not embedding_success:
             logger.error(f"Embedding generation failed for document {document_id}")
@@ -187,7 +190,7 @@ async def _update_document_status_in_session(
 
 
 @celery_app.task(name="process_document_chunking", bind=True, max_retries=3)
-def process_document_chunking(self, document_id: str) -> dict:
+def process_document_chunking(self, document_id: str, company_id: str) -> dict:
     """
     Background task to process document chunking only.
 
@@ -196,21 +199,23 @@ def process_document_chunking(self, document_id: str) -> dict:
     Args:
         self: Celery task instance
         document_id: UUID of document to chunk
+        company_id: Company ID for tenant isolation (REQUIRED)
 
     Returns:
         dict: Chunking result
     """
     import asyncio
 
-    logger.info(f"Starting chunking for document {document_id}")
+    logger.info(f"Starting chunking for document {document_id} (company: {company_id})")
 
     try:
         doc_uuid = UUID(document_id)
+        company_uuid = UUID(company_id)
 
         async def _chunk():
             async with async_session_factory() as session:
                 processor = DocumentProcessor(session)
-                success = await processor.process_chunking(doc_uuid)
+                success = await processor.process_chunking(doc_uuid, company_uuid)
 
                 if success:
                     await _update_document_status_in_session(
@@ -232,7 +237,7 @@ def process_document_chunking(self, document_id: str) -> dict:
 
 
 @celery_app.task(name="process_document_embeddings", bind=True, max_retries=3)
-def process_document_embeddings(self, document_id: str) -> dict:
+def process_document_embeddings(self, document_id: str, company_id: str) -> dict:
     """
     Background task to generate embeddings for document chunks.
 
@@ -241,21 +246,23 @@ def process_document_embeddings(self, document_id: str) -> dict:
     Args:
         self: Celery task instance
         document_id: UUID of document to generate embeddings for
+        company_id: Company ID for tenant isolation (REQUIRED)
 
     Returns:
         dict: Embedding generation result
     """
     import asyncio
 
-    logger.info(f"Starting embedding generation for document {document_id}")
+    logger.info(f"Starting embedding generation for document {document_id} (company: {company_id})")
 
     try:
         doc_uuid = UUID(document_id)
+        company_uuid = UUID(company_id)
 
         async def _embed():
             async with async_session_factory() as session:
                 processor = DocumentProcessor(session)
-                success = await processor.process_embeddings(doc_uuid)
+                success = await processor.process_embeddings(doc_uuid, company_uuid)
 
                 if success:
                     await _update_document_status_in_session(
