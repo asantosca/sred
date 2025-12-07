@@ -1,4 +1,4 @@
-# BC Legal Tech - Implementation Roadmap v2
+# BC Legal Tech - Implementation Roadmap v3
 
 ## Vision
 
@@ -7,85 +7,63 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 - **Solo Lawyers**: One person is tenant, admin, and user
 - **Multi-User Firms**: One tenant (law firm) with multiple admins and users
 
-## Tech Stack (Actual)
+## Tech Stack
 
 ### Backend
 
 - **Framework**: FastAPI (Python) with async support
-- **Database**: PostgreSQL 15 with PGvector extension (bc_legal_ds schema)
+- **Database**: PostgreSQL 15 with pgvector extension
 - **ORM**: SQLAlchemy 2.0 (async)
-- **Cache**: Valkey (Redis-compatible, open source)
+- **Cache/Broker**: Valkey (Redis-compatible, 20-33% cheaper than Redis)
 - **Storage**: AWS S3 (LocalStack for local dev)
-- **Background Jobs**: Celery + Valkey [Done]
-- **Migrations**: Alembic with single consolidated initial migration
+- **Background Jobs**: Celery + Valkey
+- **Migrations**: Alembic
 
 ### AI/ML
 
 - **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
-- **Chat**: Claude 3.5 Sonnet (planned)
-- **Vector DB**: PostgreSQL + PGvector
+- **Chat**: Claude claude-3-7-sonnet-20250219
+- **Vector DB**: PostgreSQL + pgvector
 - **Search**: Semantic similarity (cosine distance)
 
-### Frontend (Planned)
+### Frontend
 
-- **Framework**: React + TypeScript
+- **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS
-- **State Management**: React Query + Context API
+- **State Management**: Zustand + TanStack React Query
 
 ### Infrastructure
 
-- **Cloud**: AWS
-- **IaC**: Terraform (structure exists, not configured)
-- **Deployment**: ECS or Railway (backend), Vercel (frontend)
+- **Cloud**: AWS (RDS, ElastiCache, S3, ECS, CloudFront)
+- **IaC**: Terraform
+- **Monitoring**: Sentry + CloudWatch
 
 ### Multi-Tenancy
 
 - **Approach**: Row-level security (company_id filtering)
 - **Isolation**: Company-based with JWT tokens
-- **Models**: Currently shared database, can migrate to dedicated schemas later
-
-**Infrastructure**:
-AI-powered legal document intelligence platform for law firms in British Columbia.
-This is an app that uses PostgreSQL in (AWS RDS with backups)
-It uses Valkey cluster for caching and task queue (AWS ElastiCache)
-S3 buckets with IAM policies are used for document uploads
-Backend deployment (AWS ECS)
-Frontend deployment (CloudFront)
-Environment configuration (Secrets Manager)
-SSL certificates and domain setup
-Monitoring and alerting (CloudWatch)
-Log aggregation (CloudWatch Logs)
 
 ---
 
-The plan is: once the system is deployed to production, recruit 3 to 5 small law firms in BC, onboard each firm (1-2 users per firm), weekly check-ins and feedback sessions, monitor usage and errors, iterate based on feedback.
+## Beta Success Criteria
 
-Our Success Criteria:
+Recruit 3-5 small law firms in BC, onboard each firm (1-2 users per firm), weekly check-ins and feedback sessions, monitor usage and errors, iterate based on feedback.
 
 - 80% of users successfully upload documents
 - 80% of users successfully search documents
 - 80% of users successfully use chat
 - Average response: "Would recommend to colleague"
 
-How do we get there:
-Develop an easy to use system that delivers quality and accurate results.
-
-# BC Legal Tech - Development Roadmap
-
-Implementation order: Each section must complete before the next begins.
-
 ---
 
 ## Section 1: Core Features (COMPLETE)
 
-_Foundation is ready_
-
 - [x] JWT authentication with refresh token rotation
-- [x] Document upload (all form types)
+- [x] Document upload (PDF, DOCX, TXT)
 - [x] Semantic search with embeddings
 - [x] Chat with RAG and source citations
-- [x] Matter management
+- [x] Matter management with access control
 - [x] Rate limiting (slowapi)
 - [x] Input validation middleware
 - [x] CORS configuration
@@ -96,43 +74,51 @@ _Foundation is ready_
 
 ---
 
-## Section 2a: Pre-Deployment Hardening
-
-_Must complete before deploying to AWS_
+## Section 2: Pre-Deployment Hardening (COMPLETE)
 
 - [x] Security scanning and vulnerability assessment
 - [x] SQL injection audit (verify ORM usage)
 - [x] Tenant isolation audit (company_id filtering on all queries)
 - [x] CORS configuration review (add production domains)
-- [ ] CI/CD pipeline from GitHub (GitHub Actions)
+- [x] Sample data on signup (welcome matter and getting started conversation)
+- [x] Matter-scoped conversations
+- [x] Chat history as searchable knowledge (lazy-generated summaries + full-text search)
+- [x] Billable hours tracking with AI-written descriptions
+
+---
+
+## Section 3: Beta-Critical Features
+
+_Must complete before beta users can test with real documents_
+
+**RAG Quality (Critical for Beta Feedback):**
+
+- [ ] Hybrid search (semantic + BM25 keyword)
+  - Lawyers search for exact terms: "Section 12.3", "Smith v. Jones"
+  - Vector-only search misses these exact matches
+  - Without this, beta feedback will be "search doesn't work"
+
+- [ ] OCR support for scanned documents
+  - Many legal docs are scanned PDFs (court filings, signed contracts)
+  - Beta users will upload these and get empty results
+  - Blocker for real-world testing
+
+**Performance:**
+
+- [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Database query optimization
 - [ ] API response time benchmarks
 
 ---
 
-## Section 2b: Product Differentiation
-
-_Even though these could be done after MVP, they will help differentiate the product_
-
-- [x] Sample data on signup (welcome matter and getting started conversation)
-- [x] Matter-scoped conversations (matter_id on conversations)
-- [x] Matter dropdown on new conversation
-- [x] Show matter badge in conversation list
-- [x] Show confidence level on AI responses
-- [x] Chat history as searchable knowledge (lazy-generated summaries + full-text search)
-- [x] Billable hours: Generate AI-written description of legal work performed
-- [x] Billable hours: Calculate session duration from timestamps
-
----
-
-## Section 3: AWS Infrastructure Deployment
+## Section 4: AWS Infrastructure Deployment
 
 _Must complete before beta users can access_
 
 **Database and Cache:**
 
 - [ ] Production PostgreSQL (AWS RDS with automated backups)
-- [ ] Production Valkey cluster (AWS ElastiCache - 20-33% cheaper than Redis)
+- [ ] Production Valkey cluster (AWS ElastiCache)
 
 **Storage:**
 
@@ -140,7 +126,7 @@ _Must complete before beta users can access_
 
 **Compute:**
 
-- [ ] Backend deployment (AWS ECS or App Runner from GitHub)
+- [ ] Backend deployment (AWS ECS or App Runner)
 - [ ] Frontend deployment (AWS Amplify: app.bclegaltech.ca)
 
 **Networking and Security:**
@@ -162,7 +148,7 @@ _Must complete before beta users can access_
 
 ---
 
-## Section 4: Documentation and Support Setup
+## Section 5: Documentation and Support Setup
 
 _Must complete before beta users can access_
 
@@ -188,7 +174,7 @@ _Must complete before beta users can access_
 
 ---
 
-## Section 5: Beta Feedback and Onboarding
+## Section 6: Beta Feedback Implementation
 
 _Implement during beta based on user feedback_
 
@@ -198,9 +184,23 @@ _Implement during beta based on user feedback_
 
 ---
 
-## Section 6: MVP Features
+## Section 7: MVP Features
 
 _Required for public launch after beta_
+
+**RAG Quality (Differentiators):**
+
+- [ ] Confidence scoring on AI responses
+  - Lawyers need to know when to double-check
+  - Liability concern without it
+
+- [ ] Re-ranking of retrieved chunks
+  - Improves answer quality noticeably
+  - Differentiates from basic ChatGPT + copy-paste
+
+- [ ] Excel/spreadsheet support
+  - Common in corporate/real estate law
+  - Financial schedules, closing checklists
 
 **Billing and Payments:**
 
@@ -250,23 +250,25 @@ _Required for public launch after beta_
 
 ---
 
-## Section 7: Post-MVP Enhancements
+## Section 8: Post-MVP Enhancements
 
-_Future features after public launch. Discuss with customers what makes sense._
+_Future features after public launch. Prioritize based on customer feedback._
 
-**Authentication Enhancements:**
+**Authentication (For Firm Adoption):**
 
 - [ ] Google OAuth authentication
 - [ ] Microsoft OAuth authentication (Office 365)
-- [ ] Migrate from localStorage JWT to httpOnly cookie sessions
+- [ ] Role hierarchy (Partner, Associate, Paralegal, Guest)
 - [ ] Session management UI (view active sessions, revoke devices)
-- [ ] CSRF protection (required for cookie-based auth)
+
+**AI/ML Optimization:**
+
+- [ ] Evaluate Voyage AI voyage-law-2 embeddings (legal-specific)
+  - Would require schema migration (1536 -> 1024 dimensions)
+  - Test after sufficient usage data to benchmark
 
 **Document Features:**
 
-- [ ] OCR support for scanned documents
-- [ ] Hybrid search (semantic + BM25 keyword)
-- [ ] Bulk upload with Excel import
 - [ ] Bulk upload interface (multiple files at once)
 - [ ] Version control API endpoints
 - [ ] Document superseding logic
@@ -278,7 +280,6 @@ _Future features after public launch. Discuss with customers what makes sense._
   - Correspondence Upload (author, recipient, CC, subject)
   - Discovery Upload (type, parties, response due date)
   - Exhibit Upload (exhibit number, related document linking)
-- [ ] Upload session management (save drafts)
 
 **Chat Enhancements:**
 
@@ -302,11 +303,16 @@ _Future features after public launch. Discuss with customers what makes sense._
 - [ ] Webhooks for external integrations
 - [ ] API key management for programmatic access
 - [ ] Custom branding (Enterprise)
-- [ ] Analytics dashboard (usage stats)
+- [ ] Practice area specialization (templates, taxonomy)
 - [ ] Audit logging UI
 
-**Marketing and Engagement:**
+**Security Hardening:**
 
-- [ ] Email drip campaign (Day 0, 2, 5, 14)
+- [ ] Migrate from localStorage JWT to httpOnly cookie sessions
+- [ ] CSRF protection (required for cookie-based auth)
 - [ ] Penetration testing
+
+**Scale:**
+
 - [ ] CloudFront CDN for global distribution
+- [ ] Multi-region deployment
