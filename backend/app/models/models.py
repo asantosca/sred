@@ -1,7 +1,7 @@
 # app/models/models.py - Fixed database models for BC Legal Tech
 
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL, Float
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, TSVECTOR
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql import func
 import uuid
@@ -291,6 +291,9 @@ class DocumentChunk(Base):
     # Deferred loading to avoid type registration issues until needed
     embedding = deferred(Column(Vector(1536), nullable=True))
     embedding_model = Column(String(100), nullable=True)
+    # Full-text search vector for hybrid search (BM25 keyword matching)
+    # Auto-populated by database trigger on insert/update
+    search_vector = deferred(Column(TSVECTOR, nullable=True))
     chunk_metadata = Column("metadata", JSON, nullable=True)
     token_count = Column(Integer, nullable=True)
     char_count = Column(Integer, nullable=False)

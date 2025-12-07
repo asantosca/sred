@@ -93,10 +93,10 @@ _Must complete before beta users can test with real documents_
 
 **RAG Quality (Critical for Beta Feedback):**
 
-- [ ] Hybrid search (semantic + BM25 keyword)
+- [x] Hybrid search (semantic + BM25 keyword)
   - Lawyers search for exact terms: "Section 12.3", "Smith v. Jones"
   - Vector-only search misses these exact matches
-  - Without this, beta feedback will be "search doesn't work"
+  - Implemented using PostgreSQL tsvector + GIN index with RRF score fusion
 
 - [ ] OCR support for scanned documents
   - Many legal docs are scanned PDFs (court filings, signed contracts)
