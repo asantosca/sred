@@ -12,7 +12,6 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
-  Download,
   Check,
   X,
   MessageSquare,
@@ -82,11 +81,11 @@ export default function BillablePage() {
     mutationFn: (ids: string[]) => billableApi.export(ids),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['billable-sessions'] })
-      toast.success(`Marked ${response.data.exported_count} sessions as exported`)
+      toast.success(`Marked ${response.data.exported_count} session(s) as billed`)
       setSelectedIds(new Set())
     },
     onError: () => {
-      toast.error('Failed to export sessions')
+      toast.error('Failed to mark sessions as billed')
     },
   })
 
@@ -158,7 +157,7 @@ export default function BillablePage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Billable Hours</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Track and export time spent on AI-assisted legal research
+              Track time spent on AI-assisted legal research
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -181,7 +180,7 @@ export default function BillablePage() {
                 onChange={(e) => setIncludeExported(e.target.checked)}
                 className="rounded border-gray-300"
               />
-              <span className="text-sm text-gray-700">Show exported</span>
+              <span className="text-sm text-gray-700">Show billed</span>
             </label>
           </div>
           <div className="flex items-center gap-2">
@@ -191,8 +190,8 @@ export default function BillablePage() {
                 onClick={handleExport}
                 disabled={exportMutation.isPending}
               >
-                <Download className="mr-2 h-4 w-4" />
-                Mark {selectedIds.size} as Exported
+                <Check className="mr-2 h-4 w-4" />
+                Mark {selectedIds.size} as Billed
               </Button>
             )}
           </div>
@@ -211,7 +210,7 @@ export default function BillablePage() {
               <p className="mt-2 text-sm text-gray-500">
                 Billable sessions are created from your chat conversations.
                 <br />
-                Start a chat and click "Track Time" to create a billable entry.
+                Start a chat, then click the "Track Time" button in the conversation header.
               </p>
             </div>
           ) : (
@@ -327,7 +326,7 @@ export default function BillablePage() {
                     <td className="px-4 py-4 text-center">
                       {session.is_exported ? (
                         <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                          Exported
+                          Billed
                         </span>
                       ) : session.is_billable ? (
                         <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">

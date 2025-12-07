@@ -229,7 +229,7 @@ Generate ONLY the billing description, nothing else:"""
             matter_name = None
             if session.matter_id:
                 matter_result = await self.db.execute(
-                    select(Matter.name).where(Matter.id == session.matter_id)
+                    select(Matter.client_name).where(Matter.id == session.matter_id)
                 )
                 matter_name = matter_result.scalar()
 
@@ -278,7 +278,7 @@ Generate ONLY the billing description, nothing else:"""
         matter_name = None
         if session.matter_id:
             matter_result = await self.db.execute(
-                select(Matter.name).where(Matter.id == session.matter_id)
+                select(Matter.client_name).where(Matter.id == session.matter_id)
             )
             matter_name = matter_result.scalar()
 

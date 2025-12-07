@@ -283,7 +283,7 @@ class ChatService:
             # Get matter name if matter_id exists
             matter_name = None
             if conv.matter_id:
-                matter_query = select(Matter.name).where(Matter.id == conv.matter_id)
+                matter_query = select(Matter.client_name).where(Matter.id == conv.matter_id)
                 matter_result = await self.db.execute(matter_query)
                 matter_name = matter_result.scalar()
 
@@ -391,7 +391,7 @@ class ChatService:
 
             matter_name = None
             if conv.matter_id:
-                matter_query = select(Matter.name).where(Matter.id == conv.matter_id)
+                matter_query = select(Matter.client_name).where(Matter.id == conv.matter_id)
                 matter_result = await self.db.execute(matter_query)
                 matter_name = matter_result.scalar()
 
