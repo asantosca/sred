@@ -96,10 +96,7 @@ export default function RegisterPage() {
                   Registration Successful!
                 </h3>
                 <p className="mt-4 text-base text-gray-600">
-                  Your account has been created successfully.
-                </p>
-                <p className="mt-2 text-sm text-gray-500">
-                  You can now <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">sign in</Link> to your account.
+                  Check your inbox to validate the email account
                 </p>
               </div>
             ) : (

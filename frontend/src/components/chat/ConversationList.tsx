@@ -1,6 +1,7 @@
 // ConversationList component - Shows list of user's conversations
 
-import { MessageSquare, Pin, Trash2, Archive } from 'lucide-react'
+import { useState } from 'react'
+import { MessageSquare, Pin, Trash2, Archive, Briefcase, Search, X } from 'lucide-react'
 import type { Conversation } from '@/types/chat'
 import Button from '@/components/ui/Button'
 
@@ -11,6 +12,9 @@ interface ConversationListProps {
   onDeleteConversation: (conversationId: string) => void
   onNewConversation: () => void
   loading?: boolean
+  onSearch?: (query: string) => void
+  searchResults?: Conversation[]
+  isSearching?: boolean
 }
 
 export default function ConversationList({
@@ -20,7 +24,12 @@ export default function ConversationList({
   onDeleteConversation,
   onNewConversation,
   loading = false,
+  onSearch,
+  searchResults,
+  isSearching = false,
 }: ConversationListProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     const now = new Date()
@@ -41,39 +50,103 @@ export default function ConversationList({
     return text.substring(0, maxLength) + '...'
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim().length >= 2 && onSearch) {
+      onSearch(searchQuery.trim())
+    }
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('')
+    setShowSearch(false)
+    if (onSearch) {
+      onSearch('')
+    }
+  }
+
+  // Use search results if available, otherwise use conversations
+  const displayConversations = searchQuery && searchResults ? searchResults : conversations
+
   return (
     <div className="flex h-full flex-col border-r border-gray-200 bg-white">
       {/* Header */}
       <div className="border-b border-gray-200 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
-          <Button
-            onClick={onNewConversation}
-            variant="primary"
-            size="sm"
-          >
-            New Chat
-          </Button>
+          <div className="flex items-center gap-2">
+            {onSearch && (
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className={`rounded p-1.5 transition-colors ${
+                  showSearch
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+                title="Search conversations"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            )}
+            <Button
+              onClick={onNewConversation}
+              variant="primary"
+              size="sm"
+            >
+              New Chat
+            </Button>
+          </div>
         </div>
+        {/* Search input */}
+        {showSearch && onSearch && (
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by topic, case, or keyword..."
+              className="w-full rounded-md border border-gray-300 py-2 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </form>
+        )}
       </div>
 
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
-        {loading ? (
+        {loading || isSearching ? (
           <div className="flex items-center justify-center p-8">
-            <div className="text-sm text-gray-500">Loading conversations...</div>
+            <div className="text-sm text-gray-500">
+              {isSearching ? 'Searching...' : 'Loading conversations...'}
+            </div>
           </div>
-        ) : conversations.length === 0 ? (
+        ) : displayConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <MessageSquare className="h-12 w-12 text-gray-300" />
-            <p className="mt-2 text-sm text-gray-500">No conversations yet</p>
+            <p className="mt-2 text-sm text-gray-500">
+              {searchQuery ? 'No conversations found' : 'No conversations yet'}
+            </p>
             <p className="mt-1 text-xs text-gray-400">
-              Start a new chat to begin
+              {searchQuery ? 'Try different keywords' : 'Start a new chat to begin'}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {conversations.map((conversation) => (
+            {searchQuery && (
+              <div className="bg-blue-50 px-4 py-2 text-xs text-blue-700">
+                Found {displayConversations.length} conversation{displayConversations.length !== 1 ? 's' : ''} matching "{searchQuery}"
+              </div>
+            )}
+            {displayConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => onSelectConversation(conversation.id)}
@@ -97,6 +170,14 @@ export default function ConversationList({
                       <p className="mt-1 text-xs text-gray-500">
                         {truncateText(conversation.last_message_preview, 80)}
                       </p>
+                    )}
+                    {conversation.matter_name && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+                          <Briefcase className="h-3 w-3" />
+                          {truncateText(conversation.matter_name, 25)}
+                        </span>
+                      </div>
                     )}
                     <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
                       <span>

@@ -1,6 +1,6 @@
 // Email Confirmation page - Activate account after registration
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
@@ -19,6 +19,9 @@ export default function ConfirmEmailPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Prevent double-execution in React StrictMode
+  const hasConfirmed = useRef(false)
+
   useEffect(() => {
     const confirmEmail = async () => {
       if (!token) {
@@ -26,6 +29,12 @@ export default function ConfirmEmailPage() {
         setIsConfirming(false)
         return
       }
+
+      // Prevent duplicate API calls
+      if (hasConfirmed.current) {
+        return
+      }
+      hasConfirmed.current = true
 
       try {
         // Confirm email (activates account and returns auth tokens)

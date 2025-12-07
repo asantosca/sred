@@ -29,7 +29,20 @@ class Settings:
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30 days for refresh tokens
     
     # CORS settings
-    ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: List[str] = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://localhost:3001,http://localhost:8000"
+        ).split(",")
+        if origin.strip()
+    ]
+    # Production domains (always included when ENVIRONMENT != development)
+    CORS_PRODUCTION_ORIGINS: List[str] = [
+        "https://app.bclegaltech.ca",
+        "https://bclegaltech.ca",
+        "https://www.bclegaltech.ca",
+    ]
 
     # Frontend URL (for email links, redirects, etc.)
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")

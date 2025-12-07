@@ -236,6 +236,14 @@ export const chatApi = {
   }) =>
     api.get<ConversationListResponse>('/chat/conversations', { params }),
 
+  // Search conversations
+  searchConversations: (params: {
+    q: string
+    page?: number
+    page_size?: number
+  }) =>
+    api.get<ConversationListResponse>('/chat/conversations/search', { params }),
+
   // Get conversation with messages
   getConversation: (conversationId: string) =>
     api.get<ConversationWithMessages>(`/chat/conversations/${conversationId}`),
@@ -329,6 +337,56 @@ export const usageApi = {
   // Get plan limits
   getLimits: () =>
     api.get('/usage/limits'),
+}
+
+// Billable hours API endpoints
+import type {
+  BillableSession,
+  BillableSessionCreate,
+  BillableSessionUpdate,
+  BillableSessionListResponse,
+} from '@/types/billable'
+
+export const billableApi = {
+  // Create billable session from conversation
+  create: (data: BillableSessionCreate) =>
+    api.post<BillableSession>('/billable', data),
+
+  // List billable sessions
+  list: (params?: {
+    page?: number
+    page_size?: number
+    matter_id?: string
+    include_exported?: boolean
+    start_date?: string
+    end_date?: string
+  }) =>
+    api.get<BillableSessionListResponse>('/billable', { params }),
+
+  // Get single session
+  get: (sessionId: string) =>
+    api.get<BillableSession>(`/billable/${sessionId}`),
+
+  // Update session
+  update: (sessionId: string, data: BillableSessionUpdate) =>
+    api.patch<BillableSession>(`/billable/${sessionId}`, data),
+
+  // Delete session
+  delete: (sessionId: string) =>
+    api.delete(`/billable/${sessionId}`),
+
+  // Regenerate AI description
+  regenerateDescription: (sessionId: string) =>
+    api.post<{ session_id: string; ai_description: string }>(
+      `/billable/${sessionId}/regenerate-description`
+    ),
+
+  // Mark sessions as exported
+  export: (sessionIds: string[]) =>
+    api.post<{ exported_count: number; sessions: BillableSession[] }>(
+      '/billable/export',
+      { session_ids: sessionIds }
+    ),
 }
 
 export default api

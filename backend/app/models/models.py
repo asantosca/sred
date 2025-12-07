@@ -309,11 +309,13 @@ class Conversation(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
     title = Column(String(500), nullable=True)  # Auto-generated from first message
+    summary = Column(Text, nullable=True)  # AI-generated summary for search
+    summary_generated_at = Column(DateTime(timezone=True), nullable=True)
     is_pinned = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     user = relationship("User")
     matter = relationship("Matter")
@@ -348,6 +350,41 @@ class Message(Base):
 
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
+
+class BillableSession(Base):
+    """Billable session model for tracking time spent on conversations"""
+    __tablename__ = "billable_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+
+    # Session timing
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    duration_minutes = Column(Integer, nullable=True)  # Calculated or manually adjusted
+
+    # AI-generated description (editable by user)
+    ai_description = Column(Text, nullable=True)  # Auto-generated from conversation
+    description = Column(Text, nullable=True)  # User-edited version (if changed)
+
+    # Billing details
+    activity_code = Column(String(50), nullable=True)  # e.g., "A101" for Research
+    is_billable = Column(Boolean, default=True)
+    is_exported = Column(Boolean, default=False)
+    exported_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Audit fields
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    conversation = relationship("Conversation")
+    matter = relationship("Matter")
+
 
 class WaitlistSignup(Base):
     """Waitlist signup model for marketing site"""

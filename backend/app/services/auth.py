@@ -221,7 +221,7 @@ class AuthService:
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is disabled"
+                detail="Account is disabled. Did you validate your email?"
             )
         
         if not verify_password(login.password, user.password_hash):
@@ -401,9 +401,21 @@ class AuthService:
             await self.db.commit()
             logger.info(f"Revoked {len(tokens)} refresh tokens for user {user_id}")
 
-    async def request_password_reset(self, email: str) -> tuple[str, bool]:
+    async def request_password_reset(
+        self,
+        email: str,
+        expires_in_days: int = 0,
+        expires_in_hours: int = 1
+    ) -> tuple[str, bool]:
         """
         Request password reset for user
+
+        Args:
+            email: User's email address
+            expires_in_days: Token expiration in days (default 0)
+            expires_in_hours: Token expiration in hours (default 1)
+                For password reset: use default (1 hour)
+                For email confirmation: use expires_in_days=5
 
         Returns: (reset_token, user_exists)
         Note: Always generates a token (security best practice to prevent timing attacks),
@@ -438,8 +450,8 @@ class AuthService:
                 token.is_used = True
                 token.used_at = datetime.now(timezone.utc)
 
-            # Create new reset token (expires in 1 hour)
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+            # Create new reset token
+            expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days, hours=expires_in_hours)
 
             db_reset_token = PasswordResetToken(
                 id=uuid.uuid4(),

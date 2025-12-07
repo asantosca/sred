@@ -136,10 +136,14 @@ class UserService:
 
             await self.db.commit()
 
-            # Generate password reset token for invitation
+            # Generate invitation token (5 days TTL, longer than password reset)
             from app.services.auth import AuthService
             auth_service = AuthService(self.db)
-            invitation_token, _ = await auth_service.request_password_reset(new_user.email)
+            invitation_token, _ = await auth_service.request_password_reset(
+                new_user.email,
+                expires_in_days=5,
+                expires_in_hours=0
+            )
 
             logger.info(f"User {new_user.email} invited to company {company_id}")
 

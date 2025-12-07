@@ -23,6 +23,7 @@ import CreateMatterPage from '@/pages/CreateMatterPage'
 import MatterDetailPage from '@/pages/MatterDetailPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import BillablePage from '@/pages/BillablePage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -134,6 +135,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Billable hours route */}
+          <Route
+            path="/billable"
+            element={
+              <ProtectedRoute>
+                <BillablePage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/users"
             element={

@@ -52,8 +52,12 @@ async def register_company(
     # Create company and admin user. Both are inactive requiring email confirmation.
     company, admin_user = await auth_service.create_company_with_admin(registration)
 
-    # Request password reset token for email confirmation
-    reset_token, user_exists = await auth_service.request_password_reset(admin_user.email)
+    # Request token for email confirmation (5 days TTL, longer than password reset)
+    reset_token, user_exists = await auth_service.request_password_reset(
+        admin_user.email,
+        expires_in_days=5,
+        expires_in_hours=0
+    )
 
     # Send confirmation email with password setup link
     try:
@@ -61,6 +65,7 @@ async def register_company(
         await email_service.send_admin_email_confirmation(
             to_email=admin_user.email,
             token=reset_token,
+            expiry="5 days",
             user_name=user_name
         )
     except Exception as e:
@@ -356,6 +361,9 @@ async def confirm_email(
             detail="User not found"
         )
 
+    # Track if this is a new activation (for welcome data)
+    is_new_activation = not user.is_active
+
     # Activate user
     if not user.is_active:
         user.is_active = True
@@ -371,6 +379,15 @@ async def confirm_email(
     db_token.used_at = datetime.now(timezone.utc)
 
     await db.commit()
+
+    # Create welcome sample data for newly activated users
+    if is_new_activation:
+        from app.services.sample_data import SampleDataService
+        sample_data_service = SampleDataService(db)
+        await sample_data_service.create_welcome_data(
+            user_id=user.id,
+            company_id=user.company_id
+        )
 
     # Create new authentication tokens
     access_token = await auth_service.create_user_auth_token(user)

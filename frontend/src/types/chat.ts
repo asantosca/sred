@@ -29,6 +29,7 @@ export interface Conversation {
   user_id: string
   company_id: string
   matter_id?: string
+  matter_name?: string
   title?: string
   is_pinned: boolean
   is_archived: boolean

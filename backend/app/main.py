@@ -53,14 +53,15 @@ app.state.limiter = limiter
 # Add rate limit exceeded handler
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Build CORS origins list from settings
+cors_origins = settings.CORS_ORIGINS.copy()
+if settings.ENVIRONMENT != "development":
+    cors_origins.extend(settings.CORS_PRODUCTION_ORIGINS)
+
 # Add CORS middleware (must be first)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Main React app
-        "http://localhost:3001",  # Marketing site
-        "http://localhost:8000"   # Backend (for docs)
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

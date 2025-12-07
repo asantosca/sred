@@ -15,6 +15,7 @@ import {
   LogOut,
   User,
   Briefcase,
+  Clock,
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Matters', href: '/matters', icon: Briefcase },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
+    { name: 'Billable Hours', href: '/billable', icon: Clock },
     { name: 'Users', href: '/users', icon: Users, adminOnly: true },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]

@@ -102,7 +102,7 @@ _Must complete before deploying to AWS_
 
 - [ ] Security scanning and vulnerability assessment
 - [ ] SQL injection audit (verify ORM usage)
-- [ ] CORS configuration review (add production domains)
+- [x] CORS configuration review (add production domains)
 - [ ] CI/CD pipeline from GitHub (GitHub Actions)
 - [ ] Database query optimization
 - [ ] API response time benchmarks
@@ -113,14 +113,14 @@ _Must complete before deploying to AWS_
 
 _Even though these could be done after MVP, they will help differentiate the product_
 
-- [ ] Sample data on signup ("Welcome to BC Legal Tech" matter with sample docs)
-- [ ] Matter-scoped conversations (matter_id on conversations)
-- [ ] Matter dropdown on new conversation
-- [ ] Show matter badge in conversation list
-- [ ] Show confidence level on AI responses
-- [ ] Chat history as searchable knowledge (What did we discuss last week?)
-- [ ] Billable hours: Generate AI-written description of legal work performed
-- [ ] Billable hours: Calculate session duration from timestamps
+- [x] Sample data on signup (welcome matter and getting started conversation)
+- [x] Matter-scoped conversations (matter_id on conversations)
+- [x] Matter dropdown on new conversation
+- [x] Show matter badge in conversation list
+- [x] Show confidence level on AI responses
+- [x] Chat history as searchable knowledge (lazy-generated summaries + full-text search)
+- [x] Billable hours: Generate AI-written description of legal work performed
+- [x] Billable hours: Calculate session duration from timestamps
 
 ---
 

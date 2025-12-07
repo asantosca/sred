@@ -139,6 +139,38 @@ async def list_conversations(
         raise HTTPException(status_code=500, detail=f"Failed to list conversations: {str(e)}")
 
 
+@router.get("/conversations/search", response_model=ConversationListResponse)
+@limiter.limit(get_rate_limit("chat_list"))
+async def search_conversations(
+    request: Request,
+    q: str = Query(..., min_length=2, max_length=200, description="Search query"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Search conversations by title and summary using full-text search.
+
+    This endpoint searches across conversation titles and AI-generated summaries.
+    Summaries are lazily generated when conversations are first searched.
+
+    **Rate limit**: 120 requests per minute
+    """
+    try:
+        chat_service = ChatService(db)
+        conversations = await chat_service.search_conversations(
+            user_id=current_user.id,
+            query=q,
+            page=page,
+            page_size=page_size
+        )
+        return conversations
+    except Exception as e:
+        logger.error(f"Error searching conversations: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to search conversations: {str(e)}")
+
+
 @router.get("/conversations/{conversation_id}", response_model=ConversationWithMessages)
 @limiter.limit(get_rate_limit("chat_get"))
 async def get_conversation(

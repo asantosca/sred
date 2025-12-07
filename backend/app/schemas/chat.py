@@ -81,6 +81,7 @@ class ConversationResponse(ConversationBase):
     updated_at: Optional[datetime]
     message_count: Optional[int] = Field(None, description="Total messages in conversation")
     last_message_preview: Optional[str] = Field(None, description="Preview of last message")
+    matter_name: Optional[str] = Field(None, description="Name of the associated matter")
 
     class Config:
         from_attributes = True

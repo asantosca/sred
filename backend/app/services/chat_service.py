@@ -10,7 +10,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.models import Conversation, Message, User
+from app.models.models import Conversation, Message, User, Matter
 from app.schemas.chat import (
     ChatRequest, ChatResponse, MessageResponse, MessageSource,
     ConversationCreate, ConversationUpdate, ConversationResponse,
@@ -255,7 +255,7 @@ class ChatService:
         result = await self.db.execute(query)
         conversations = result.scalars().all()
 
-        # Enrich with message count and preview
+        # Enrich with message count, preview, and matter name
         enriched = []
         for conv in conversations:
             # Get message count
@@ -274,10 +274,18 @@ class ChatService:
             if last_msg:
                 preview = last_msg.content[:100] + "..." if len(last_msg.content) > 100 else last_msg.content
 
+            # Get matter name if matter_id exists
+            matter_name = None
+            if conv.matter_id:
+                matter_query = select(Matter.name).where(Matter.id == conv.matter_id)
+                matter_result = await self.db.execute(matter_query)
+                matter_name = matter_result.scalar()
+
             enriched.append(ConversationResponse(
                 **conv.__dict__,
                 message_count=message_count,
-                last_message_preview=preview
+                last_message_preview=preview,
+                matter_name=matter_name
             ))
 
         return ConversationListResponse(
@@ -318,6 +326,146 @@ class ChatService:
         conversation = await self._get_conversation(conversation_id, current_user)
         await self.db.delete(conversation)
         await self.db.commit()
+
+    async def search_conversations(
+        self,
+        user_id: UUID,
+        query: str,
+        page: int = 1,
+        page_size: int = 20
+    ) -> ConversationListResponse:
+        """
+        Search conversations using full-text search on summaries and titles.
+        Generates summaries lazily for conversations that don't have them.
+        """
+        from sqlalchemy import text
+
+        # First, generate summaries for conversations without them (up to 5 at a time)
+        await self._generate_missing_summaries(user_id, limit=5)
+
+        # Full-text search query
+        search_query = select(Conversation).where(
+            and_(
+                Conversation.user_id == user_id,
+                text("""
+                    to_tsvector('english', COALESCE(summary, '') || ' ' || COALESCE(title, ''))
+                    @@ plainto_tsquery('english', :query)
+                """)
+            )
+        ).params(query=query).order_by(Conversation.updated_at.desc())
+
+        # Get total count
+        count_query = select(func.count()).select_from(search_query.subquery())
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar() or 0
+
+        # Apply pagination
+        search_query = search_query.offset((page - 1) * page_size).limit(page_size)
+        result = await self.db.execute(search_query)
+        conversations = result.scalars().all()
+
+        # Enrich with message count and preview (reuse existing logic)
+        enriched = []
+        for conv in conversations:
+            msg_count_query = select(func.count()).where(Message.conversation_id == conv.id)
+            msg_count_result = await self.db.execute(msg_count_query)
+            message_count = msg_count_result.scalar() or 0
+
+            last_msg_query = select(Message).where(
+                Message.conversation_id == conv.id
+            ).order_by(Message.created_at.desc()).limit(1)
+            last_msg_result = await self.db.execute(last_msg_query)
+            last_msg = last_msg_result.scalar()
+
+            preview = None
+            if last_msg:
+                preview = last_msg.content[:100] + "..." if len(last_msg.content) > 100 else last_msg.content
+
+            matter_name = None
+            if conv.matter_id:
+                matter_query = select(Matter.name).where(Matter.id == conv.matter_id)
+                matter_result = await self.db.execute(matter_query)
+                matter_name = matter_result.scalar()
+
+            enriched.append(ConversationResponse(
+                **conv.__dict__,
+                message_count=message_count,
+                last_message_preview=preview,
+                matter_name=matter_name
+            ))
+
+        return ConversationListResponse(
+            conversations=enriched,
+            total=total,
+            page=page,
+            page_size=page_size
+        )
+
+    async def _generate_missing_summaries(self, user_id: UUID, limit: int = 5) -> None:
+        """Generate summaries for conversations that don't have them (lazy generation)."""
+        # Find conversations without summaries that have messages
+        query = select(Conversation).where(
+            and_(
+                Conversation.user_id == user_id,
+                Conversation.summary.is_(None)
+            )
+        ).order_by(Conversation.updated_at.desc()).limit(limit)
+
+        result = await self.db.execute(query)
+        conversations = result.scalars().all()
+
+        for conv in conversations:
+            await self._generate_summary(conv)
+
+    async def _generate_summary(self, conversation: Conversation) -> str:
+        """Generate AI summary for a conversation."""
+        from datetime import datetime, timezone
+
+        # Get messages for this conversation
+        msg_query = select(Message).where(
+            Message.conversation_id == conversation.id
+        ).order_by(Message.created_at).limit(20)  # Limit to first 20 messages
+        msg_result = await self.db.execute(msg_query)
+        messages = msg_result.scalars().all()
+
+        if not messages:
+            return ""
+
+        # Build conversation text for summarization
+        conversation_text = "\n".join([
+            f"{'User' if m.role == 'user' else 'Assistant'}: {m.content[:500]}"
+            for m in messages
+        ])
+
+        prompt = f"""Summarize this legal research conversation in 2-3 sentences. Focus on:
+1. The main legal question or topic discussed
+2. Key documents or cases referenced
+3. The conclusion or outcome (if any)
+
+Keep it concise and searchable - use specific legal terms and names mentioned.
+
+Conversation:
+{conversation_text}
+
+Summary:"""
+
+        try:
+            response = await self.anthropic.messages.create(
+                model=settings.ANTHROPIC_MODEL,
+                max_tokens=200,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            summary = response.content[0].text.strip()
+
+            # Save summary to conversation
+            conversation.summary = summary
+            conversation.summary_generated_at = datetime.now(timezone.utc)
+            await self.db.commit()
+
+            return summary
+        except Exception as e:
+            logger.error(f"Failed to generate summary for conversation {conversation.id}: {e}")
+            return ""
 
     async def submit_feedback(
         self,
@@ -410,6 +558,16 @@ class ChatService:
         )
 
         self.db.add(message)
+
+        # Invalidate summary when new messages are added (will be regenerated lazily)
+        conv_result = await self.db.execute(
+            select(Conversation).where(Conversation.id == conversation_id)
+        )
+        conversation = conv_result.scalar_one_or_none()
+        if conversation and conversation.summary is not None:
+            conversation.summary = None
+            conversation.summary_generated_at = None
+
         await self.db.commit()
         await self.db.refresh(message)
 

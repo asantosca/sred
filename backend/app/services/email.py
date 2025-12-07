@@ -102,7 +102,7 @@ class EmailService:
             return False
 
     async def send_admin_email_confirmation(
-        self, to_email: str, token: str, user_name: Optional[str] = None
+        self, to_email: str, token: str, expiry:str, user_name: Optional[str] = None
     ) -> bool:
         """
         Send email to admin user with confirmation link for email verification
@@ -110,6 +110,7 @@ class EmailService:
         Args:
             to_email: Admin user's email address
             token: Password reset token used for email confirmation
+            expiry: When this link is expiring
             user_name: User's name (optional)
 
         Returns:
@@ -158,12 +159,11 @@ class EmailService:
                 <h2>Confirm Your Email Address</h2>
                 <p>{greeting}</p>
                 <p>Thank you for registering your company with BC Legal Tech!</p>
-                <p>To complete your registration and activate your account, please set your password by clicking the button below:</p>
+                <p>To complete your registration and activate your account, please confirm your email by clicking the button below:</p>
                 <a href="{confirm_url}" class="button">Set Your Password</a>
                 <p>Or copy and paste this link into your browser:</p>
                 <p><a href="{confirm_url}">{confirm_url}</a></p>
-                <p><strong>This link will expire in 1 hour.</strong></p>
-                <p>Once you set your password, you'll be able to log in and start using BC Legal Tech.</p>
+                <p><strong>This link will expire in {expiry}.</strong></p>
                 <div class="footer">
                     <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
                     <p>This is an automated email, please do not reply.</p>

@@ -1,6 +1,6 @@
 // SourceCitations component - Displays document sources for AI responses
 
-import { FileText, ExternalLink } from 'lucide-react'
+import { FileText, ExternalLink, Shield } from 'lucide-react'
 import type { MessageSource } from '@/types/chat'
 
 interface SourceCitationsProps {
@@ -20,9 +20,34 @@ export default function SourceCitations({
     return `${(score * 100).toFixed(0)}% match`
   }
 
+  // Calculate overall confidence from source similarity scores
+  const calculateConfidence = () => {
+    if (sources.length === 0) return 0
+    // Use average of top 3 sources (or all if fewer)
+    const topSources = sources.slice(0, 3)
+    const avgScore = topSources.reduce((sum, s) => sum + s.similarity_score, 0) / topSources.length
+    return Math.round(avgScore * 100)
+  }
+
+  const confidence = calculateConfidence()
+
+  const getConfidenceLevel = () => {
+    if (confidence >= 80) return { label: 'High', color: 'text-green-700', bg: 'bg-green-100' }
+    if (confidence >= 60) return { label: 'Medium', color: 'text-yellow-700', bg: 'bg-yellow-100' }
+    return { label: 'Low', color: 'text-red-700', bg: 'bg-red-100' }
+  }
+
+  const confidenceInfo = getConfidenceLevel()
+
   return (
     <div className="mt-3 space-y-2">
-      <div className="text-xs font-medium text-gray-500">Sources:</div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-medium text-gray-500">Sources:</div>
+        <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${confidenceInfo.bg} ${confidenceInfo.color}`}>
+          <Shield className="h-3 w-3" />
+          {confidenceInfo.label} confidence ({confidence}%)
+        </div>
+      </div>
       <div className="space-y-2">
         {sources.map((source, index) => (
           <div
