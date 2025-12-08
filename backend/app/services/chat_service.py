@@ -56,14 +56,17 @@ class ChatService:
             )
             is_new_conversation = True
 
-        # 2. Save user message
+        # 2. Get conversation history BEFORE saving new message
+        history = await self._get_conversation_history(conversation.id, limit=10)
+
+        # 3. Save user message
         user_message = await self._save_message(
             conversation_id=conversation.id,
             role="user",
             content=request.message
         )
 
-        # 3. Retrieve relevant context using RAG
+        # 4. Retrieve relevant context using RAG
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
             matter_id=conversation.matter_id,
@@ -72,11 +75,8 @@ class ChatService:
             user=current_user
         )
 
-        # 4. Build prompt with context
+        # 5. Build prompt with context
         system_prompt = self._build_system_prompt(context_chunks)
-
-        # 5. Get conversation history
-        history = await self._get_conversation_history(conversation.id, limit=10)
 
         # 6. Call Claude API
         try:
@@ -136,6 +136,7 @@ class ChatService:
 
         # 2. Get conversation history BEFORE saving new message
         history = await self._get_conversation_history(conversation.id, limit=10)
+        logger.info(f"[stream] Fetched {len(history)} messages from history for conversation {conversation.id}")
 
         # 3. Save user message
         user_message = await self._save_message(
@@ -156,16 +157,21 @@ class ChatService:
         # 5. Build prompt
         system_prompt = self._build_system_prompt(context_chunks)
 
-        # 5. Stream Claude response
+        # 6. Stream Claude response
         full_content = ""
+        formatted_messages = self._format_history_for_claude(history) + [
+            {"role": "user", "content": request.message}
+        ]
+        logger.info(f"Sending {len(formatted_messages)} messages to Claude:")
+        for i, msg in enumerate(formatted_messages):
+            logger.info(f"  [{i}] {msg['role']}: {msg['content'][:100]}...")
+
         try:
             async with self.anthropic.messages.stream(
                 model=settings.ANTHROPIC_MODEL,
                 max_tokens=settings.ANTHROPIC_MAX_TOKENS,
                 system=system_prompt,
-                messages=self._format_history_for_claude(history) + [
-                    {"role": "user", "content": request.message}
-                ]
+                messages=formatted_messages
             ) as stream:
                 async for text in stream.text_stream:
                     full_content += text
@@ -534,7 +540,16 @@ Summary:"""
     ) -> Conversation:
         """Create new conversation with auto-generated title"""
         # Generate title from first message (first 50 chars)
-        title = first_message[:50] + "..." if len(first_message) > 50 else first_message
+        message_title = first_message[:50] + "..." if len(first_message) > 50 else first_message
+
+        # Prepend matter name if available
+        title = message_title
+        if matter_id:
+            matter_query = select(Matter).where(Matter.id == matter_id)
+            matter_result = await self.db.execute(matter_query)
+            matter = matter_result.scalar()
+            if matter:
+                title = f"[{matter.client_name}] {message_title}"
 
         conversation = Conversation(
             company_id=user.company_id,
@@ -651,11 +666,11 @@ Summary:"""
             return """You are a legal AI assistant for BC Legal Tech, helping lawyers analyze their documents.
 
 Important guidelines:
-- Always cite your sources when referencing specific information
-- If you don't have relevant information, say "I don't have information about that in the provided documents"
+- Always cite your sources when referencing specific document information
+- You may reference information the user has shared directly in the conversation
+- If asked about something not in any documents or the conversation, say "I don't have information about that"
 - Be concise and professional
-- For legal advice, remind users to verify with qualified counsel
-- Stick to the facts in the documents"""
+- For legal advice, remind users to verify with qualified counsel"""
 
         # Build context section
         context_text = ""
@@ -671,12 +686,12 @@ You have access to the following relevant document excerpts:
 </context>
 
 Important guidelines:
-- Always cite your sources using [Source X] notation when referencing information
-- Only use information from the provided context
-- If the context doesn't contain relevant information, say "I don't have information about that in the provided documents"
+- Always cite your sources using [Source X] notation when referencing document information
+- For document-related questions, use information from the provided context
+- You may also reference information the user has shared directly in the conversation
+- If asked about something not in the documents or conversation, say "I don't have information about that"
 - Be concise and professional
-- For legal advice, remind users to verify with qualified counsel
-- Stick to the facts in the documents"""
+- For legal advice, remind users to verify with qualified counsel"""
 
     async def _get_conversation_history(
         self,
