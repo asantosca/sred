@@ -221,9 +221,12 @@ class StorageService:
         # Ensure bucket exists (lazy initialization)
         self._ensure_bucket_exists()
 
+        # Map HTTP method to S3 client method name
+        client_method = 'get_object' if http_method == 'GET' else 'put_object'
+
         try:
             url = self.s3_client.generate_presigned_url(
-                http_method,
+                client_method,
                 Params={'Bucket': self.bucket_name, 'Key': storage_path},
                 ExpiresIn=expiration
             )

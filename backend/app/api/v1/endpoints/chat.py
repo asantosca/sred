@@ -17,6 +17,7 @@ from app.schemas.chat import (
     ConversationListResponse, MessageFeedback
 )
 from app.services.chat_service import ChatService
+from app.services.usage_tracker import UsageTracker
 from app.core.rate_limit import limiter, get_rate_limit
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,11 @@ async def send_message(
     try:
         chat_service = ChatService(db)
         response = await chat_service.send_message(chat_request, current_user)
+
+        # Track AI query usage
+        usage_tracker = UsageTracker(db)
+        await usage_tracker.increment_ai_query_count(current_user.company_id)
+
         return response
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -89,6 +95,11 @@ async def send_message_stream(
     ```
     """
     try:
+        # Track AI query usage upfront (before streaming starts)
+        # This ensures the count is incremented even if streaming is interrupted
+        usage_tracker = UsageTracker(db)
+        await usage_tracker.increment_ai_query_count(current_user.company_id)
+
         chat_service = ChatService(db)
         return StreamingResponse(
             chat_service.send_message_stream(chat_request, current_user),

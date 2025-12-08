@@ -25,18 +25,3 @@ api_router.include_router(usage.router, prefix="/usage", tags=["usage-tracking"]
 api_router.include_router(chat.router, prefix="/chat", tags=["ai-chat"])
 api_router.include_router(billable.router, prefix="/billable", tags=["billable-hours"])
 api_router.include_router(sentry_test.router, prefix="/sentry", tags=["sentry-testing"])
-
-# Temporary test endpoint
-@api_router.get("/test")
-async def test_endpoint():
-    """Test endpoint to verify API is working"""
-    return {
-        "message": "BC Legal Tech API v1 is working!",
-        "endpoints": [
-            "/api/v1/health",
-            "/api/v1/test",
-            "/api/v1/auth/register",
-            "/api/v1/auth/login",
-            "/api/v1/users/"
-        ]
-    }

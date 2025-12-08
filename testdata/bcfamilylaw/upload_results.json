@@ -1,0 +1,51 @@
+{
+  "matter_id_map": {
+    "MATTER-001": "f50465fe-c8ce-4b5d-b07b-215907adf76f",
+    "MATTER-002": "5a4716e0-e33e-4ab3-87e6-185ef3f16c65",
+    "MATTER-003": "f6e8aced-ef9c-478f-a1e2-7555f988dc25",
+    "MATTER-004": "1c40e376-aec5-40bf-8f52-ee416e83532e",
+    "MATTER-005": "9145b304-4701-40fd-a8b9-c633969d3528"
+  },
+  "results": {
+    "success": [
+      {
+        "doc_id": "DOC-001",
+        "document_id": "cd37bc5f-0eed-496a-a296-71811d999a3a",
+        "matter_id": "f50465fe-c8ce-4b5d-b07b-215907adf76f",
+        "title": "Chen v. Chen - Final Order"
+      },
+      {
+        "doc_id": "DOC-002",
+        "document_id": "d2e0db49-4f74-4c37-9079-5478f3ae4027",
+        "matter_id": "5a4716e0-e33e-4ab3-87e6-185ef3f16c65",
+        "title": "Financial Statement of James Morrison"
+      },
+      {
+        "doc_id": "DOC-003",
+        "document_id": "e242e8bb-99b4-45d5-8543-a490bee8948b",
+        "matter_id": "f6e8aced-ef9c-478f-a1e2-7555f988dc25",
+        "title": "Patel-Singh Separation Agreement"
+      },
+      {
+        "doc_id": "DOC-004",
+        "document_id": "93ed22d5-2b58-4949-9c24-af1ca55afbc7",
+        "matter_id": "1c40e376-aec5-40bf-8f52-ee416e83532e",
+        "title": "Affidavit of Rebecca Foster"
+      },
+      {
+        "doc_id": "DOC-005",
+        "document_id": "d0fa9a54-34d8-466d-b2dc-effe85d4966e",
+        "matter_id": "9145b304-4701-40fd-a8b9-c633969d3528",
+        "title": "Williams v. Thompson - Variation Order"
+      },
+      {
+        "doc_id": "DOC-006",
+        "document_id": "38f57a1a-35c6-49ac-8411-3940b6bf81fd",
+        "matter_id": "f50465fe-c8ce-4b5d-b07b-215907adf76f",
+        "title": "Financial Statement of Michael Chen"
+      }
+    ],
+    "failed": [],
+    "processing_failed": []
+  }
+}
