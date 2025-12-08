@@ -56,13 +56,13 @@ async def get_usage_statistics(
             })
 
     # Check storage
-    if isinstance(stats['storage']['limit_gb'], int):
+    if isinstance(stats['storage']['limit_mb'], int):
         storage_percentage = stats['storage']['percentage']
         if storage_percentage >= 90:
             warnings.append({
                 "level": "critical",
                 "type": "storage",
-                "message": f"Storage usage at {storage_percentage:.0f}%. {stats['storage']['current_gb']}/{stats['storage']['limit_gb']} GB used."
+                "message": f"Storage usage at {storage_percentage:.0f}%. {stats['storage']['current_mb']}/{stats['storage']['limit_mb']} MB used."
             })
         elif storage_percentage >= 80:
             warnings.append({
@@ -161,7 +161,7 @@ async def get_usage_summary(
         doc_health = get_health_status(stats['documents']['percentage'])
 
     storage_health = "healthy"
-    if isinstance(stats['storage']['limit_gb'], int):
+    if isinstance(stats['storage']['limit_mb'], int):
         storage_health = get_health_status(stats['storage']['percentage'])
 
     query_health = "healthy"
@@ -190,8 +190,8 @@ async def get_usage_summary(
             },
             "storage": {
                 "status": storage_health,
-                "current_gb": stats['storage']['current_gb'],
-                "limit_gb": stats['storage']['limit_gb'],
+                "current_mb": stats['storage']['current_mb'],
+                "limit_mb": stats['storage']['limit_mb'],
                 "percentage": round(stats['storage']['percentage'], 1)
             },
             "ai_queries": {
