@@ -389,6 +389,31 @@ class BillableSession(Base):
     matter = relationship("Matter")
 
 
+class DailyBriefing(Base):
+    """AI-generated daily briefing for users"""
+    __tablename__ = "daily_briefings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Briefing content
+    briefing_date = Column(Date, nullable=False)  # Date the briefing is for
+    content = Column(Text, nullable=False)  # Markdown content
+
+    # Generation metadata
+    generated_at = Column(DateTime(timezone=True), server_default=func.now())
+    model_name = Column(String(100), nullable=True)
+    token_count = Column(Integer, nullable=True)
+
+    # Context used for generation (for debugging)
+    context_summary = Column(JSON, nullable=True)  # Summary of data used
+
+    # Relationships
+    user = relationship("User")
+    company = relationship("Company")
+
+
 class WaitlistSignup(Base):
     """Waitlist signup model for marketing site"""
     __tablename__ = "waitlist_signups"

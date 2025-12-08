@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 # Import endpoint routers
-from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, billable, sentry_test, public
+from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, billable, briefing, sentry_test, public
 
 # Create main API router
 api_router = APIRouter()
@@ -24,4 +24,5 @@ api_router.include_router(search.router, prefix="/search", tags=["semantic-searc
 api_router.include_router(usage.router, prefix="/usage", tags=["usage-tracking"])
 api_router.include_router(chat.router, prefix="/chat", tags=["ai-chat"])
 api_router.include_router(billable.router, prefix="/billable", tags=["billable-hours"])
+api_router.include_router(briefing.router, prefix="/briefing", tags=["daily-briefing"])
 api_router.include_router(sentry_test.router, prefix="/sentry", tags=["sentry-testing"])

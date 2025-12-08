@@ -339,6 +339,24 @@ export const usageApi = {
     api.get('/usage/limits'),
 }
 
+// Briefing API endpoints
+export interface BriefingResponse {
+  briefing_date: string
+  content: string
+  generated_at: string
+  is_fresh: boolean
+}
+
+export const briefingApi = {
+  // Get today's briefing (generates if needed)
+  getToday: (regenerate = false) =>
+    api.get<BriefingResponse>('/briefing/today', { params: { regenerate } }),
+
+  // Get past briefings
+  getHistory: (limit = 7) =>
+    api.get<BriefingResponse[]>('/briefing/history', { params: { limit } }),
+}
+
 // Billable hours API endpoints
 import type {
   BillableSession,
