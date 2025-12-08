@@ -76,8 +76,7 @@ export default function DashboardPage() {
 
   const formatStorageLimit = (limit: number) => {
     if (limit === -1) return 'Unlimited'
-    if (limit >= 1024) return `${(limit / 1024).toFixed(0)} GB`
-    return `${limit} MB`
+    return `${limit.toLocaleString()} MB`
   }
 
   return (
