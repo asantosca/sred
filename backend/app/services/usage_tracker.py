@@ -271,6 +271,7 @@ class UsageTracker:
             return (current / maximum) * 100
 
         storage_gb = storage_bytes / (1024 ** 3)
+        storage_mb = storage_bytes / (1024 ** 2)
 
         return {
             "plan_tier": plan_tier,
@@ -280,7 +281,9 @@ class UsageTracker:
                 "percentage": calc_percentage(doc_count, max_docs)
             },
             "storage": {
-                "current_gb": round(storage_gb, 2),
+                "current_bytes": storage_bytes,
+                "current_mb": round(storage_mb, 2),
+                "current_gb": round(storage_gb, 3),  # 3 decimals for small values
                 "limit_gb": max_storage_gb if max_storage_gb != -1 else "unlimited",
                 "percentage": (storage_gb / max_storage_gb) * 100 if max_storage_gb > 0 else 0.0
             },

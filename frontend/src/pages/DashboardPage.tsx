@@ -19,6 +19,8 @@ interface UsageSummary {
     }
     storage: {
       status: string
+      current_bytes?: number
+      current_mb?: number
       current_gb: number
       limit_gb: number
       percentage: number
@@ -71,6 +73,14 @@ export default function DashboardPage() {
 
   const formatLimit = (limit: number) => {
     return limit === -1 ? 'Unlimited' : limit.toLocaleString()
+  }
+
+  const formatStorage = (storage: UsageSummary['health_details']['storage']) => {
+    // Show MB for values under 1 GB, otherwise show GB
+    if (storage.current_gb < 1 && storage.current_mb !== undefined) {
+      return `${storage.current_mb.toFixed(1)} MB`
+    }
+    return `${storage.current_gb.toFixed(1)} GB`
   }
 
   return (
@@ -176,7 +186,7 @@ export default function DashboardPage() {
                   </div>
                   <p className="text-sm font-medium text-gray-600">Storage</p>
                   <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    {usageSummary.health_details.storage.current_gb.toFixed(1)} GB
+                    {formatStorage(usageSummary.health_details.storage)}
                     <span className="text-sm text-gray-500 font-normal">
                       {' / '}{usageSummary.health_details.storage.limit_gb === -1 ? 'Unlimited' : `${usageSummary.health_details.storage.limit_gb} GB`}
                     </span>
