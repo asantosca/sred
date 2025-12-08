@@ -272,15 +272,14 @@ class BriefingService:
     async def _generate_content(self, user: User, context: Dict[str, Any]) -> tuple[str, int]:
         """Generate briefing content using Claude."""
 
-        system_prompt = """You are an AI assistant for a legal document management platform.
-Generate a brief, friendly daily briefing in Markdown format for a lawyer.
+        system_prompt = f"""You are an AI assistant for a legal document management platform.
+Generate a brief, friendly daily briefing in Markdown format for a user with first name {context['user_first_name']}.
 
 Keep it concise and actionable. Focus on:
 1. A warm greeting with their name
 2. Key matters with recent activity (if any)
 3. Recent documents uploaded (if any)
 4. Unbilled time that needs attention (if any)
-5. A helpful suggestion or tip
 
 Use these formatting guidelines:
 - Use ## for the greeting header
@@ -288,7 +287,7 @@ Use these formatting guidelines:
 - Use bullet points for lists
 - Keep the total length under 300 words
 - Be professional but warm
-- If there's no activity, encourage them to get started
+- If there's no activity, encourage them to create a matter, upload a document, or start chatting.
 
 Do NOT include fictional data. Only reference what's in the context provided."""
 
