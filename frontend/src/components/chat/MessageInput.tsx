@@ -1,6 +1,6 @@
 // MessageInput component - Input field for sending chat messages
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { Send } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
@@ -10,13 +10,24 @@ interface MessageInputProps {
   placeholder?: string
 }
 
-export default function MessageInput({
+export interface MessageInputHandle {
+  focus: () => void
+}
+
+const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(({
   onSendMessage,
   disabled = false,
   placeholder = 'Ask a question about your documents...',
-}: MessageInputProps) {
+}, ref) => {
   const [message, setMessage] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Expose focus method to parent
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      textareaRef.current?.focus()
+    }
+  }))
 
   // Auto-resize textarea as content changes
   useEffect(() => {
@@ -76,4 +87,8 @@ export default function MessageInput({
       </div>
     </form>
   )
-}
+})
+
+MessageInput.displayName = 'MessageInput'
+
+export default MessageInput

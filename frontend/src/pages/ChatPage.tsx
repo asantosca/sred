@@ -1,13 +1,13 @@
 // ChatPage - Main chat page with conversation management and streaming
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import ConversationList from '@/components/chat/ConversationList'
 import ChatInterface from '@/components/chat/ChatInterface'
-import MessageInput from '@/components/chat/MessageInput'
+import MessageInput, { MessageInputHandle } from '@/components/chat/MessageInput'
 import MatterSelectorCompact from '@/components/chat/MatterSelectorCompact'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -18,6 +18,7 @@ import { Clock } from 'lucide-react'
 export default function ChatPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const messageInputRef = useRef<MessageInputHandle>(null)
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -200,6 +201,9 @@ export default function ChatPage() {
             setIsStreaming(false)
             setStreamingContent('')
 
+            // Return focus to input
+            setTimeout(() => messageInputRef.current?.focus(), 100)
+
             // Refresh conversation list
             queryClient.invalidateQueries({ queryKey: ['conversations'] })
 
@@ -304,6 +308,7 @@ export default function ChatPage() {
           )}
 
           <MessageInput
+            ref={messageInputRef}
             onSendMessage={handleSendMessage}
             disabled={isStreaming || loadingMessages}
             placeholder={

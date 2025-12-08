@@ -134,14 +134,17 @@ class ChatService:
                 first_message=request.message
             )
 
-        # 2. Save user message
+        # 2. Get conversation history BEFORE saving new message
+        history = await self._get_conversation_history(conversation.id, limit=10)
+
+        # 3. Save user message
         user_message = await self._save_message(
             conversation_id=conversation.id,
             role="user",
             content=request.message
         )
 
-        # 3. Retrieve context
+        # 4. Retrieve context
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
             matter_id=conversation.matter_id,
@@ -150,9 +153,8 @@ class ChatService:
             user=current_user
         )
 
-        # 4. Build prompt and get history
+        # 5. Build prompt
         system_prompt = self._build_system_prompt(context_chunks)
-        history = await self._get_conversation_history(conversation.id, limit=10)
 
         # 5. Stream Claude response
         full_content = ""
