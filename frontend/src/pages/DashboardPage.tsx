@@ -20,9 +20,8 @@ interface UsageSummary {
     storage: {
       status: string
       current_bytes?: number
-      current_mb?: number
-      current_gb: number
-      limit_gb: number
+      current_mb: number
+      limit_mb: number
       percentage: number
     }
     ai_queries: {
@@ -75,12 +74,10 @@ export default function DashboardPage() {
     return limit === -1 ? 'Unlimited' : limit.toLocaleString()
   }
 
-  const formatStorage = (storage: UsageSummary['health_details']['storage']) => {
-    // Show MB for values under 1 GB, otherwise show GB
-    if (storage.current_gb < 1 && storage.current_mb !== undefined) {
-      return `${storage.current_mb.toFixed(1)} MB`
-    }
-    return `${storage.current_gb.toFixed(1)} GB`
+  const formatStorageLimit = (limit: number) => {
+    if (limit === -1) return 'Unlimited'
+    if (limit >= 1024) return `${(limit / 1024).toFixed(0)} GB`
+    return `${limit} MB`
   }
 
   return (
@@ -186,12 +183,12 @@ export default function DashboardPage() {
                   </div>
                   <p className="text-sm font-medium text-gray-600">Storage</p>
                   <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    {formatStorage(usageSummary.health_details.storage)}
+                    {usageSummary.health_details.storage.current_mb.toFixed(1)} MB
                     <span className="text-sm text-gray-500 font-normal">
-                      {' / '}{usageSummary.health_details.storage.limit_gb === -1 ? 'Unlimited' : `${usageSummary.health_details.storage.limit_gb} GB`}
+                      {' / '}{formatStorageLimit(usageSummary.health_details.storage.limit_mb)}
                     </span>
                   </p>
-                  {usageSummary.health_details.storage.limit_gb !== -1 && (
+                  {usageSummary.health_details.storage.limit_mb !== -1 && (
                     <div className="mt-3">
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                         <span>{usageSummary.health_details.storage.percentage.toFixed(0)}% used</span>

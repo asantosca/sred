@@ -282,9 +282,8 @@ class UsageTracker:
             },
             "storage": {
                 "current_bytes": storage_bytes,
-                "current_mb": round(storage_mb, 2),
-                "current_gb": round(storage_gb, 3),  # 3 decimals for small values
-                "limit_gb": max_storage_gb if max_storage_gb != -1 else "unlimited",
+                "current_mb": round(storage_mb, 1),
+                "limit_mb": max_storage_gb * 1024 if max_storage_gb != -1 else "unlimited",
                 "percentage": (storage_gb / max_storage_gb) * 100 if max_storage_gb > 0 else 0.0
             },
             "ai_queries": {
