@@ -228,9 +228,17 @@ class ChatService:
         result = await self.db.execute(messages_query)
         messages = result.scalars().all()
 
+        # Get matter name if matter_id exists
+        matter_name = None
+        if conversation.matter_id:
+            matter_query = select(Matter.client_name).where(Matter.id == conversation.matter_id)
+            matter_result = await self.db.execute(matter_query)
+            matter_name = matter_result.scalar()
+
         return ConversationWithMessages(
             **conversation.__dict__,
-            messages=[MessageResponse.model_validate(m) for m in messages]
+            messages=[MessageResponse.model_validate(m) for m in messages],
+            matter_name=matter_name
         )
 
     async def list_conversations(

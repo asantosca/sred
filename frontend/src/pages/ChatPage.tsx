@@ -13,7 +13,7 @@ import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import { chatApi, billableApi } from '@/lib/api'
 import type { ChatStreamChunk } from '@/types/chat'
-import { Clock } from 'lucide-react'
+import { Clock, Briefcase } from 'lucide-react'
 
 export default function ChatPage() {
   const navigate = useNavigate()
@@ -264,8 +264,20 @@ export default function ChatPage() {
           {/* Conversation header with Track Time button */}
           {selectedConversationId && messages.length > 0 && (
             <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
-              <div className="text-sm text-gray-600">
-                {conversationData?.title || 'Conversation'}
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-600">
+                  {conversationData?.title || 'Conversation'}
+                </div>
+                {conversationData?.matter_name ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                    <Briefcase className="h-3 w-3" />
+                    {conversationData.matter_name}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    All documents
+                  </span>
+                )}
               </div>
               <Button
                 variant="secondary"
