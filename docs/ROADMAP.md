@@ -149,20 +149,14 @@ _Must complete before beta users can access_
 
 ---
 
-## Section 5: Documentation and Support Setup
+## Section 5: Support Setup
 
 _Must complete before beta users can access_
-
-**Documentation:**
-
-- [ ] API documentation with examples
-- [ ] User guide (how to use the platform)
-- [ ] FAQ document
 
 **Support:**
 
 - [ ] Support email setup (@bclegaltech.ca)
-- [ ] Bug reporting system
+- [ ] Bug reporting system (can use GitHub Issues initially)
 - [ ] Feedback collection form
 
 **Email:**
@@ -321,6 +315,12 @@ _Future features after public launch. Prioritize based on customer feedback._
 - [ ] Migrate from localStorage JWT to httpOnly cookie sessions
 - [ ] CSRF protection (required for cookie-based auth)
 - [ ] Penetration testing
+
+**Documentation (when scaling):**
+
+- [ ] API documentation with examples
+- [ ] User guide (how to use the platform)
+- [ ] FAQ document
 
 **Scale:**
 

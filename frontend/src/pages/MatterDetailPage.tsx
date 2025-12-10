@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi, documentsApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
@@ -319,6 +319,13 @@ export default function MatterDetailPage() {
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h3>
               <div className="space-y-2">
+                <button
+                  onClick={() => navigate(`/chat?matter=${matterId}`)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-md font-medium"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Chat about this Matter
+                </button>
                 <button
                   onClick={() => setShowUpload(true)}
                   className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import ConversationList from '@/components/chat/ConversationList'
@@ -18,13 +18,17 @@ import { Clock, Briefcase } from 'lucide-react'
 
 export default function ChatPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const messageInputRef = useRef<MessageInputHandle>(null)
+
+  // Get matter ID from URL query param (e.g., /chat?matter=uuid)
+  const matterFromUrl = searchParams.get('matter')
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null)
-  const [selectedMatterId, setSelectedMatterId] = useState<string | null>(null)
+  const [selectedMatterId, setSelectedMatterId] = useState<string | null>(matterFromUrl)
   const [streamingContent, setStreamingContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -239,6 +243,11 @@ export default function ChatPage() {
     setLocalMessages([])
     setPendingUserMessage(null)
     setMatterSuggestion(null)
+    // Clear the matter query param from URL
+    if (searchParams.has('matter')) {
+      searchParams.delete('matter')
+      setSearchParams(searchParams, { replace: true })
+    }
   }
 
   // Handle accepting matter suggestion
