@@ -21,6 +21,7 @@ import ChatPage from '@/pages/ChatPage'
 import MattersPage from '@/pages/MattersPage'
 import CreateMatterPage from '@/pages/CreateMatterPage'
 import MatterDetailPage from '@/pages/MatterDetailPage'
+import EditMatterPage from '@/pages/EditMatterPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import BillablePage from '@/pages/BillablePage'
@@ -123,6 +124,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MatterDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/matters/:matterId/edit"
+            element={
+              <ProtectedRoute>
+                <EditMatterPage />
               </ProtectedRoute>
             }
           />

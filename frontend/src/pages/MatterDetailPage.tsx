@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi, documentsApi, billableApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign, Pencil } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
@@ -174,6 +174,16 @@ export default function MatterDetailPage() {
               >
                 {showUpload ? 'Cancel' : 'Upload Document'}
               </Button>
+
+              {matter.user_can_edit && (
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/matters/${matterId}/edit`)}
+                  icon={<Pencil className="h-4 w-4" />}
+                >
+                  Edit
+                </Button>
+              )}
 
               {matter.user_can_delete && (
                 <Button
