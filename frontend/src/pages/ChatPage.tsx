@@ -24,6 +24,8 @@ export default function ChatPage() {
 
   // Get matter ID from URL query param (e.g., /chat?matter=uuid)
   const matterFromUrl = searchParams.get('matter')
+  // If history=true, we're viewing conversation history for a matter
+  const showHistoryForMatter = searchParams.get('history') === 'true' && matterFromUrl
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -38,11 +40,14 @@ export default function ChatPage() {
   const [matterSuggestion, setMatterSuggestion] = useState<MatterSuggestion | null>(null)
   const [isLinkingMatter, setIsLinkingMatter] = useState(false)
 
-  // Fetch conversations
+  // Fetch conversations (optionally filtered by matter when viewing history)
   const { data: conversationsData, isLoading: loadingConversations } = useQuery({
-    queryKey: ['conversations'],
+    queryKey: ['conversations', showHistoryForMatter ? matterFromUrl : null],
     queryFn: async () => {
-      const response = await chatApi.listConversations({ page_size: 50 })
+      const response = await chatApi.listConversations({
+        page_size: 50,
+        matter_id: showHistoryForMatter ? matterFromUrl! : undefined,
+      })
       return response.data
     },
   })

@@ -233,6 +233,7 @@ export const chatApi = {
     page?: number
     page_size?: number
     include_archived?: boolean
+    matter_id?: string
   }) =>
     api.get<ConversationListResponse>('/chat/conversations', { params }),
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { billableApi } from '@/lib/api'
@@ -20,6 +21,9 @@ import Button from '@/components/ui/Button'
 
 export default function BillablePage() {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const matterFilter = searchParams.get('matter')
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<BillableSessionUpdate>({})
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -27,11 +31,12 @@ export default function BillablePage() {
 
   // Fetch billable sessions
   const { data, isLoading } = useQuery({
-    queryKey: ['billable-sessions', includeExported],
+    queryKey: ['billable-sessions', includeExported, matterFilter],
     queryFn: async () => {
       const response = await billableApi.list({
         page_size: 100,
         include_exported: includeExported,
+        matter_id: matterFilter || undefined,
       })
       return response.data
     },

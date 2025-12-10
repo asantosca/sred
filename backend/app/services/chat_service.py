@@ -259,7 +259,8 @@ class ChatService:
         company_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        include_archived: bool = False
+        include_archived: bool = False,
+        matter_id: Optional[UUID] = None
     ) -> ConversationListResponse:
         """List user's conversations with pagination and tenant isolation"""
         # Build query with tenant isolation
@@ -272,6 +273,10 @@ class ChatService:
 
         if not include_archived:
             query = query.where(Conversation.is_archived == False)
+
+        # Filter by matter if specified
+        if matter_id:
+            query = query.where(Conversation.matter_id == matter_id)
 
         query = query.order_by(
             Conversation.is_pinned.desc(),

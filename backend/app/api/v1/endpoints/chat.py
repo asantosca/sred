@@ -125,6 +125,7 @@ async def list_conversations(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     include_archived: bool = Query(False, description="Include archived conversations"),
+    matter_id: Optional[UUID] = Query(None, description="Filter by matter ID"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -144,7 +145,8 @@ async def list_conversations(
             company_id=current_user.company_id,
             page=page,
             page_size=page_size,
-            include_archived=include_archived
+            include_archived=include_archived,
+            matter_id=matter_id
         )
         return conversations
     except Exception as e:

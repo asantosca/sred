@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi, documentsApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
@@ -328,21 +328,38 @@ export default function MatterDetailPage() {
                 </button>
                 <button
                   onClick={() => setShowUpload(true)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
+                  <Upload className="h-4 w-4" />
                   Upload Document
                 </button>
                 <button
                   onClick={() => navigate(`/documents?matter=${matterId}`)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
+                  <FileText className="h-4 w-4" />
                   View All Documents
                 </button>
                 <button
                   onClick={() => navigate(`/timeline?matter_id=${matterId}`)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
+                  <Calendar className="h-4 w-4" />
                   View Timeline
+                </button>
+                <button
+                  onClick={() => navigate(`/chat?matter=${matterId}&history=true`)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                >
+                  <History className="h-4 w-4" />
+                  Chat History
+                </button>
+                <button
+                  onClick={() => navigate(`/billable?matter=${matterId}`)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                >
+                  <Clock className="h-4 w-4" />
+                  Billable Hours
                 </button>
               </div>
             </div>
