@@ -1,11 +1,13 @@
 // Dashboard home page
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { FileText, MessageSquare, HardDrive, AlertCircle, Sparkles, RefreshCw } from 'lucide-react'
-import { usageApi, briefingApi, BriefingResponse } from '@/lib/api'
+import { FileText, MessageSquare, HardDrive, AlertCircle, Sparkles, RefreshCw, Calendar, ChevronRight, Briefcase } from 'lucide-react'
+import { usageApi, briefingApi, timelineApi, BriefingResponse } from '@/lib/api'
+import type { DocumentEventWithContext } from '@/types/timeline'
 
 interface UsageSummary {
   overall_health: string
@@ -36,11 +38,14 @@ interface UsageSummary {
 
 export default function DashboardPage() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null)
   const [briefing, setBriefing] = useState<BriefingResponse | null>(null)
+  const [upcomingEvents, setUpcomingEvents] = useState<DocumentEventWithContext[]>([])
   const [loading, setLoading] = useState(true)
   const [briefingLoading, setBriefingLoading] = useState(true)
   const [briefingError, setBriefingError] = useState<string | null>(null)
+  const [eventsLoading, setEventsLoading] = useState(true)
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -68,8 +73,26 @@ export default function DashboardPage() {
       }
     }
 
+    const fetchUpcomingEvents = async () => {
+      try {
+        setEventsLoading(true)
+        const today = new Date().toISOString().split('T')[0]
+        const response = await timelineApi.list({
+          date_from: today,
+          page: 1,
+          page_size: 5,
+        })
+        setUpcomingEvents(response.data.events)
+      } catch (error) {
+        console.error('Failed to fetch upcoming events:', error)
+      } finally {
+        setEventsLoading(false)
+      }
+    }
+
     fetchUsage()
     fetchBriefing()
+    fetchUpcomingEvents()
   }, [])
 
   const handleRegenerateBriefing = async () => {
@@ -308,6 +331,8 @@ export default function DashboardPage() {
           ) : null}
         </div>
 
+        {/* Two column layout for briefing and timeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Briefing */}
         <Card>
           <CardHeader>
@@ -368,6 +393,88 @@ export default function DashboardPage() {
             ) : null}
           </CardContent>
         </Card>
+
+        {/* Upcoming Events */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <CardTitle>Upcoming Events</CardTitle>
+              </div>
+              <button
+                onClick={() => navigate('/timeline')}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+              >
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <CardDescription>
+              Key dates and deadlines from your documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="animate-pulse flex items-start gap-3">
+                    <div className="h-10 w-10 bg-gray-200 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : upcomingEvents.length === 0 ? (
+              <div className="text-center py-6">
+                <Calendar className="mx-auto h-10 w-10 text-gray-300 mb-2" />
+                <p className="text-sm text-gray-500">No upcoming events</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Events will appear here once documents are processed
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/timeline?date_from=${event.event_date}`)}
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 flex flex-col items-center justify-center">
+                      <span className="text-xs font-medium text-blue-600">
+                        {new Date(event.event_date).toLocaleDateString('en-CA', { month: 'short' })}
+                      </span>
+                      <span className="text-sm font-bold text-blue-700">
+                        {new Date(event.event_date).getDate()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 line-clamp-2">
+                        {event.event_description}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                        {event.matter_number && (
+                          <span className="inline-flex items-center gap-1">
+                            <Briefcase className="h-3 w-3" />
+                            {event.matter_number}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          {event.document_title || event.document_filename}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </div>
       </div>
     </DashboardLayout>
   )
