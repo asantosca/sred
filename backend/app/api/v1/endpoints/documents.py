@@ -17,7 +17,7 @@ from app.schemas.documents import (
     Document, DocumentWithMatter, DocumentUploadResponse, DocumentListResponse,
     QuickDocumentUpload, StandardDocumentUpload, ContractUpload,
     PleadingUpload, CorrespondenceUpload, DiscoveryUpload, ExhibitUpload,
-    DocumentDownloadResponse, FileValidationResult
+    DocumentDownloadResponse, FileValidationResult, DocumentUpdate
 )
 from app.models.models import Document as DocumentModel, Matter, MatterAccess, User
 from app.api.deps import get_current_user
@@ -1214,15 +1214,7 @@ async def get_document(
 @router.patch("/{document_id}", response_model=Document)
 async def update_document(
     document_id: UUID,
-    document_title: Optional[str] = Form(None),
-    document_type: Optional[str] = Form(None),
-    document_date: Optional[date] = Form(None),
-    document_status: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
-    confidentiality_level: Optional[str] = Form(None),
-    is_privileged: Optional[bool] = Form(None),
-    tags: Optional[str] = Form(None),  # JSON string of array
-    internal_notes: Optional[str] = Form(None),
+    updates: DocumentUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -1260,24 +1252,9 @@ async def update_document(
         )
 
     # Update fields if provided
-    if document_title is not None:
-        document.document_title = document_title
-    if document_type is not None:
-        document.document_type = document_type
-    if document_date is not None:
-        document.document_date = document_date
-    if document_status is not None:
-        document.document_status = document_status
-    if description is not None:
-        document.description = description if description else None
-    if confidentiality_level is not None:
-        document.confidentiality_level = confidentiality_level
-    if is_privileged is not None:
-        document.is_privileged = is_privileged
-    if tags is not None:
-        document.tags = json.loads(tags) if tags else None
-    if internal_notes is not None:
-        document.internal_notes = internal_notes if internal_notes else None
+    update_data = updates.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(document, field, value)
 
     # Update audit fields
     document.updated_at = datetime.utcnow()

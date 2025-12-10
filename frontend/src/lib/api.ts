@@ -222,19 +222,7 @@ export const documentsApi = {
     is_privileged?: boolean
     tags?: string[]
     internal_notes?: string
-  }) => {
-    const formData = new FormData()
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (key === 'tags') {
-          formData.append(key, JSON.stringify(value))
-        } else {
-          formData.append(key, String(value))
-        }
-      }
-    })
-    return api.patch(`/documents/${documentId}`, formData)
-  },
+  }) => api.patch(`/documents/${documentId}`, data),
 }
 
 // Chat API endpoints

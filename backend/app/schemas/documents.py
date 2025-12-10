@@ -186,6 +186,19 @@ class Document(DocumentBase):
     cc: Optional[str] = None
     subject: Optional[str] = None
 
+class DocumentUpdate(BaseModel):
+    """Schema for updating document metadata"""
+    document_title: Optional[str] = Field(None, min_length=1, max_length=500)
+    document_type: Optional[str] = None
+    document_date: Optional[date] = None
+    document_status: Optional[str] = None
+    description: Optional[str] = None
+    confidentiality_level: Optional[str] = None
+    is_privileged: Optional[bool] = None
+    tags: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+
+
 class DocumentWithMatter(Document):
     """Document schema with matter information"""
     matter_number: str
