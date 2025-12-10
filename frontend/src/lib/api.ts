@@ -217,11 +217,11 @@ export const documentsApi = {
     document_type?: string
     document_date?: string
     document_status?: string
-    description?: string
+    description?: string | null
     confidentiality_level?: string
     is_privileged?: boolean
     tags?: string[]
-    internal_notes?: string
+    internal_notes?: string | null
   }) => api.patch(`/documents/${documentId}`, data),
 }
 

@@ -119,9 +119,14 @@ export default function DocumentList({ matterId }: DocumentListProps) {
 
   const handleSaveEdit = () => {
     if (!editingDocument) return
+    // Convert empty strings to null for optional fields
+    const data = {
+      ...editForm,
+      description: editForm.description || null,
+    }
     updateMutation.mutate({
       documentId: editingDocument.id,
-      data: editForm,
+      data,
     })
   }
 
