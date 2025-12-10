@@ -378,3 +378,71 @@ Generate ONLY the billing description, nothing else:"""
 
         await self.db.commit()
         return sessions
+
+    async def get_unbilled_conversations(
+        self,
+        current_user: User,
+        matter_id: Optional[UUID] = None
+    ) -> dict:
+        """
+        Get conversations that have a matter but no billable session.
+
+        These represent potential unbilled work.
+        """
+        # Subquery: conversation IDs that have billable sessions
+        billed_conv_ids = (
+            select(BillableSession.conversation_id)
+            .where(BillableSession.company_id == current_user.company_id)
+        )
+
+        # Main query: conversations with matter but not in billed list
+        query = (
+            select(Conversation, Matter.client_name, Matter.matter_number)
+            .join(Matter, Conversation.matter_id == Matter.id)
+            .where(
+                and_(
+                    Conversation.user_id == current_user.id,
+                    Conversation.company_id == current_user.company_id,
+                    Conversation.matter_id.isnot(None),
+                    Conversation.id.notin_(billed_conv_ids)
+                )
+            )
+            .order_by(Conversation.updated_at.desc())
+        )
+
+        # Filter by matter if specified
+        if matter_id:
+            query = query.where(Conversation.matter_id == matter_id)
+
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        # Build response
+        conversations = []
+        for conv, client_name, matter_number in rows:
+            conversations.append({
+                "id": str(conv.id),
+                "title": conv.title,
+                "matter_id": str(conv.matter_id),
+                "matter_name": f"{matter_number} - {client_name}",
+                "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
+                "created_at": conv.created_at.isoformat() if conv.created_at else None,
+            })
+
+        # Group by matter for summary
+        matters_summary = {}
+        for conv in conversations:
+            mid = conv["matter_id"]
+            if mid not in matters_summary:
+                matters_summary[mid] = {
+                    "matter_id": mid,
+                    "matter_name": conv["matter_name"],
+                    "unbilled_count": 0
+                }
+            matters_summary[mid]["unbilled_count"] += 1
+
+        return {
+            "total_unbilled": len(conversations),
+            "conversations": conversations,
+            "by_matter": list(matters_summary.values())
+        }

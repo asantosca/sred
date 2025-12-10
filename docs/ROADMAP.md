@@ -294,6 +294,7 @@ _Future features after public launch. Prioritize based on customer feedback._
 
 **Billable Hours and Export:**
 
+- [x] Unbilled work reminders (Dashboard + Matter detail page)
 - [ ] Export formats: CSV, PDF, Clio, PracticePanther
 
 **UI/UX Enhancements:**

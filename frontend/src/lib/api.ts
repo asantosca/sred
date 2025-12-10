@@ -417,6 +417,25 @@ export const billableApi = {
       '/billable/export',
       { session_ids: sessionIds }
     ),
+
+  // Get unbilled conversations (matter-scoped conversations without billable sessions)
+  getUnbilled: (params?: { matter_id?: string }) =>
+    api.get<{
+      total_unbilled: number
+      conversations: Array<{
+        id: string
+        title: string
+        matter_id: string
+        matter_name: string
+        updated_at: string
+        created_at: string
+      }>
+      by_matter: Array<{
+        matter_id: string
+        matter_name: string
+        unbilled_count: number
+      }>
+    }>('/billable/unbilled/conversations', { params }),
 }
 
 // Timeline API endpoints

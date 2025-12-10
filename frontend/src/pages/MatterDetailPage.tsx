@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { mattersApi, documentsApi } from '@/lib/api'
+import { mattersApi, documentsApi, billableApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
@@ -21,11 +21,13 @@ export default function MatterDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [unbilledCount, setUnbilledCount] = useState<number>(0)
 
   useEffect(() => {
     if (matterId) {
       fetchMatterDetails()
       fetchMatterDocuments()
+      fetchUnbilledCount()
     }
   }, [matterId])
 
@@ -48,6 +50,15 @@ export default function MatterDetailPage() {
       setDocuments(response.data.documents || [])
     } catch (err) {
       console.error('Failed to load documents:', err)
+    }
+  }
+
+  const fetchUnbilledCount = async () => {
+    try {
+      const response = await billableApi.getUnbilled({ matter_id: matterId })
+      setUnbilledCount(response.data.total_unbilled)
+    } catch (err) {
+      console.error('Failed to fetch unbilled count:', err)
     }
   }
 
@@ -315,6 +326,22 @@ export default function MatterDetailPage() {
               <p className="text-3xl font-bold text-gray-900">{documents.length}</p>
               <p className="text-sm text-gray-600 mt-1">Total documents</p>
             </div>
+
+            {unbilledCount > 0 && (
+              <div
+                onClick={() => navigate(`/chat?matter=${matterId}&history=true`)}
+                className="bg-amber-50 rounded-lg border border-amber-200 p-6 cursor-pointer hover:bg-amber-100 transition-colors"
+              >
+                <div className="flex items-center mb-2">
+                  <DollarSign className="h-5 w-5 text-amber-600 mr-2" />
+                  <h3 className="text-sm font-medium text-amber-700">Unbilled Work</h3>
+                </div>
+                <p className="text-3xl font-bold text-amber-900">{unbilledCount}</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Conversation{unbilledCount !== 1 ? 's' : ''} to review
+                </p>
+              </div>
+            )}
 
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h3>

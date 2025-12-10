@@ -198,6 +198,28 @@ async def regenerate_description(
         )
 
 
+@router.get("/unbilled/conversations")
+@limiter.limit(get_rate_limit("default"))
+async def get_unbilled_conversations(
+    request: Request,
+    matter_id: Optional[UUID] = Query(None, description="Filter by matter"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get conversations that have a matter assigned but no billable session created.
+
+    These represent potential unbilled work that the user may want to track.
+    Returns a summary count and list of unbilled conversations.
+    """
+    current_user = await get_current_user(request, db)
+    service = BillableService(db)
+
+    return await service.get_unbilled_conversations(
+        current_user=current_user,
+        matter_id=matter_id
+    )
+
+
 @router.post("/export", response_model=ExportSessionsResponse)
 @limiter.limit(get_rate_limit("default"))
 async def export_sessions(

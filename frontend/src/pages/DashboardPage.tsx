@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { FileText, MessageSquare, HardDrive, AlertCircle, Sparkles, RefreshCw, Calendar, ChevronRight, Briefcase } from 'lucide-react'
-import { usageApi, briefingApi, timelineApi, BriefingResponse } from '@/lib/api'
+import { FileText, MessageSquare, HardDrive, AlertCircle, Sparkles, RefreshCw, Calendar, ChevronRight, Briefcase, DollarSign } from 'lucide-react'
+import { usageApi, briefingApi, timelineApi, billableApi, BriefingResponse } from '@/lib/api'
 import type { DocumentEventWithContext } from '@/types/timeline'
 
 interface UsageSummary {
@@ -42,10 +42,15 @@ export default function DashboardPage() {
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null)
   const [briefing, setBriefing] = useState<BriefingResponse | null>(null)
   const [upcomingEvents, setUpcomingEvents] = useState<DocumentEventWithContext[]>([])
+  const [unbilledData, setUnbilledData] = useState<{
+    total_unbilled: number
+    by_matter: Array<{ matter_id: string; matter_name: string; unbilled_count: number }>
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [briefingLoading, setBriefingLoading] = useState(true)
   const [briefingError, setBriefingError] = useState<string | null>(null)
   const [eventsLoading, setEventsLoading] = useState(true)
+  const [unbilledLoading, setUnbilledLoading] = useState(true)
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -90,9 +95,22 @@ export default function DashboardPage() {
       }
     }
 
+    const fetchUnbilled = async () => {
+      try {
+        setUnbilledLoading(true)
+        const response = await billableApi.getUnbilled()
+        setUnbilledData(response.data)
+      } catch (error) {
+        console.error('Failed to fetch unbilled data:', error)
+      } finally {
+        setUnbilledLoading(false)
+      }
+    }
+
     fetchUsage()
     fetchBriefing()
     fetchUpcomingEvents()
+    fetchUnbilled()
   }, [])
 
   const handleRegenerateBriefing = async () => {
@@ -330,6 +348,58 @@ export default function DashboardPage() {
             </>
           ) : null}
         </div>
+
+        {/* Unbilled Work Alert */}
+        {!unbilledLoading && unbilledData && unbilledData.total_unbilled > 0 && (
+          <div className="mb-8">
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-amber-100 p-2">
+                    <DollarSign className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-amber-900">
+                      {unbilledData.total_unbilled} Unbilled Conversation{unbilledData.total_unbilled !== 1 ? 's' : ''}
+                    </h3>
+                    <p className="text-sm text-amber-700 mt-1">
+                      You have matter-related conversations that haven't been billed yet.
+                    </p>
+                    {unbilledData.by_matter.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {unbilledData.by_matter.slice(0, 5).map((matter) => (
+                          <button
+                            key={matter.matter_id}
+                            onClick={() => navigate(`/chat?matter=${matter.matter_id}&history=true`)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                          >
+                            <Briefcase className="h-3 w-3" />
+                            {matter.matter_name.split(' - ')[1] || matter.matter_name}
+                            <span className="rounded-full bg-amber-200 px-1.5 text-amber-900">
+                              {matter.unbilled_count}
+                            </span>
+                          </button>
+                        ))}
+                        {unbilledData.by_matter.length > 5 && (
+                          <span className="text-xs text-amber-600 self-center">
+                            +{unbilledData.by_matter.length - 5} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate('/billable')}
+                    className="flex items-center gap-1 text-sm text-amber-700 hover:text-amber-900 font-medium"
+                  >
+                    Review
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Two column layout for briefing and timeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
