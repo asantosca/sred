@@ -145,6 +145,7 @@ _Must complete before beta users can access_
 - [ ] Monitoring and alerting (CloudWatch)
 - [ ] Log aggregation (CloudWatch Logs)
 - [ ] Uptime monitoring
+- [x] Local file logging with rotation (app.log, error.log)
 
 ---
 
@@ -269,6 +270,11 @@ _Future features after public launch. Prioritize based on customer feedback._
 
 **Document Features:**
 
+- [x] Document timeline (event extraction from documents)
+  - Auto-extracts dates and events during document processing
+  - Shows chronological timeline view across matters
+  - Supports date precision and confidence levels
+  - User can create/edit/delete events
 - [ ] Bulk upload interface (multiple files at once)
 - [ ] Version control API endpoints
 - [ ] Document superseding logic

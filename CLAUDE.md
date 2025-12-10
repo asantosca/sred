@@ -46,3 +46,7 @@ Beta preparation. Priority gaps before beta:
 - Any other Claude attribution
 
 Use clean, single-line commit messages. No icons or emoticons.
+
+## Troubleshooting
+
+- Logs are located in C:\Users\alexs\projects\bc-legal-tech\backend\logs

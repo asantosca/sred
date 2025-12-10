@@ -303,6 +303,49 @@ class DocumentChunk(Base):
 
     # Relationships
     document = relationship("Document", back_populates="chunks")
+
+
+class DocumentEvent(Base):
+    """Timeline events extracted from documents"""
+    __tablename__ = "document_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    chunk_id = Column(UUID(as_uuid=True), ForeignKey("document_chunks.id", ondelete="SET NULL"), nullable=True)
+
+    # Event data
+    event_date = Column(Date, nullable=False)
+    event_description = Column(Text, nullable=False)
+
+    # Date precision and confidence
+    date_precision = Column(String(10), nullable=False, default="day")  # day, month, year, unknown
+    confidence = Column(String(10), nullable=False, default="high")  # high, medium, low
+    raw_date_text = Column(String(255), nullable=True)  # original text from document
+
+    # User overrides
+    is_user_created = Column(Boolean, default=False)
+    is_user_modified = Column(Boolean, default=False)
+    user_notes = Column(Text, nullable=True)
+
+    # Versioning - track which document version this came from
+    document_version = Column(Integer, nullable=True)
+    superseded_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Audit fields
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    company = relationship("Company")
+    matter = relationship("Matter")
+    document = relationship("Document")
+    chunk = relationship("DocumentChunk")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+
+
 class Conversation(Base):
     """Conversation model for AI chat"""
     __tablename__ = "conversations"

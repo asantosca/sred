@@ -90,6 +90,7 @@ export default function DocumentList({ matterId }: DocumentListProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'embedded':
+      case 'events_extracted':
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'processing':
         return <Clock className="h-4 w-4 text-blue-500 animate-spin" />
@@ -103,7 +104,8 @@ export default function DocumentList({ matterId }: DocumentListProps) {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'embedded':
-        return 'Ready for search'
+      case 'events_extracted':
+        return 'Ready'
       case 'processing':
         return 'Processing...'
       case 'failed':

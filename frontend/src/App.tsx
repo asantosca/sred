@@ -24,6 +24,7 @@ import MatterDetailPage from '@/pages/MatterDetailPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import BillablePage from '@/pages/BillablePage'
+import TimelinePage from '@/pages/TimelinePage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -142,6 +143,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <BillablePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Timeline route */}
+          <Route
+            path="/timeline"
+            element={
+              <ProtectedRoute>
+                <TimelinePage />
               </ProtectedRoute>
             }
           />

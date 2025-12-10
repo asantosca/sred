@@ -407,4 +407,44 @@ export const billableApi = {
     ),
 }
 
+// Timeline API endpoints
+import type {
+  DocumentEvent,
+  DocumentEventWithContext,
+  DocumentEventCreate,
+  DocumentEventUpdate,
+  TimelineListResponse,
+  TimelineQuery,
+} from '@/types/timeline'
+
+export const timelineApi = {
+  // List events with filters
+  list: (params?: TimelineQuery) =>
+    api.get<TimelineListResponse>('/timeline', { params }),
+
+  // Get events for a specific matter
+  listByMatter: (matterId: string, params?: Omit<TimelineQuery, 'matter_id'>) =>
+    api.get<TimelineListResponse>(`/timeline/matter/${matterId}`, { params }),
+
+  // Get events for a specific document
+  listByDocument: (documentId: string, params?: { include_superseded?: boolean; page?: number; page_size?: number }) =>
+    api.get<TimelineListResponse>(`/timeline/document/${documentId}`, { params }),
+
+  // Get single event
+  get: (eventId: string) =>
+    api.get<DocumentEventWithContext>(`/timeline/${eventId}`),
+
+  // Create event
+  create: (data: DocumentEventCreate) =>
+    api.post<DocumentEvent>('/timeline', data),
+
+  // Update event
+  update: (eventId: string, data: DocumentEventUpdate) =>
+    api.patch<DocumentEvent>(`/timeline/${eventId}`, data),
+
+  // Delete event
+  delete: (eventId: string) =>
+    api.delete(`/timeline/${eventId}`),
+}
+
 export default api

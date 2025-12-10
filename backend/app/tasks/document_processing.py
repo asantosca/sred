@@ -17,6 +17,7 @@ STATUS_PENDING = "pending"
 STATUS_PROCESSING = "processing"
 STATUS_CHUNKED = "chunked"
 STATUS_EMBEDDED = "embedded"
+STATUS_EVENTS_EXTRACTED = "events_extracted"
 STATUS_FAILED = "failed"
 
 
@@ -140,12 +141,32 @@ async def _process_document_async(document_id: str, company_id: str) -> dict:
         # Update status to embedded (ready for search)
         await _update_document_status_in_session(session, doc_uuid, STATUS_EMBEDDED)
 
+        # Step 4: Extract timeline events
+        logger.info(f"Extracting timeline events for document {document_id}")
+        events_extracted = 0
+        try:
+            from app.services.event_extraction import EventExtractionService
+            event_service = EventExtractionService(session)
+            extraction_result = await event_service.extract_events_from_document(
+                doc_uuid, company_uuid
+            )
+            events_extracted = extraction_result.events_extracted
+            logger.info(f"Extracted {events_extracted} events from document {document_id}")
+
+            # Update status to events_extracted
+            await _update_document_status_in_session(session, doc_uuid, STATUS_EVENTS_EXTRACTED)
+        except Exception as e:
+            # Event extraction failure is non-fatal - document is still searchable
+            logger.warning(f"Event extraction failed for document {document_id}: {str(e)}")
+            # Keep status as embedded since core functionality still works
+
         logger.info(f"Document {document_id} fully processed and ready for search")
 
         return {
             "status": "success",
             "document_id": document_id,
-            "indexed_for_search": True
+            "indexed_for_search": True,
+            "events_extracted": events_extracted
         }
 
 

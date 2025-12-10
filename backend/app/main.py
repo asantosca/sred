@@ -16,9 +16,10 @@ from app.middleware.validation import InputValidationMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.core.rate_limit import limiter
 from app.core.config import settings
+from app.core.logging_config import setup_logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with file output
+setup_logging(log_level="DEBUG", log_dir="logs")
 logger = logging.getLogger(__name__)
 
 # Initialize Sentry for error tracking

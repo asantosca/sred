@@ -331,6 +331,12 @@ export default function MatterDetailPage() {
                 >
                   View All Documents
                 </button>
+                <button
+                  onClick={() => navigate(`/timeline?matter_id=${matterId}`)}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                >
+                  View Timeline
+                </button>
               </div>
             </div>
           </div>
