@@ -49,7 +49,7 @@ export default function MatterSelectorCompact({
         disabled={disabled}
         className="flex-1 rounded border-gray-300 bg-white py-1 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
       >
-        <option value="">All documents (no matter filter)</option>
+        <option value="">AI Discovery (general assistance)</option>
         {matters.map((matter: Matter) => (
           <option key={matter.id} value={matter.id}>
             {matter.matter_number} - {matter.client_name}
@@ -62,7 +62,7 @@ export default function MatterSelectorCompact({
           onClick={() => onChange(null)}
           disabled={disabled}
           className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 disabled:opacity-50"
-          title="Clear matter filter"
+          title="Switch to AI Discovery"
         >
           <X className="h-4 w-4" />
         </button>

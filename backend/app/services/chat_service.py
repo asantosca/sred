@@ -76,7 +76,8 @@ class ChatService:
         )
 
         # 5. Build prompt with context
-        system_prompt = self._build_system_prompt(context_chunks)
+        is_discovery_mode = conversation.matter_id is None
+        system_prompt = self._build_system_prompt(context_chunks, is_discovery_mode)
 
         # 6. Call Claude API
         try:
@@ -155,7 +156,8 @@ class ChatService:
         )
 
         # 5. Build prompt
-        system_prompt = self._build_system_prompt(context_chunks)
+        is_discovery_mode = conversation.matter_id is None
+        system_prompt = self._build_system_prompt(context_chunks, is_discovery_mode)
 
         # 6. Stream Claude response
         full_content = ""
@@ -209,7 +211,17 @@ class ChatService:
             for source in sources:
                 yield f"data: {self._format_sse_chunk('source', source.model_dump(mode='json'))}\n\n"
 
-        # 8. Send done signal with message ID and conversation ID
+        # 8. In Discovery mode, check if query relates to any matter
+        if is_discovery_mode:
+            suggested_matter = await self._detect_related_matter(
+                query=request.message,
+                user=current_user,
+                threshold=0.7
+            )
+            if suggested_matter:
+                yield f"data: {self._format_sse_chunk('matter_suggestion', suggested_matter)}\n\n"
+
+        # 9. Send done signal with message ID and conversation ID
         yield f"data: {self._format_sse_chunk('done', {'message_id': str(assistant_message.id), 'conversation_id': str(conversation.id)})}\n\n"
 
     async def get_conversation_with_messages(
@@ -523,6 +535,101 @@ Summary:"""
 
     # Helper methods
 
+    async def _detect_related_matter(
+        self,
+        query: str,
+        user: User,
+        threshold: float = 0.7
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check if the user's query semantically matches documents in any matter.
+        Used in Discovery mode to suggest linking the conversation to a matter.
+
+        Returns:
+            Dict with matter_id, matter_name, similarity, matched_document if found,
+            None otherwise.
+        """
+        # Generate query embedding
+        query_embedding = embedding_service.generate_embedding(query)
+        if not query_embedding:
+            return None
+
+        # Search across ALL user's matters (no matter_id filter)
+        try:
+            results = await vector_storage_service.similarity_search(
+                query_embedding=query_embedding,
+                company_id=user.company_id,
+                matter_id=None,  # Search all matters
+                limit=3,
+                similarity_threshold=threshold
+            )
+        except Exception as e:
+            logger.warning(f"Matter detection search failed: {e}")
+            return None
+
+        if not results:
+            return None
+
+        # Get the matter with highest similarity
+        top_result = results[0]
+
+        # Fetch document and matter info
+        from app.models.models import Document
+        doc_query = select(Document, Matter).join(Matter).where(
+            and_(
+                Document.id == top_result["document_id"],
+                Matter.company_id == user.company_id
+            )
+        )
+        doc_result = await self.db.execute(doc_query)
+        doc_matter = doc_result.first()
+
+        if doc_matter:
+            doc, matter = doc_matter
+            return {
+                "matter_id": str(matter.id),
+                "matter_name": f"{matter.matter_number} - {matter.client_name}",
+                "similarity": top_result["similarity"],
+                "matched_document": doc.document_title or doc.filename
+            }
+
+        return None
+
+    async def link_to_matter(
+        self,
+        conversation_id: UUID,
+        matter_id: UUID,
+        current_user: User
+    ) -> Conversation:
+        """Link a Discovery mode conversation to a matter."""
+        conversation = await self._get_conversation(conversation_id, current_user)
+
+        # Verify user has access to the matter
+        matter_query = select(Matter).where(
+            and_(
+                Matter.id == matter_id,
+                Matter.company_id == current_user.company_id
+            )
+        )
+        matter_result = await self.db.execute(matter_query)
+        matter = matter_result.scalar()
+
+        if not matter:
+            raise ValueError("Matter not found or access denied")
+
+        # Update conversation
+        conversation.matter_id = matter_id
+
+        # Update title to include matter name if not already
+        if not conversation.title.startswith("["):
+            conversation.title = f"[{matter.client_name}] {conversation.title}"
+
+        conversation.updated_at = datetime.utcnow()
+        await self.db.commit()
+        await self.db.refresh(conversation)
+
+        return conversation
+
     async def _get_conversation(self, conversation_id: UUID, user: User) -> Conversation:
         """Get conversation and verify access with tenant isolation"""
         query = select(Conversation).where(
@@ -620,9 +727,16 @@ Summary:"""
         """
         Retrieve relevant document chunks using semantic search.
 
+        In Discovery mode (matter_id is None), no RAG context is retrieved.
+
         Returns:
             (context_chunks, message_sources)
         """
+        # Discovery mode - no RAG, just general AI assistance
+        if matter_id is None:
+            logger.info("Discovery mode: skipping RAG retrieval")
+            return [], []
+
         # Generate query embedding
         query_embedding = embedding_service.generate_embedding(query)
 
@@ -668,8 +782,21 @@ Summary:"""
 
         return search_results, sources
 
-    def _build_system_prompt(self, context_chunks: List[Dict]) -> str:
+    def _build_system_prompt(self, context_chunks: List[Dict], is_discovery_mode: bool = False) -> str:
         """Build system prompt with document context"""
+        if is_discovery_mode:
+            return """You are a legal AI assistant for BC Legal Tech, operating in Discovery mode.
+
+In Discovery mode, you answer general legal questions using your knowledge - you do NOT have access to the user's documents.
+
+Guidelines:
+- Answer general legal questions, especially about BC (British Columbia) law
+- Help with legal procedures, terminology, concepts, and general guidance
+- If the user asks about specific documents, contracts, or cases they're working on, suggest they select a matter to search their documents
+- Be concise and professional
+- Always remind users to verify with qualified legal counsel for specific legal advice
+- You can discuss general legal principles without needing document context"""
+
         if not context_chunks:
             return """You are a legal AI assistant for BC Legal Tech, helping lawyers analyze their documents.
 

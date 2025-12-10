@@ -51,6 +51,21 @@ class MessageFeedback(BaseModel):
     feedback_text: Optional[str] = Field(None, max_length=1000)
 
 
+class LinkMatterRequest(BaseModel):
+    """Request to link a conversation to a matter"""
+    matter_id: UUID = Field(..., description="The matter ID to link the conversation to")
+
+
+class HelpRequest(BaseModel):
+    """Request for platform help chat"""
+    message: str = Field(..., min_length=1, max_length=2000, description="User's help question")
+
+
+class HelpResponse(BaseModel):
+    """Response from help chat endpoint"""
+    content: str = Field(..., description="AI assistant response")
+
+
 # Conversation schemas
 class ConversationBase(BaseModel):
     """Base conversation model"""

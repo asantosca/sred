@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import HelpDeskModal from '@/components/help/HelpDeskModal'
 import {
   Menu,
   X,
@@ -17,6 +18,7 @@ import {
   Briefcase,
   Clock,
   Calendar,
+  HelpCircle,
 } from 'lucide-react'
 
 interface DashboardLayoutProps {
@@ -28,6 +30,7 @@ const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:30
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, company, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const handleLogout = async () => {
     await logout()
@@ -124,6 +127,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {company?.name}
             </div>
 
+            {/* Help button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setHelpOpen(true)}
+              title="Help & Support"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </Button>
+
             {/* User menu */}
             <div className="flex items-center space-x-2">
               <Link to="/profile">
@@ -146,6 +159,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Help Desk Modal */}
+      <HelpDeskModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   )
 }

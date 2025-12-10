@@ -66,13 +66,21 @@ export interface ChatResponse {
   is_new_conversation: boolean
 }
 
+export interface MatterSuggestion {
+  matter_id: string
+  matter_name: string
+  similarity: number
+  matched_document: string
+}
+
 export interface ChatStreamChunk {
-  type: 'content' | 'source' | 'done' | 'error'
+  type: 'content' | 'source' | 'done' | 'error' | 'matter_suggestion'
   content?: string
   source?: MessageSource
   message_id?: string
   conversation_id?: string
   error?: string
+  matter_suggestion?: MatterSuggestion
 }
 
 export interface MessageFeedback {

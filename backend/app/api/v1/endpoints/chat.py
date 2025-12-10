@@ -14,7 +14,8 @@ from app.models.models import User
 from app.schemas.chat import (
     ChatRequest, ChatResponse,
     ConversationResponse, ConversationUpdate, ConversationWithMessages,
-    ConversationListResponse, MessageFeedback
+    ConversationListResponse, MessageFeedback, LinkMatterRequest,
+    HelpRequest, HelpResponse
 )
 from app.services.chat_service import ChatService
 from app.services.usage_tracker import UsageTracker
@@ -269,6 +270,55 @@ async def delete_conversation(
         raise HTTPException(status_code=500, detail=f"Failed to delete conversation: {str(e)}")
 
 
+@router.post("/conversations/{conversation_id}/link-matter")
+@limiter.limit(get_rate_limit("chat_update"))
+async def link_conversation_to_matter(
+    request: Request,
+    conversation_id: UUID,
+    link_request: LinkMatterRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Link a Discovery mode conversation to a matter.
+
+    This allows users to associate a general conversation with a specific matter
+    after the AI suggests it may be related. Future messages in this conversation
+    will use RAG context from the linked matter's documents.
+
+    **Rate limit**: 120 requests per minute
+    """
+    try:
+        chat_service = ChatService(db)
+        conversation = await chat_service.link_to_matter(
+            conversation_id=conversation_id,
+            matter_id=link_request.matter_id,
+            current_user=current_user
+        )
+
+        # Get matter name for response
+        from sqlalchemy import select
+        from app.models.models import Matter
+        matter_query = select(Matter.client_name, Matter.matter_number).where(
+            Matter.id == link_request.matter_id
+        )
+        result = await db.execute(matter_query)
+        matter = result.first()
+        matter_name = f"{matter.matter_number} - {matter.client_name}" if matter else None
+
+        return {
+            "success": True,
+            "conversation_id": str(conversation.id),
+            "matter_id": str(link_request.matter_id),
+            "matter_name": matter_name
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error linking conversation to matter: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to link conversation: {str(e)}")
+
+
 @router.post("/messages/{message_id}/feedback", response_model=None)
 @limiter.limit(get_rate_limit("chat_feedback"))
 async def submit_message_feedback(
@@ -301,3 +351,58 @@ async def submit_message_feedback(
     except Exception as e:
         logger.error(f"Error submitting feedback: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(e)}")
+
+
+@router.post("/help", response_model=HelpResponse)
+@limiter.limit(get_rate_limit("chat_message"))
+async def send_help_message(
+    request: Request,
+    help_request: HelpRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Platform help chat - answers questions about using BC Legal Tech.
+
+    This endpoint provides quick answers about platform features and usage.
+    It does NOT search documents or provide legal advice.
+
+    **Use cases**:
+    - "How do I upload a document?"
+    - "What is a matter?"
+    - "How do I track billable hours?"
+
+    **Rate limit**: 60 requests per minute
+    """
+    from anthropic import AsyncAnthropic
+    from app.core.config import settings
+
+    try:
+        anthropic = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+        response = await anthropic.messages.create(
+            model="claude-3-5-haiku-20241022",  # Use faster/cheaper model for help
+            max_tokens=500,
+            system="""You are a helpful assistant for BC Legal Tech, a legal document management platform for law firms in British Columbia.
+
+Answer questions about using the platform:
+- **Documents**: Upload PDF/DOCX/TXT files, organize by matter, search content
+- **Matters**: Cases/files to organize work, each with documents and access control
+- **Chat**: AI assistant that searches your documents (select a matter first for document search, or use AI Discovery for general questions)
+- **Billable Hours**: Track time spent on conversations, generate descriptions
+- **Timeline**: View events extracted from documents chronologically
+- **Daily Briefings**: AI-generated summaries of recent activity
+
+Keep answers concise (2-3 sentences). If asked about legal questions (not platform usage), politely redirect them to use the main Chat feature with a matter selected.
+
+Do NOT provide legal advice. You are only here to help with platform usage.""",
+            messages=[{"role": "user", "content": help_request.message}]
+        )
+
+        return HelpResponse(content=response.content[0].text)
+
+    except Exception as e:
+        logger.error(f"Help chat error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process help request. Please try again."
+        )

@@ -289,7 +289,11 @@ _Future features after public launch. Prioritize based on customer feedback._
 
 **Chat Enhancements:**
 
-- [ ] Filter RAG retrieval to selected matter's documents
+- [x] Chat mode redesign with three distinct modes:
+  - **Matter Chat**: RAG search within selected matter's documents
+  - **AI Discovery**: General legal AI without RAG, auto-detects related matters
+  - **Help Desk**: Platform assistance via separate modal (uses Haiku model)
+- [x] Matter linking from Discovery mode (AI suggests related matters)
 - [ ] Share conversation with colleague
 - [ ] Search across all conversations
 - [ ] "Ask about this document" button

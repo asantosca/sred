@@ -12,7 +12,8 @@ import MatterSelectorCompact from '@/components/chat/MatterSelectorCompact'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import { chatApi, billableApi } from '@/lib/api'
-import type { ChatStreamChunk } from '@/types/chat'
+import type { ChatStreamChunk, MatterSuggestion } from '@/types/chat'
+import MatterSuggestionBanner from '@/components/chat/MatterSuggestionBanner'
 import { Clock, Briefcase } from 'lucide-react'
 
 export default function ChatPage() {
@@ -30,6 +31,8 @@ export default function ChatPage() {
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null)
   const [localMessages, setLocalMessages] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [matterSuggestion, setMatterSuggestion] = useState<MatterSuggestion | null>(null)
+  const [isLinkingMatter, setIsLinkingMatter] = useState(false)
 
   // Fetch conversations
   const { data: conversationsData, isLoading: loadingConversations } = useQuery({
@@ -211,6 +214,9 @@ export default function ChatPage() {
             if (parsed.conversation_id && !selectedConversationId) {
               setSelectedConversationId(parsed.conversation_id)
             }
+          } else if (parsed.type === 'matter_suggestion' && parsed.matter_suggestion) {
+            // AI detected this query may relate to a matter
+            setMatterSuggestion(parsed.matter_suggestion)
           } else if (parsed.type === 'error' && parsed.error) {
             setError(parsed.error)
             setIsStreaming(false)
@@ -232,6 +238,35 @@ export default function ChatPage() {
     setSelectedMatterId(null)
     setLocalMessages([])
     setPendingUserMessage(null)
+    setMatterSuggestion(null)
+  }
+
+  // Handle accepting matter suggestion
+  const handleAcceptMatterSuggestion = async () => {
+    if (!matterSuggestion || !selectedConversationId) return
+
+    setIsLinkingMatter(true)
+    try {
+      const response = await chatApi.linkToMatter(
+        selectedConversationId,
+        matterSuggestion.matter_id
+      )
+
+      // Update local state
+      setSelectedMatterId(matterSuggestion.matter_id)
+      setMatterSuggestion(null)
+
+      // Refresh conversation data to get updated title and matter_name
+      queryClient.invalidateQueries({ queryKey: ['conversation', selectedConversationId] })
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+
+      toast.success(`Linked to ${response.data.matter_name}`)
+    } catch (err) {
+      console.error('Failed to link conversation:', err)
+      toast.error('Failed to link conversation to matter')
+    } finally {
+      setIsLinkingMatter(false)
+    }
   }
 
   const handleViewDocument = (documentId: string) => {
@@ -274,8 +309,8 @@ export default function ChatPage() {
                     {conversationData.matter_name}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                    All documents
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                    AI Discovery
                   </span>
                 )}
               </div>
@@ -310,6 +345,16 @@ export default function ChatPage() {
             onViewDocument={handleViewDocument}
           />
 
+          {/* Matter suggestion banner - shown when AI detects related matter */}
+          {matterSuggestion && selectedConversationId && !conversationData?.matter_id && (
+            <MatterSuggestionBanner
+              suggestion={matterSuggestion}
+              onAccept={handleAcceptMatterSuggestion}
+              onDismiss={() => setMatterSuggestion(null)}
+              loading={isLinkingMatter}
+            />
+          )}
+
           {/* Matter selector - only shown for new conversations */}
           {!selectedConversationId && (
             <MatterSelectorCompact
@@ -328,7 +373,7 @@ export default function ChatPage() {
                 ? 'Ask a follow-up question...'
                 : selectedMatterId
                   ? 'Ask about documents in this matter...'
-                  : 'Start a new conversation...'
+                  : 'Ask a general legal question...'
             }
           />
         </div>

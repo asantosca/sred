@@ -322,6 +322,17 @@ export const chatApi = {
   // Submit message feedback
   submitFeedback: (messageId: string, feedback: MessageFeedback) =>
     api.post(`/chat/messages/${messageId}/feedback`, feedback),
+
+  // Link conversation to a matter (after AI suggestion)
+  linkToMatter: (conversationId: string, matterId: string) =>
+    api.post<{ success: boolean; conversation_id: string; matter_id: string; matter_name: string }>(
+      `/chat/conversations/${conversationId}/link-matter`,
+      { matter_id: matterId }
+    ),
+
+  // Send help desk message (platform assistance, no RAG)
+  sendHelpMessage: (data: { message: string }) =>
+    api.post<{ content: string }>('/chat/help', data),
 }
 
 // Usage API endpoints
