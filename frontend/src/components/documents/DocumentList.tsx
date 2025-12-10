@@ -16,10 +16,23 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Pencil,
+  X,
 } from 'lucide-react'
+import { DOCUMENT_TYPES, DOCUMENT_STATUSES, CONFIDENTIALITY_LEVELS } from '@/types/documents'
+import toast from 'react-hot-toast'
 
 interface DocumentListProps {
   matterId?: string
+}
+
+interface EditFormData {
+  document_title: string
+  document_type: string
+  document_date: string
+  document_status: string
+  description: string
+  confidentiality_level: string
 }
 
 export default function DocumentList({ matterId }: DocumentListProps) {
@@ -28,6 +41,17 @@ export default function DocumentList({ matterId }: DocumentListProps) {
   const [selectedType, setSelectedType] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 20
+
+  // Edit modal state
+  const [editingDocument, setEditingDocument] = useState<DocumentWithMatter | null>(null)
+  const [editForm, setEditForm] = useState<EditFormData>({
+    document_title: '',
+    document_type: '',
+    document_date: '',
+    document_status: '',
+    description: '',
+    confidentiality_level: '',
+  })
 
   const queryClient = useQueryClient()
 
@@ -65,6 +89,40 @@ export default function DocumentList({ matterId }: DocumentListProps) {
     if (confirm(`Are you sure you want to delete "${documentTitle}"? This action cannot be undone.`)) {
       deleteMutation.mutate(documentId)
     }
+  }
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ documentId, data }: { documentId: string; data: Partial<EditFormData> }) =>
+      documentsApi.update(documentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] })
+      setEditingDocument(null)
+      toast.success('Document updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to update document')
+    },
+  })
+
+  const handleEdit = (document: DocumentWithMatter) => {
+    setEditingDocument(document)
+    setEditForm({
+      document_title: document.document_title,
+      document_type: document.document_type,
+      document_date: document.document_date.split('T')[0],
+      document_status: document.document_status,
+      description: document.description || '',
+      confidentiality_level: document.confidentiality_level,
+    })
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingDocument) return
+    updateMutation.mutate({
+      documentId: editingDocument.id,
+      data: editForm,
+    })
   }
 
   const handleDownload = async (documentId: string) => {
@@ -246,6 +304,13 @@ export default function DocumentList({ matterId }: DocumentListProps) {
                 {/* Actions */}
                 <div className="flex items-center space-x-2 ml-4">
                   <button
+                    onClick={() => handleEdit(document)}
+                    className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleDownload(document.id)}
                     className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
                     title="Download"
@@ -311,6 +376,134 @@ export default function DocumentList({ matterId }: DocumentListProps) {
                   Next
                 </button>
               </nav>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Document Modal */}
+      {editingDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Document</h3>
+              <button
+                onClick={() => setEditingDocument(null)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Document Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.document_title}
+                  onChange={(e) => setEditForm({ ...editForm, document_title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Document Type
+                </label>
+                <select
+                  value={editForm.document_type}
+                  onChange={(e) => setEditForm({ ...editForm, document_type: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                >
+                  {DOCUMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Document Date
+                </label>
+                <input
+                  type="date"
+                  value={editForm.document_date}
+                  onChange={(e) => setEditForm({ ...editForm, document_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={editForm.document_status}
+                  onChange={(e) => setEditForm({ ...editForm, document_status: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                >
+                  {DOCUMENT_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Confidentiality */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confidentiality Level
+                </label>
+                <select
+                  value={editForm.confidentiality_level}
+                  onChange={(e) => setEditForm({ ...editForm, confidentiality_level: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                >
+                  {CONFIDENTIALITY_LEVELS.map((level) => (
+                    <option key={level} value={level}>
+                      {level.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Optional description..."
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingDocument(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={updateMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
+              >
+                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
         </div>

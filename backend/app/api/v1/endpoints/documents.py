@@ -1210,6 +1210,85 @@ async def get_document(
     
     return Document.model_validate(document)
 
+# Document metadata update endpoint
+@router.patch("/{document_id}", response_model=Document)
+async def update_document(
+    document_id: UUID,
+    document_title: Optional[str] = Form(None),
+    document_type: Optional[str] = Form(None),
+    document_date: Optional[date] = Form(None),
+    document_status: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    confidentiality_level: Optional[str] = Form(None),
+    is_privileged: Optional[bool] = Form(None),
+    tags: Optional[str] = Form(None),  # JSON string of array
+    internal_notes: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update document metadata (not the file content).
+    Requires edit access to the matter.
+    """
+    # Check if user has edit access
+    access_query = (
+        select(DocumentModel, MatterAccess.can_edit)
+        .join(Matter, DocumentModel.matter_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .where(
+            and_(
+                DocumentModel.id == document_id,
+                Matter.company_id == current_user.company_id,
+                MatterAccess.user_id == current_user.id
+            )
+        )
+    )
+    access_result = await db.execute(access_query)
+    row = access_result.first()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or access denied"
+        )
+
+    document, can_edit = row
+    if not can_edit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to edit this document"
+        )
+
+    # Update fields if provided
+    if document_title is not None:
+        document.document_title = document_title
+    if document_type is not None:
+        document.document_type = document_type
+    if document_date is not None:
+        document.document_date = document_date
+    if document_status is not None:
+        document.document_status = document_status
+    if description is not None:
+        document.description = description if description else None
+    if confidentiality_level is not None:
+        document.confidentiality_level = confidentiality_level
+    if is_privileged is not None:
+        document.is_privileged = is_privileged
+    if tags is not None:
+        document.tags = json.loads(tags) if tags else None
+    if internal_notes is not None:
+        document.internal_notes = internal_notes if internal_notes else None
+
+    # Update audit fields
+    document.updated_at = datetime.utcnow()
+    document.updated_by = str(current_user.id)
+
+    await db.commit()
+    await db.refresh(document)
+
+    return Document.model_validate(document)
+
+
 # Document deletion endpoint
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
