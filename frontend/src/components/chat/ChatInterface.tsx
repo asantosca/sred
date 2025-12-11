@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { User, Bot, ThumbsUp, ThumbsDown } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import type { Message } from '@/types/chat'
 import SourceCitations from './SourceCitations'
 
@@ -91,9 +92,15 @@ export default function ChatInterface({
                 : 'bg-gray-100 text-gray-900'
             }`}
           >
-            <div className="whitespace-pre-wrap break-words text-sm">
-              {message.content}
-            </div>
+            {isUser ? (
+              <div className="whitespace-pre-wrap break-words text-sm">
+                {message.content}
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
+            )}
           </div>
 
           {/* Source citations for assistant messages */}
@@ -197,8 +204,8 @@ export default function ChatInterface({
                   <span className="text-xs text-gray-500">typing...</span>
                 </div>
                 <div className="inline-block max-w-3xl rounded-lg bg-gray-100 px-4 py-2 text-gray-900">
-                  <div className="whitespace-pre-wrap break-words text-sm">
-                    {streamingContent}
+                  <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                    <ReactMarkdown>{streamingContent}</ReactMarkdown>
                   </div>
                   <span className="inline-block h-4 w-1 animate-pulse bg-gray-900"></span>
                 </div>
