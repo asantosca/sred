@@ -142,10 +142,12 @@ export default function DocumentList({ matterId }: DocumentListProps) {
   }
 
   const documents = documentsResponse?.documents || []
+  const searchLower = searchTerm.toLowerCase()
   const filteredDocuments = documents.filter((doc: DocumentWithMatter) =>
-    doc.document_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.original_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.client_name.toLowerCase().includes(searchTerm.toLowerCase())
+    doc.document_title.toLowerCase().includes(searchLower) ||
+    doc.original_filename.toLowerCase().includes(searchLower) ||
+    doc.client_name.toLowerCase().includes(searchLower) ||
+    (doc.description && doc.description.toLowerCase().includes(searchLower))
   )
 
   const matters = mattersResponse?.matters || []
