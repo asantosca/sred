@@ -1,9 +1,15 @@
 // ConversationList component - Shows list of user's conversations
 
 import { useState } from 'react'
-import { MessageSquare, Pin, Trash2, Archive, Briefcase, Search, X } from 'lucide-react'
+import { MessageSquare, Pin, Trash2, Archive, Briefcase, Search, X, Filter } from 'lucide-react'
 import type { Conversation } from '@/types/chat'
 import Button from '@/components/ui/Button'
+
+interface Matter {
+  id: string
+  matter_number: string
+  client_name: string
+}
 
 interface ConversationListProps {
   conversations: Conversation[]
@@ -15,6 +21,9 @@ interface ConversationListProps {
   onSearch?: (query: string) => void
   searchResults?: Conversation[]
   isSearching?: boolean
+  matters?: Matter[]
+  selectedMatterFilter?: string | null
+  onMatterFilterChange?: (matterId: string | null) => void
 }
 
 export default function ConversationList({
@@ -27,9 +36,13 @@ export default function ConversationList({
   onSearch,
   searchResults,
   isSearching = false,
+  matters = [],
+  selectedMatterFilter,
+  onMatterFilterChange,
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
+  const [showMatterFilter, setShowMatterFilter] = useState(false)
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     const now = new Date()
@@ -75,6 +88,19 @@ export default function ConversationList({
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
           <div className="flex items-center gap-2">
+            {onMatterFilterChange && matters.length > 0 && (
+              <button
+                onClick={() => setShowMatterFilter(!showMatterFilter)}
+                className={`rounded p-1.5 transition-colors ${
+                  showMatterFilter || selectedMatterFilter
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+                title="Filter by matter"
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+            )}
             {onSearch && (
               <button
                 onClick={() => setShowSearch(!showSearch)}
@@ -97,6 +123,25 @@ export default function ConversationList({
             </Button>
           </div>
         </div>
+
+        {/* Matter filter dropdown */}
+        {showMatterFilter && onMatterFilterChange && (
+          <div className="mb-3">
+            <select
+              value={selectedMatterFilter || ''}
+              onChange={(e) => onMatterFilterChange(e.target.value || null)}
+              className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">All Matters</option>
+              {matters.map((matter) => (
+                <option key={matter.id} value={matter.id}>
+                  {matter.matter_number} - {matter.client_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Search input */}
         {showSearch && onSearch && (
           <form onSubmit={handleSearch} className="relative">

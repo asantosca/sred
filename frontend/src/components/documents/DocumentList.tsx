@@ -93,7 +93,7 @@ export default function DocumentList({ matterId }: DocumentListProps) {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ documentId, data }: { documentId: string; data: Partial<EditFormData> }) =>
+    mutationFn: ({ documentId, data }: { documentId: string; data: Parameters<typeof documentsApi.update>[1] }) =>
       documentsApi.update(documentId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
@@ -119,8 +119,8 @@ export default function DocumentList({ matterId }: DocumentListProps) {
 
   const handleSaveEdit = () => {
     if (!editingDocument) return
-    // Convert empty strings to null for optional fields
-    const data = {
+    // Convert empty strings to undefined for optional fields (null handled by API)
+    const data: Parameters<typeof documentsApi.update>[1] = {
       ...editForm,
       description: editForm.description || null,
     }

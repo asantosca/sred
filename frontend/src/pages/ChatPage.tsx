@@ -11,7 +11,7 @@ import MessageInput, { MessageInputHandle } from '@/components/chat/MessageInput
 import MatterSelectorCompact from '@/components/chat/MatterSelectorCompact'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
-import { chatApi, billableApi } from '@/lib/api'
+import { chatApi, billableApi, mattersApi } from '@/lib/api'
 import type { ChatStreamChunk, MatterSuggestion } from '@/types/chat'
 import MatterSuggestionBanner from '@/components/chat/MatterSuggestionBanner'
 import { Clock, Briefcase } from 'lucide-react'
@@ -39,14 +39,27 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [matterSuggestion, setMatterSuggestion] = useState<MatterSuggestion | null>(null)
   const [isLinkingMatter, setIsLinkingMatter] = useState(false)
+  const [conversationMatterFilter, setConversationMatterFilter] = useState<string | null>(null)
 
-  // Fetch conversations (optionally filtered by matter when viewing history)
+  // Fetch matters for filter dropdown
+  const { data: mattersData } = useQuery({
+    queryKey: ['matters', 'all'],
+    queryFn: async () => {
+      const response = await mattersApi.list({ size: 100 })
+      return response.data
+    },
+  })
+
+  // Determine which matter filter to use
+  const effectiveMatterFilter = showHistoryForMatter ? matterFromUrl : conversationMatterFilter
+
+  // Fetch conversations (optionally filtered by matter)
   const { data: conversationsData, isLoading: loadingConversations } = useQuery({
-    queryKey: ['conversations', showHistoryForMatter ? matterFromUrl : null],
+    queryKey: ['conversations', effectiveMatterFilter],
     queryFn: async () => {
       const response = await chatApi.listConversations({
         page_size: 50,
-        matter_id: showHistoryForMatter ? matterFromUrl! : undefined,
+        matter_id: effectiveMatterFilter || undefined,
       })
       return response.data
     },
@@ -305,6 +318,9 @@ export default function ChatPage() {
             onSearch={handleSearch}
             searchResults={searchData?.conversations}
             isSearching={isSearching}
+            matters={mattersData?.matters || []}
+            selectedMatterFilter={conversationMatterFilter}
+            onMatterFilterChange={setConversationMatterFilter}
           />
         </div>
 
