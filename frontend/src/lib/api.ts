@@ -162,7 +162,7 @@ export const mattersApi = {
 
   // Update matter
   update: (matterId: string, data: any) =>
-    api.patch(`/matters/${matterId}`, data),
+    api.put(`/matters/${matterId}`, data),
 
   // Delete matter
   delete: (matterId: string) =>
