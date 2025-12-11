@@ -248,6 +248,7 @@ class Document(Base):
     review_instructions = Column(Text, nullable=True)
     
     # Metadata
+    description = Column(Text, nullable=True)
     internal_notes = Column(Text, nullable=True)
     tags = Column(ARRAY(String), nullable=True)
     
