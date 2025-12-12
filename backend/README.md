@@ -199,7 +199,39 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Database Setup
+### 2. Install OCR Dependencies (Optional)
+
+OCR is used for extracting text from scanned PDFs. The system supports two OCR engines:
+
+- **AWS Textract** (production) - Used when AWS credentials are configured
+- **Tesseract** (local development) - Free, offline fallback
+
+For local development with Tesseract, install system dependencies:
+
+**Windows:**
+1. Install Tesseract: Download from [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
+2. Install Poppler: Download from [poppler-windows releases](https://github.com/osborber/poppler-windows/releases)
+3. Add both to your PATH
+
+**macOS:**
+```bash
+brew install tesseract poppler
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install tesseract-ocr poppler-utils
+```
+
+**Docker (recommended):** The Celery worker in `docker-compose.yml` already includes Tesseract and Poppler. Just run:
+```bash
+docker-compose up -d
+```
+OCR will work automatically for document processing tasks.
+
+If running FastAPI locally without Docker, OCR dependencies are optional. The system will gracefully skip OCR and log a warning if they're not installed. Documents with selectable text will still be processed normally.
+
+### 3. Database Setup
 
 ```bash
 # Start PostgreSQL with pgvector
@@ -209,7 +241,7 @@ docker-compose up -d postgres
 python -m alembic upgrade head
 ```
 
-### 3. Start Development Server
+### 4. Start Development Server
 
 ```bash
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -280,11 +312,23 @@ Document uploaded to S3 and metadata stored in database.
 **Status:** `pending`
 
 ### 2. Text Extraction
-Extract text content from PDF, DOCX, TXT files using `charset_normalizer` and other libraries.
+Extract text content from PDF, DOCX, TXT files using `pdfplumber`, `python-docx`, and `charset_normalizer`.
+
+For scanned PDFs (detected by low text density < 100 chars/page), OCR is automatically triggered:
+- **AWS Textract** - Used in production when AWS credentials are configured
+- **Tesseract** - Fallback for local development
 
 **Status:** `text_extracted`
 
-**Files:** `app/services/text_extraction.py`
+**Files:**
+- `app/services/text_extraction.py` - Main extraction logic
+- `app/services/ocr.py` - OCR service (Textract + Tesseract fallback)
+
+**OCR Metadata:** When OCR is applied, the document record stores:
+- `ocr_applied` - Boolean indicating OCR was used
+- `ocr_engine` - Which engine was used (`textract` or `tesseract`)
+- `ocr_pages_processed` - Number of pages processed
+- `ocr_confidence_avg` - Average OCR confidence score
 
 ### 3. Chunking
 Split text into semantic chunks using `semantic-text-splitter` with sentence-aware splitting.
@@ -365,7 +409,8 @@ backend/
 │   │   ├── vector_storage.py     # Raw asyncpg for vectors
 │   │   ├── document_processor.py # Pipeline orchestration
 │   │   ├── chunking.py           # Text chunking
-│   │   └── text_extraction.py   # Text extraction
+│   │   ├── text_extraction.py    # Text extraction
+│   │   └── ocr.py                # OCR (Textract + Tesseract)
 │   ├── db/               # Database connection
 │   └── main.py           # FastAPI application
 ├── alembic/              # Database migrations

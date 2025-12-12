@@ -113,3 +113,5 @@ watchfiles==1.1.0
 wcwidth==0.2.14
 websockets==15.0.1
 wrapt==2.0.0
+pytesseract==0.3.13
+pdf2image==1.17.0

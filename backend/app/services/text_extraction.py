@@ -3,6 +3,8 @@ Text extraction service for legal documents.
 
 Extracts text from PDF, DOCX, and TXT files for RAG pipeline processing.
 Optimized for legal documents with proper handling of tables, headers, and formatting.
+
+Includes OCR support via AWS Textract for scanned PDFs.
 """
 
 import io
@@ -13,6 +15,8 @@ from pathlib import Path
 import pdfplumber
 from docx import Document
 import charset_normalizer
+
+from app.services.ocr import ocr_service, is_likely_scanned_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +31,19 @@ class TextExtractionService:
     def extract_text(
         file_content: bytes,
         filename: str,
-        mime_type: Optional[str] = None
+        mime_type: Optional[str] = None,
+        storage_path: Optional[str] = None
     ) -> Dict:
         """
         Extract text from document based on file type.
+
+        For PDFs, automatically detects scanned documents and uses OCR if needed.
 
         Args:
             file_content: Raw file bytes
             filename: Original filename (used to determine file type)
             mime_type: MIME type of the file (optional)
+            storage_path: S3 storage path (required for OCR on scanned PDFs)
 
         Returns:
             Dictionary with extraction results:
@@ -46,7 +54,11 @@ class TextExtractionService:
                     'page_count': int,
                     'word_count': int,
                     'char_count': int,
-                    'extraction_method': str
+                    'extraction_method': str,
+                    'ocr_applied': bool,
+                    'ocr_engine': str (if OCR applied),
+                    'ocr_pages_processed': int (if OCR applied),
+                    'ocr_confidence_avg': float (if OCR applied)
                 },
                 'error': str (if success=False)
             }
@@ -65,7 +77,7 @@ class TextExtractionService:
 
         try:
             if file_ext == '.pdf':
-                return TextExtractionService._extract_pdf(file_content)
+                return TextExtractionService._extract_pdf(file_content, storage_path)
             elif file_ext in ['.docx', '.doc']:
                 return TextExtractionService._extract_docx(file_content)
             elif file_ext == '.txt':
@@ -88,9 +100,12 @@ class TextExtractionService:
             }
 
     @staticmethod
-    def _extract_pdf(file_content: bytes) -> Dict:
+    def _extract_pdf(file_content: bytes, storage_path: Optional[str] = None) -> Dict:
         """
         Extract text from PDF using pdfplumber.
+
+        If the PDF appears to be scanned (insufficient extractable text),
+        automatically falls back to OCR using AWS Textract.
 
         pdfplumber is better than PyPDF2 for:
         - Table extraction
@@ -114,6 +129,17 @@ class TextExtractionService:
                         pages_text.append(f"[Page {page_num}]\n[Extraction failed]")
 
                 full_text = "\n\n".join(pages_text)
+
+                # Check if this appears to be a scanned PDF
+                if is_likely_scanned_pdf(full_text, page_count):
+                    logger.info(f"PDF appears to be scanned, attempting OCR extraction")
+
+                    # Use unified OCR service (tries Textract, falls back to Tesseract)
+                    return TextExtractionService._extract_pdf_with_ocr(
+                        file_content, storage_path, page_count
+                    )
+
+                # Standard extraction succeeded
                 word_count = len(full_text.split())
                 char_count = len(full_text)
 
@@ -124,7 +150,8 @@ class TextExtractionService:
                         'page_count': page_count,
                         'word_count': word_count,
                         'char_count': char_count,
-                        'extraction_method': 'pdfplumber'
+                        'extraction_method': 'pdfplumber',
+                        'ocr_applied': False
                     },
                     'error': None
                 }
@@ -136,6 +163,84 @@ class TextExtractionService:
                 'text': '',
                 'metadata': {},
                 'error': f'PDF extraction failed: {str(e)}'
+            }
+
+    @staticmethod
+    def _extract_pdf_with_ocr(
+        file_content: bytes,
+        storage_path: Optional[str],
+        page_count: int
+    ) -> Dict:
+        """
+        Extract text from a scanned PDF using OCR.
+
+        Uses the unified OCR service which tries Textract first (production),
+        then falls back to Tesseract (local development).
+
+        Args:
+            file_content: Raw PDF bytes (needed for Tesseract fallback)
+            storage_path: S3 key of the document (needed for Textract)
+            page_count: Number of pages (from pdfplumber)
+
+        Returns:
+            Dictionary with extraction results including OCR metadata
+        """
+        import asyncio
+
+        try:
+            # Run async OCR extraction
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        try:
+            ocr_result = loop.run_until_complete(
+                ocr_service.extract_text(file_content, storage_path)
+            )
+
+            if ocr_result['success']:
+                full_text = ocr_result['text']
+                word_count = len(full_text.split())
+                char_count = len(full_text)
+                ocr_engine = ocr_result.get('ocr_engine', 'unknown')
+
+                return {
+                    'success': True,
+                    'text': full_text,
+                    'metadata': {
+                        'page_count': ocr_result['pages_processed'] or page_count,
+                        'word_count': word_count,
+                        'char_count': char_count,
+                        'extraction_method': f'pdfplumber_with_{ocr_engine}',
+                        'ocr_applied': True,
+                        'ocr_engine': ocr_engine,
+                        'ocr_pages_processed': ocr_result['pages_processed'],
+                        'ocr_confidence_avg': ocr_result['confidence_avg']
+                    },
+                    'error': None
+                }
+            else:
+                # OCR failed, return error
+                logger.error(f"OCR extraction failed: {ocr_result['error']}")
+                return {
+                    'success': False,
+                    'text': '',
+                    'metadata': {
+                        'page_count': page_count,
+                        'ocr_applied': True,
+                        'ocr_engine': ocr_result.get('ocr_engine')
+                    },
+                    'error': f"OCR extraction failed: {ocr_result['error']}"
+                }
+
+        except Exception as e:
+            logger.error(f"OCR extraction error: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'text': '',
+                'metadata': {'page_count': page_count},
+                'error': f'OCR extraction failed: {str(e)}'
             }
 
     @staticmethod

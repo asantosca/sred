@@ -70,12 +70,13 @@ class DocumentProcessor:
                 await self._mark_extraction_failed(document, error_msg)
                 return False
 
-            # Extract text
+            # Extract text (pass storage_path for OCR support on scanned PDFs)
             logger.info(f"Extracting text from document {document_id} ({document.filename})")
             extraction_result = text_extraction_service.extract_text(
                 file_content=file_content,
                 filename=document.filename,
-                mime_type=document.mime_type
+                mime_type=document.mime_type,
+                storage_path=document.storage_path
             )
 
             if extraction_result['success']:
@@ -112,7 +113,7 @@ class DocumentProcessor:
         document: Document,
         extraction_result: dict
     ) -> None:
-        """Save extraction results to the document."""
+        """Save extraction results to the document, including OCR metadata if applicable."""
         metadata = extraction_result.get('metadata', {})
 
         # Update document fields
@@ -124,6 +125,18 @@ class DocumentProcessor:
         document.text_extracted = True
         document.processing_status = 'text_extracted'
         document.extraction_error = None
+
+        # Save OCR metadata if OCR was applied
+        document.ocr_applied = metadata.get('ocr_applied', False)
+        if document.ocr_applied:
+            document.ocr_engine = metadata.get('ocr_engine')
+            document.ocr_pages_processed = metadata.get('ocr_pages_processed')
+            document.ocr_confidence_avg = metadata.get('ocr_confidence_avg')
+            logger.info(
+                f"Document {document.id} processed with OCR: "
+                f"{document.ocr_pages_processed} pages, "
+                f"{document.ocr_confidence_avg:.1f}% avg confidence"
+            )
 
         # Commit changes
         await self.db.commit()
@@ -371,7 +384,11 @@ class DocumentProcessor:
             'word_count': document.word_count,
             'extraction_method': document.extraction_method,
             'extraction_date': document.extraction_date.isoformat() if document.extraction_date else None,
-            'extraction_error': document.extraction_error
+            'extraction_error': document.extraction_error,
+            'ocr_applied': document.ocr_applied,
+            'ocr_engine': document.ocr_engine,
+            'ocr_pages_processed': document.ocr_pages_processed,
+            'ocr_confidence_avg': document.ocr_confidence_avg
         }
 
 

@@ -264,6 +264,12 @@ class Document(Base):
     extraction_method = Column(String(50), nullable=True)
     extraction_date = Column(DateTime(timezone=True), nullable=True)
     extraction_error = Column(Text, nullable=True)
+
+    # OCR Processing (for scanned PDFs)
+    ocr_applied = Column(Boolean, default=False)
+    ocr_engine = Column(String(50), nullable=True)  # 'textract'
+    ocr_pages_processed = Column(Integer, nullable=True)
+    ocr_confidence_avg = Column(Float, nullable=True)
     
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
