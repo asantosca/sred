@@ -1,10 +1,10 @@
 """
 Text extraction service for legal documents.
 
-Extracts text from PDF, DOCX, and TXT files for RAG pipeline processing.
+Extracts text from PDF, DOCX, TXT, and image files for RAG pipeline processing.
 Optimized for legal documents with proper handling of tables, headers, and formatting.
 
-Includes OCR support via AWS Textract for scanned PDFs.
+Includes OCR support via AWS Textract/Tesseract for scanned PDFs and images.
 """
 
 import io
@@ -26,6 +26,9 @@ class TextExtractionService:
 
     # Maximum file size to process (100 MB)
     MAX_FILE_SIZE = 100 * 1024 * 1024
+
+    # Supported image extensions for OCR
+    IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.tiff', '.tif'}
 
     @staticmethod
     def extract_text(
@@ -74,6 +77,7 @@ class TextExtractionService:
 
         # Determine file type
         file_ext = Path(filename).suffix.lower()
+        logger.info(f"Text extraction for file '{filename}' with extension '{file_ext}'")
 
         try:
             if file_ext == '.pdf':
@@ -82,7 +86,11 @@ class TextExtractionService:
                 return TextExtractionService._extract_docx(file_content)
             elif file_ext == '.txt':
                 return TextExtractionService._extract_txt(file_content)
+            elif file_ext in TextExtractionService.IMAGE_EXTENSIONS:
+                logger.info(f"Routing to image extraction for {filename}")
+                return TextExtractionService._extract_image(file_content, storage_path)
             else:
+                logger.warning(f"Unsupported file type: {file_ext} (supported images: {TextExtractionService.IMAGE_EXTENSIONS})")
                 return {
                     'success': False,
                     'text': '',
@@ -244,6 +252,133 @@ class TextExtractionService:
             }
 
     @staticmethod
+    def _extract_image(file_content: bytes, storage_path: Optional[str] = None) -> Dict:
+        """
+        Extract text from image files using OCR.
+
+        Images always require OCR - no text extraction fallback.
+
+        Args:
+            file_content: Raw image bytes (PNG, JPG, JPEG, TIFF)
+            storage_path: S3 key of the document (needed for Textract)
+
+        Returns:
+            Dictionary with extraction results including OCR metadata
+        """
+        from app.services.ocr import tesseract_ocr_service, textract_ocr_service
+        import asyncio
+
+        logger.info(f"Extracting text from image using OCR (file size: {len(file_content)} bytes)")
+
+        ocr_result = None
+        ocr_engine = None
+
+        # Check OCR availability
+        textract_available = textract_ocr_service.is_available()
+        tesseract_available = tesseract_ocr_service.is_available()
+        logger.info(f"OCR availability - Textract: {textract_available}, Tesseract: {tesseract_available}")
+
+        # Try Textract first if available (production)
+        if storage_path and textract_available:
+            logger.info("Attempting image OCR with AWS Textract")
+            try:
+                # Handle async Textract call
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # We're in an async context, create a new thread to run it
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(
+                                asyncio.run,
+                                textract_ocr_service.extract_text_from_s3_document(storage_path)
+                            )
+                            ocr_result = future.result()
+                    else:
+                        ocr_result = loop.run_until_complete(
+                            textract_ocr_service.extract_text_from_s3_document(storage_path)
+                        )
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    ocr_result = loop.run_until_complete(
+                        textract_ocr_service.extract_text_from_s3_document(storage_path)
+                    )
+
+                if ocr_result and ocr_result.get('success'):
+                    ocr_engine = 'textract'
+                else:
+                    logger.warning(f"Textract failed for image, falling back to Tesseract: {ocr_result.get('error') if ocr_result else 'Unknown error'}")
+                    ocr_result = None
+            except Exception as e:
+                logger.warning(f"Textract failed for image: {e}, falling back to Tesseract")
+                ocr_result = None
+
+        # Fall back to Tesseract (local development or Textract failure)
+        if ocr_result is None and tesseract_available:
+            logger.info("Using Tesseract OCR for image text extraction")
+            try:
+                ocr_result = tesseract_ocr_service.extract_text_from_image_bytes(file_content)
+                logger.info(f"Tesseract OCR result: success={ocr_result.get('success')}, error={ocr_result.get('error')}")
+                if ocr_result.get('success'):
+                    ocr_engine = 'tesseract'
+            except Exception as e:
+                logger.error(f"Tesseract OCR threw exception: {e}", exc_info=True)
+                ocr_result = {
+                    'success': False,
+                    'text': '',
+                    'pages_processed': 0,
+                    'confidence_avg': None,
+                    'error': f'Tesseract exception: {str(e)}'
+                }
+
+        # Handle no OCR available
+        if ocr_result is None:
+            error_msg = 'No OCR engine available. Install Tesseract or configure AWS credentials.'
+            logger.error(error_msg)
+            return {
+                'success': False,
+                'text': '',
+                'metadata': {'page_count': 1, 'ocr_applied': True},
+                'error': error_msg
+            }
+
+        # Process OCR result
+        if ocr_result['success']:
+            full_text = ocr_result['text']
+            word_count = len(full_text.split())
+            char_count = len(full_text)
+
+            return {
+                'success': True,
+                'text': full_text,
+                'metadata': {
+                    'page_count': 1,  # Images are single-page
+                    'word_count': word_count,
+                    'char_count': char_count,
+                    'extraction_method': f'ocr_{ocr_engine}',
+                    'ocr_applied': True,
+                    'ocr_engine': ocr_engine,
+                    'ocr_pages_processed': 1,
+                    'ocr_confidence_avg': ocr_result['confidence_avg']
+                },
+                'error': None
+            }
+        else:
+            # OCR failed
+            logger.error(f"Image OCR extraction failed: {ocr_result['error']}")
+            return {
+                'success': False,
+                'text': '',
+                'metadata': {
+                    'page_count': 1,
+                    'ocr_applied': True,
+                    'ocr_engine': ocr_engine
+                },
+                'error': f"Image OCR extraction failed: {ocr_result['error']}"
+            }
+
+    @staticmethod
     def _extract_docx(file_content: bytes) -> Dict:
         """
         Extract text from DOCX files using python-docx.
@@ -380,6 +515,9 @@ class TextExtractionService:
                 text = file_content.decode('utf-8', errors='ignore')
                 word_count = len(text.split())
                 metadata['page_count'] = max(1, word_count // 500)
+            elif file_ext in TextExtractionService.IMAGE_EXTENSIONS:
+                # Images are always single-page
+                metadata['page_count'] = 1
             else:
                 metadata['page_count'] = 0
 

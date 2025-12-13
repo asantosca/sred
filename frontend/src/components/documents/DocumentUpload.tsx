@@ -77,9 +77,12 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain',
+      'image/png',
+      'image/jpeg',
+      'image/tiff',
     ]
     if (!allowedTypes.includes(file.type)) {
-      setUploadError('Unsupported file type. Please upload PDF, DOC, DOCX, or TXT files.')
+      setUploadError('Unsupported file type. Please upload PDF, DOC, DOCX, TXT, or image files (PNG, JPG, TIFF).')
       return
     }
 
@@ -163,7 +166,7 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
             type="file"
             id="file-upload"
             className="sr-only"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.tiff,.tif"
             onChange={handleFileInput}
           />
 
@@ -177,7 +180,7 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
                 or drag and drop
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                PDF, DOC, DOCX, or TXT (max 50MB)
+                PDF, DOC, DOCX, TXT, or images (max 50MB)
               </p>
             </label>
           ) : (

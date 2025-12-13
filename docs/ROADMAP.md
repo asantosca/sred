@@ -98,10 +98,11 @@ _Must complete before beta users can test with real documents_
   - Vector-only search misses these exact matches
   - Implemented using PostgreSQL tsvector + GIN index with RRF score fusion
 
-- [ ] OCR support for scanned documents
-  - Many legal docs are scanned PDFs (court filings, signed contracts)
-  - Beta users will upload these and get empty results
-  - Blocker for real-world testing
+- [x] OCR support for scanned documents
+  - AWS Textract (production) with Tesseract fallback (local dev)
+  - Supports scanned PDFs and image files (PNG, JPG, TIFF)
+  - Automatic detection of scanned PDFs based on text density
+  - OCR metadata tracked (engine, confidence, pages processed)
 
 **Performance:**
 

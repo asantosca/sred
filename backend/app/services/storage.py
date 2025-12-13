@@ -84,11 +84,14 @@ class StorageService:
             errors.append(f"File size ({file_size:,} bytes) exceeds maximum allowed size (50MB)")
         
         # Check file extension
-        allowed_extensions = {'.pdf', '.docx', '.doc', '.txt', '.msg', '.eml'}
+        allowed_extensions = {
+            '.pdf', '.docx', '.doc', '.txt', '.msg', '.eml',
+            '.png', '.jpg', '.jpeg', '.tiff', '.tif'  # Image formats for OCR
+        }
         file_ext = os.path.splitext(filename)[1].lower()
         if file_ext not in allowed_extensions:
-            errors.append(f"File extension '{file_ext}' not allowed. Allowed: {', '.join(allowed_extensions)}")
-        
+            errors.append(f"File extension '{file_ext}' not allowed. Allowed: {', '.join(sorted(allowed_extensions))}")
+
         # Additional MIME type validation if content is provided
         if file_content:
             mime_type = self.get_mime_type(filename)
@@ -98,7 +101,10 @@ class StorageService:
                 'application/msword',
                 'text/plain',
                 'application/vnd.ms-outlook',
-                'message/rfc822'
+                'message/rfc822',
+                'image/png',
+                'image/jpeg',
+                'image/tiff'
             }
             
             # Note: We're checking based on extension for now

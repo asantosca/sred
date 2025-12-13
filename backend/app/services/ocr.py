@@ -81,15 +81,40 @@ class TesseractOCRService:
 
         try:
             import pytesseract
-            from pdf2image import convert_from_bytes
+            import platform
+            import shutil
+            import os
+
+            # On Windows, tesseract may not be in PATH - set path before testing
+            if platform.system() == 'Windows' and not shutil.which('tesseract'):
+                # Try common Windows installation paths
+                common_paths = [
+                    r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+                    r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+                    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Tesseract-OCR', 'tesseract.exe'),
+                ]
+                for path in common_paths:
+                    if os.path.exists(path):
+                        pytesseract.pytesseract.tesseract_cmd = path
+                        logger.info(f"Found Tesseract at: {path}")
+                        break
 
             # Test that tesseract is actually installed
-            pytesseract.get_tesseract_version()
+            version = pytesseract.get_tesseract_version()
+            logger.info(f"Tesseract version: {version}")
 
             self._pytesseract = pytesseract
-            self._convert_from_bytes = convert_from_bytes
             self._available = True
             logger.info("Tesseract OCR initialized successfully")
+
+            # pdf2image is optional - only needed for PDF OCR, not images
+            try:
+                from pdf2image import convert_from_bytes
+                self._convert_from_bytes = convert_from_bytes
+                logger.info("pdf2image available for PDF OCR")
+            except ImportError:
+                self._convert_from_bytes = None
+                logger.info("pdf2image not available - PDF OCR disabled, image OCR still works")
 
         except Exception as e:
             self._available = False
@@ -185,6 +210,80 @@ class TesseractOCRService:
 
         except Exception as e:
             error_msg = f"Tesseract OCR failed: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            return {
+                'success': False,
+                'text': '',
+                'pages_processed': 0,
+                'confidence_avg': None,
+                'error': error_msg
+            }
+
+    def extract_text_from_image_bytes(self, file_content: bytes) -> Dict:
+        """
+        Extract text from image bytes using Tesseract OCR.
+
+        Simpler than PDF extraction - no page conversion needed.
+
+        Args:
+            file_content: Raw image bytes (PNG, JPG, JPEG, TIFF)
+
+        Returns:
+            Dictionary with extraction results
+        """
+        self._lazy_init()
+
+        if not self._available:
+            return {
+                'success': False,
+                'text': '',
+                'pages_processed': 0,
+                'confidence_avg': None,
+                'error': 'Tesseract OCR is not available on this system'
+            }
+
+        try:
+            from PIL import Image
+
+            # Load image from bytes
+            image = Image.open(io.BytesIO(file_content))
+            logger.info(f"Processing image for OCR: {image.size[0]}x{image.size[1]} {image.mode}")
+
+            # Get OCR data with confidence scores
+            ocr_data = self._pytesseract.image_to_data(
+                image,
+                output_type=self._pytesseract.Output.DICT,
+                config='--psm 1'  # Automatic page segmentation with OSD
+            )
+
+            # Extract text and confidence
+            text_parts = []
+            confidences = []
+            for i, text in enumerate(ocr_data['text']):
+                if text.strip():
+                    text_parts.append(text)
+                    conf = ocr_data['conf'][i]
+                    if conf > 0:  # -1 means no confidence available
+                        confidences.append(conf)
+
+            full_text = ' '.join(text_parts)
+            confidence_avg = sum(confidences) / len(confidences) if confidences else 0
+
+            logger.info(
+                f"Tesseract extracted {len(full_text)} chars from image, "
+                f"avg confidence: {confidence_avg:.1f}%"
+            )
+
+            return {
+                'success': True,
+                'text': full_text,
+                'pages_processed': 1,  # Images are single-page
+                'confidence_avg': confidence_avg,
+                'error': None
+            }
+
+        except Exception as e:
+            error_msg = f"Tesseract image OCR failed: {str(e)}"
             logger.error(error_msg, exc_info=True)
             return {
                 'success': False,
@@ -438,22 +537,25 @@ class OCRService:
     async def extract_text(
         self,
         file_content: bytes,
-        storage_path: Optional[str] = None
+        storage_path: Optional[str] = None,
+        is_image: bool = False
     ) -> Dict:
         """
-        Extract text from a scanned PDF using the best available OCR engine.
+        Extract text from a scanned PDF or image using the best available OCR engine.
 
         Tries Textract first (if available and storage_path provided),
         falls back to Tesseract for local development.
 
         Args:
-            file_content: Raw PDF bytes
+            file_content: Raw file bytes (PDF or image)
             storage_path: S3 storage path (required for Textract)
+            is_image: True if the file is an image (PNG, JPG, JPEG, TIFF)
 
         Returns:
             Dictionary with extraction results including which engine was used
         """
         # Try Textract first if available and we have an S3 path
+        # Textract supports both PDFs and images via the same API
         if storage_path and self.textract.is_available():
             logger.info("Attempting OCR with AWS Textract")
             result = await self.textract.extract_text_from_s3_document(storage_path)
@@ -467,7 +569,10 @@ class OCRService:
         # Fall back to Tesseract
         if self.tesseract.is_available():
             logger.info("Using Tesseract OCR for text extraction")
-            result = self.tesseract.extract_text_from_pdf_bytes(file_content)
+            if is_image:
+                result = self.tesseract.extract_text_from_image_bytes(file_content)
+            else:
+                result = self.tesseract.extract_text_from_pdf_bytes(file_content)
             result['ocr_engine'] = 'tesseract'
             return result
 
