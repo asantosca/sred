@@ -364,7 +364,9 @@ async def _generate_document_summary(
     # Generate summary
     summary = await summarization_service.generate_summary(
         text=document.extracted_text,
-        document_title=document.document_title or document.original_filename
+        document_title=document.document_title or document.original_filename,
+        company_id=company_id,
+        document_id=document_id
     )
 
     if not summary:

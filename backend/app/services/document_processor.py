@@ -19,6 +19,7 @@ from app.services.storage import storage_service
 from app.services.chunking import chunking_service
 from app.services.embeddings import embedding_service
 from app.services.vector_storage import vector_storage_service
+from app.services.usage_logging import usage_logging_service
 
 logger = logging.getLogger(__name__)
 
@@ -324,6 +325,17 @@ class DocumentProcessor:
             # Get embedding metadata
             embedding_metadata = embedding_service.get_embedding_metadata()
             embedding_model = embedding_metadata['model']
+
+            # Log API usage for cost tracking
+            await usage_logging_service.log_usage(
+                service="openai_embeddings",
+                operation="generate_embeddings_batch",
+                company_id=company_id,
+                chunks_processed=len(chunks),
+                model_name=embedding_model,
+                document_id=document_id,
+                db=self.db
+            )
 
             # Store embeddings using raw SQL (bypasses ORM vector type issues)
             await vector_storage_service.store_embeddings(

@@ -2,10 +2,12 @@
 
 import logging
 from typing import Optional
+from uuid import UUID
 
 from anthropic import AsyncAnthropic
 
 from app.core.config import settings
+from app.services.usage_logging import usage_logging_service
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,9 @@ class SummarizationService:
     async def generate_summary(
         self,
         text: str,
-        document_title: str
+        document_title: str,
+        company_id: Optional[UUID] = None,
+        document_id: Optional[UUID] = None
     ) -> Optional[str]:
         """
         Generate an AI summary of a document.
@@ -84,6 +88,8 @@ class SummarizationService:
         Args:
             text: The full extracted text of the document
             document_title: Title of the document for context
+            company_id: Company ID for usage tracking
+            document_id: Document ID for usage tracking
 
         Returns:
             Generated summary string, or None if generation fails
@@ -98,6 +104,10 @@ class SummarizationService:
             f"text length: {text_length} chars"
         )
 
+        # Store context for usage logging
+        self._current_company_id = company_id
+        self._current_document_id = document_id
+
         try:
             if text_length <= MAX_DIRECT_CHARS:
                 # Document fits in context - summarize directly
@@ -108,6 +118,9 @@ class SummarizationService:
         except Exception as e:
             logger.error(f"Summary generation failed: {e}", exc_info=True)
             raise
+        finally:
+            self._current_company_id = None
+            self._current_document_id = None
 
     async def _summarize_direct(
         self,
@@ -133,6 +146,17 @@ class SummarizationService:
             model=settings.ANTHROPIC_MODEL,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Log API usage
+        await usage_logging_service.log_usage(
+            service="claude_summary",
+            operation="summarize_direct",
+            company_id=getattr(self, '_current_company_id', None),
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            model_name=settings.ANTHROPIC_MODEL,
+            document_id=getattr(self, '_current_document_id', None)
         )
 
         summary = response.content[0].text.strip()
@@ -202,6 +226,17 @@ class SummarizationService:
             messages=[{"role": "user", "content": prompt}]
         )
 
+        # Log API usage
+        await usage_logging_service.log_usage(
+            service="claude_summary",
+            operation="summarize_chunk",
+            company_id=getattr(self, '_current_company_id', None),
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            model_name=settings.ANTHROPIC_MODEL,
+            document_id=getattr(self, '_current_document_id', None)
+        )
+
         return response.content[0].text.strip()
 
     async def _combine_summaries(
@@ -228,6 +263,17 @@ class SummarizationService:
             model=settings.ANTHROPIC_MODEL,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Log API usage
+        await usage_logging_service.log_usage(
+            service="claude_summary",
+            operation="combine_summaries",
+            company_id=getattr(self, '_current_company_id', None),
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            model_name=settings.ANTHROPIC_MODEL,
+            document_id=getattr(self, '_current_document_id', None)
         )
 
         summary = response.content[0].text.strip()

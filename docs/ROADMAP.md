@@ -116,6 +116,14 @@ _Must complete before beta users can test with real documents_
 - [ ] Database query optimization
 - [ ] API response time benchmarks
 
+**Cost Monitoring (Beta Operations):**
+
+- [x] API usage logging for cost tracking
+  - Tracks tokens for Claude (chat, summaries) and OpenAI (embeddings)
+  - Estimates costs based on current API pricing
+  - Platform admin API endpoints for usage queries
+  - Per-company and per-service breakdowns
+
 ---
 
 ## Section 4: AWS Infrastructure Deployment

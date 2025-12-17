@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.middleware.auth import get_current_user as get_tenant_context
 from app.models.models import User
 from app.core.tenant import TenantContext
+from app.core.config import settings
 
 async def get_current_user(
     request: Request,
@@ -67,3 +68,20 @@ def verify_company_access(user: User, resource_company_id: UUID) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resource not found"  # Don't reveal existence of resource in other company
         )
+
+
+async def get_platform_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    FastAPI dependency to get current authenticated platform admin.
+    Platform admins are BC Legal Tech staff who can access all companies' data.
+    Configured via PLATFORM_ADMIN_EMAILS environment variable.
+    """
+    if current_user.email.lower() not in settings.PLATFORM_ADMIN_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Platform admin privileges required"
+        )
+
+    return current_user

@@ -468,6 +468,44 @@ class DailyBriefing(Base):
     company = relationship("Company")
 
 
+class ApiUsageLog(Base):
+    """API usage log for tracking token consumption and costs"""
+    __tablename__ = "api_usage_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)  # Nullable for system-level ops
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Service identification
+    service = Column(String(50), nullable=False)  # 'claude_chat', 'claude_summary', 'openai_embeddings', 'textract_ocr'
+    operation = Column(String(100), nullable=True)  # 'send_message', 'generate_summary', etc.
+
+    # Token usage (for LLM services)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+
+    # Other usage metrics
+    pages_processed = Column(Integer, nullable=True)  # For OCR
+    chunks_processed = Column(Integer, nullable=True)  # For embeddings
+
+    # Model info
+    model_name = Column(String(100), nullable=True)
+
+    # Cost estimation (in USD cents for precision)
+    estimated_cost_cents = Column(Integer, nullable=True)
+
+    # Context
+    document_id = Column(UUID(as_uuid=True), nullable=True)
+    conversation_id = Column(UUID(as_uuid=True), nullable=True)
+
+    # Timestamp
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    company = relationship("Company")
+    user = relationship("User")
+
+
 class WaitlistSignup(Base):
     """Waitlist signup model for marketing site"""
     __tablename__ = "waitlist_signups"

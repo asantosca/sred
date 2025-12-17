@@ -92,5 +92,12 @@ class Settings:
     SENTRY_TRACES_SAMPLE_RATE: float = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))  # 10% of transactions
     SENTRY_ENVIRONMENT: str = os.getenv("SENTRY_ENVIRONMENT", ENVIRONMENT)
 
+    # Platform admin settings (comma-separated list of admin email addresses)
+    PLATFORM_ADMIN_EMAILS: List[str] = [
+        email.strip().lower()
+        for email in os.getenv("PLATFORM_ADMIN_EMAILS", "").split(",")
+        if email.strip()
+    ]
+
 # Create global settings instance
 settings = Settings()

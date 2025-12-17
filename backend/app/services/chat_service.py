@@ -18,6 +18,7 @@ from app.schemas.chat import (
 )
 from app.services.embeddings import embedding_service
 from app.services.vector_storage import vector_storage_service
+from app.services.usage_logging import usage_logging_service
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,19 @@ class ChatService:
                 system_prompt=system_prompt,
                 user_message=request.message,
                 conversation_history=history
+            )
+
+            # Log API usage for cost tracking
+            await usage_logging_service.log_usage(
+                service="claude_chat",
+                operation="send_message",
+                company_id=current_user.company_id,
+                user_id=current_user.id,
+                input_tokens=usage.get("input_tokens"),
+                output_tokens=usage.get("output_tokens"),
+                model_name=settings.ANTHROPIC_MODEL,
+                conversation_id=conversation.id,
+                db=self.db
             )
         except Exception as e:
             logger.error(f"Claude API error: {str(e)}", exc_info=True)
@@ -200,6 +214,19 @@ class ChatService:
                 "input_tokens": final_message.usage.input_tokens,
                 "output_tokens": final_message.usage.output_tokens
             }
+
+            # Log API usage for cost tracking
+            await usage_logging_service.log_usage(
+                service="claude_chat",
+                operation="send_message_stream",
+                company_id=current_user.company_id,
+                user_id=current_user.id,
+                input_tokens=usage.get("input_tokens"),
+                output_tokens=usage.get("output_tokens"),
+                model_name=settings.ANTHROPIC_MODEL,
+                conversation_id=conversation.id,
+                db=self.db
+            )
 
         except Exception as e:
             logger.error(f"Streaming error: {str(e)}", exc_info=True)
@@ -513,6 +540,18 @@ Summary:"""
             )
             summary = response.content[0].text.strip()
 
+            # Log API usage for cost tracking
+            await usage_logging_service.log_usage(
+                service="claude_chat",
+                operation="generate_conversation_summary",
+                company_id=conversation.company_id,
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                model_name=settings.ANTHROPIC_MODEL,
+                conversation_id=conversation.id,
+                db=self.db
+            )
+
             # Save summary to conversation
             conversation.summary = summary
             conversation.summary_generated_at = datetime.now(timezone.utc)
@@ -762,6 +801,17 @@ Summary:"""
         if not query_embedding:
             logger.warning("Failed to generate query embedding, proceeding without context")
             return [], []
+
+        # Log embedding usage for cost tracking
+        await usage_logging_service.log_usage(
+            service="openai_embeddings",
+            operation="search_query",
+            company_id=user.company_id,
+            user_id=user.id,
+            chunks_processed=1,
+            model_name=embedding_service.model,
+            db=self.db
+        )
 
         # Perform vector similarity search (filtered by company_id at database level)
         search_results = await vector_storage_service.similarity_search(
