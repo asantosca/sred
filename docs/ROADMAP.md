@@ -104,6 +104,12 @@ _Must complete before beta users can test with real documents_
   - Automatic detection of scanned PDFs based on text density
   - OCR metadata tracked (engine, confidence, pages processed)
 
+- [x] AI document summaries for RAG context enhancement
+  - Auto-generates document summary during processing using Claude
+  - Summaries included in chat context alongside retrieved chunks
+  - Hierarchical summarization for very long documents
+  - Internal only (not exposed to users), improves answer quality
+
 **Performance:**
 
 - [ ] CI/CD pipeline (GitHub Actions)

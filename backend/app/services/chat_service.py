@@ -75,9 +75,16 @@ class ChatService:
             user=current_user
         )
 
+        # 4b. Fetch document summaries for context enhancement
+        document_summaries = await self._get_document_summaries(
+            context_chunks, current_user.company_id
+        )
+
         # 5. Build prompt with context
         is_discovery_mode = conversation.matter_id is None
-        system_prompt = self._build_system_prompt(context_chunks, is_discovery_mode)
+        system_prompt = self._build_system_prompt(
+            context_chunks, is_discovery_mode, document_summaries
+        )
 
         # 6. Call Claude API
         try:
@@ -155,9 +162,16 @@ class ChatService:
             user=current_user
         )
 
+        # 4b. Fetch document summaries for context enhancement
+        document_summaries = await self._get_document_summaries(
+            context_chunks, current_user.company_id
+        )
+
         # 5. Build prompt
         is_discovery_mode = conversation.matter_id is None
-        system_prompt = self._build_system_prompt(context_chunks, is_discovery_mode)
+        system_prompt = self._build_system_prompt(
+            context_chunks, is_discovery_mode, document_summaries
+        )
 
         # 6. Stream Claude response
         full_content = ""
@@ -787,8 +801,64 @@ Summary:"""
 
         return search_results, sources
 
-    def _build_system_prompt(self, context_chunks: List[Dict], is_discovery_mode: bool = False) -> str:
-        """Build system prompt with document context"""
+    async def _get_document_summaries(
+        self,
+        context_chunks: List[Dict],
+        company_id: UUID
+    ) -> Dict[UUID, Dict[str, str]]:
+        """
+        Fetch AI summaries for documents referenced in context chunks.
+
+        Args:
+            context_chunks: List of context chunks from RAG retrieval
+            company_id: Company ID for tenant isolation
+
+        Returns:
+            Dict mapping document_id to {title, summary}
+        """
+        if not context_chunks:
+            return {}
+
+        # Get unique document IDs from chunks
+        document_ids = {chunk["document_id"] for chunk in context_chunks}
+
+        if not document_ids:
+            return {}
+
+        # Fetch documents with summaries
+        from app.models.models import Document, Matter
+
+        query = (
+            select(Document)
+            .join(Matter)
+            .where(
+                Document.id.in_(document_ids),
+                Matter.company_id == company_id,
+                Document.ai_summary.isnot(None)
+            )
+        )
+
+        result = await self.db.execute(query)
+        documents = result.scalars().all()
+
+        # Build summaries dict
+        summaries = {}
+        for doc in documents:
+            summaries[doc.id] = {
+                "title": doc.document_title or doc.filename,
+                "summary": doc.ai_summary
+            }
+
+        logger.info(f"Retrieved {len(summaries)} document summaries for RAG context")
+        return summaries
+
+    def _build_system_prompt(
+        self,
+        context_chunks: List[Dict],
+        is_discovery_mode: bool = False,
+        document_summaries: Optional[Dict[UUID, Dict[str, str]]] = None
+    ) -> str:
+        """Build system prompt with document context and summaries"""
         if is_discovery_mode:
             return """You are a legal AI assistant for BC Legal Tech, operating in Discovery mode.
 
@@ -812,13 +882,21 @@ Important guidelines:
 - Be concise and professional
 - For legal advice, remind users to verify with qualified counsel"""
 
+        # Build document summaries section (if available)
+        summaries_text = ""
+        if document_summaries:
+            summaries_text = "\n<document_summaries>\n"
+            for doc_id, doc_info in document_summaries.items():
+                summaries_text += f"\n[{doc_info['title']}]\n{doc_info['summary']}\n"
+            summaries_text += "</document_summaries>\n"
+
         # Build context section
         context_text = ""
         for i, chunk in enumerate(context_chunks, 1):
             context_text += f"\n[Source {i}]\n{chunk['content']}\n"
 
         return f"""You are a legal AI assistant for BC Legal Tech, helping lawyers analyze their documents.
-
+{summaries_text}
 You have access to the following relevant document excerpts:
 
 <context>
@@ -827,6 +905,7 @@ You have access to the following relevant document excerpts:
 
 Important guidelines:
 - Always cite your sources using [Source X] notation when referencing document information
+- Use the document summaries (if provided) to understand the overall context of each document
 - For document-related questions, use information from the provided context
 - You may also reference information the user has shared directly in the conversation
 - If asked about something not in the documents or conversation, say "I don't have information about that"

@@ -270,7 +270,11 @@ class Document(Base):
     ocr_engine = Column(String(50), nullable=True)  # 'textract'
     ocr_pages_processed = Column(Integer, nullable=True)
     ocr_confidence_avg = Column(Float, nullable=True)
-    
+
+    # AI Summary (for RAG context enhancement)
+    ai_summary = Column(Text, nullable=True)
+    ai_summary_generated_at = Column(DateTime(timezone=True), nullable=True)
+
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)

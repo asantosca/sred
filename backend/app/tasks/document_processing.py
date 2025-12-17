@@ -160,13 +160,29 @@ async def _process_document_async(document_id: str, company_id: str) -> dict:
             logger.warning(f"Event extraction failed for document {document_id}: {str(e)}")
             # Keep status as embedded since core functionality still works
 
+        # Step 5: Generate AI summary
+        logger.info(f"Generating AI summary for document {document_id}")
+        summary_generated = False
+        try:
+            summary_generated = await _generate_document_summary(
+                session, doc_uuid, company_uuid
+            )
+            if summary_generated:
+                logger.info(f"AI summary generated for document {document_id}")
+            else:
+                logger.info(f"No summary generated for document {document_id} (possibly empty text)")
+        except Exception as e:
+            # Summary generation failure is non-fatal - document is still searchable
+            logger.warning(f"Summary generation failed for document {document_id}: {str(e)}")
+
         logger.info(f"Document {document_id} fully processed and ready for search")
 
         return {
             "status": "success",
             "document_id": document_id,
             "indexed_for_search": True,
-            "events_extracted": events_extracted
+            "events_extracted": events_extracted,
+            "summary_generated": summary_generated
         }
 
 
@@ -302,3 +318,68 @@ def process_document_embeddings(self, document_id: str, company_id: str) -> dict
     except Exception as e:
         logger.error(f"Embedding generation failed for {document_id}: {str(e)}", exc_info=True)
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+async def _generate_document_summary(
+    session,
+    document_id: UUID,
+    company_id: UUID
+) -> bool:
+    """
+    Generate AI summary for a document using its extracted text.
+
+    Args:
+        session: Database session
+        document_id: Document UUID
+        company_id: Company ID for tenant isolation
+
+    Returns:
+        bool: True if summary was generated, False otherwise
+    """
+    from datetime import datetime
+    from sqlalchemy import select, update
+
+    from app.services.summarization import summarization_service
+
+    # Fetch document with tenant isolation
+    stmt = (
+        select(Document)
+        .join(Matter)
+        .where(
+            Document.id == document_id,
+            Matter.company_id == company_id
+        )
+    )
+    result = await session.execute(stmt)
+    document = result.scalar()
+
+    if not document:
+        logger.error(f"Document {document_id} not found for company {company_id}")
+        return False
+
+    if not document.extracted_text:
+        logger.warning(f"Document {document_id} has no extracted text for summarization")
+        return False
+
+    # Generate summary
+    summary = await summarization_service.generate_summary(
+        text=document.extracted_text,
+        document_title=document.document_title or document.original_filename
+    )
+
+    if not summary:
+        return False
+
+    # Update document with summary
+    update_stmt = (
+        update(Document)
+        .where(Document.id == document_id)
+        .values(
+            ai_summary=summary,
+            ai_summary_generated_at=datetime.utcnow()
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
+
+    return True
