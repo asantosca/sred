@@ -160,7 +160,7 @@ class EmailService:
                 <p>{greeting}</p>
                 <p>Thank you for registering your company with BC Legal Tech!</p>
                 <p>To complete your registration and activate your account, please confirm your email by clicking the button below:</p>
-                <a href="{confirm_url}" class="button">Set Your Password</a>
+                <a href="{confirm_url}" class="button">Confirm your email</a>
                 <p>Or copy and paste this link into your browser:</p>
                 <p><a href="{confirm_url}">{confirm_url}</a></p>
                 <p><strong>This link will expire in {expiry}.</strong></p>
