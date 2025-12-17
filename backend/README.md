@@ -9,6 +9,7 @@ FastAPI backend for AI-powered legal document intelligence platform.
 - [Setup](#setup)
 - [Environment Variables](#environment-variables)
 - [API Endpoints](#api-endpoints)
+- [Platform Admin & Cost Reporting](#platform-admin--cost-reporting)
 - [Document Processing Pipeline](#document-processing-pipeline)
 
 ## Architecture Overview
@@ -301,6 +302,114 @@ DEBUG=true
 ### Search
 - `POST /api/v1/search/semantic` - Semantic search across documents
 - `POST /api/v1/search/hybrid` - Hybrid search (keyword + semantic)
+
+### Platform Admin (Cost Reporting)
+- `GET /api/v1/admin/usage` - Get API usage summary with cost estimates
+- `GET /api/v1/admin/usage/daily` - Get daily usage for trending
+- `GET /api/v1/admin/companies` - List all companies
+
+## Platform Admin & Cost Reporting
+
+The platform includes API usage tracking and cost estimation for monitoring during Beta.
+
+### Setup
+
+1. Add your email to `.env`:
+   ```bash
+   PLATFORM_ADMIN_EMAILS=admin@yourcompany.com,another@yourcompany.com
+   ```
+
+2. Restart the backend to load the new configuration.
+
+### Generating Cost Reports
+
+First, obtain a JWT token by logging in:
+
+```bash
+# Login to get access token
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@yourcompany.com", "password": "your-password"}'
+```
+
+Then use the token to access admin endpoints:
+
+```bash
+# Get usage summary (last 30 days by default)
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/usage"
+
+# Get usage for specific period (e.g., last 7 days)
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/usage?days=7"
+
+# Get usage for a specific company
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/usage?company_id=<uuid>"
+
+# Get daily usage for cost trending
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/usage/daily"
+
+# Filter daily usage by service
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/usage/daily?service=claude_chat"
+
+# List all companies
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/companies"
+```
+
+### Response Format
+
+The `/admin/usage` endpoint returns:
+
+```json
+{
+  "period_start": "2025-11-16T00:00:00",
+  "period_end": "2025-12-16T00:00:00",
+  "overall": {
+    "total_requests": 150,
+    "total_input_tokens": 500000,
+    "total_output_tokens": 75000,
+    "total_chunks_processed": 1200,
+    "total_pages_ocr": 45,
+    "estimated_cost_cents": 285
+  },
+  "by_company": [
+    {
+      "company_id": "uuid",
+      "company_name": "Acme Law Firm",
+      "usage": { ... }
+    }
+  ],
+  "by_service": [
+    {
+      "service": "claude_chat",
+      "request_count": 100,
+      "input_tokens": 400000,
+      "output_tokens": 60000,
+      "estimated_cost_cents": 210
+    },
+    {
+      "service": "openai_embeddings",
+      "chunks_processed": 1200,
+      "estimated_cost_cents": 12
+    }
+  ]
+}
+```
+
+### Services Tracked
+
+| Service | Metrics | Pricing Basis |
+|---------|---------|---------------|
+| `claude_chat` | input/output tokens | $3/$15 per 1M tokens |
+| `claude_summary` | input/output tokens | $3/$15 per 1M tokens |
+| `openai_embeddings` | chunks processed | $0.02 per 1M tokens |
+| `textract_ocr` | pages processed | ~$0.015 per page |
+
+Costs are estimated in USD cents for precision. Actual billing may vary.
 
 ## Document Processing Pipeline
 
