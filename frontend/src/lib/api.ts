@@ -329,9 +329,25 @@ export const chatApi = {
     return response
   },
 
-  // Submit message feedback
-  submitFeedback: (messageId: string, feedback: MessageFeedback) =>
+  // Submit message feedback (enhanced with category support)
+  submitFeedback: (messageId: string, feedback: {
+    rating: number  // -1 or 1
+    feedback_category?: 'incorrect' | 'irrelevant' | 'wrong_question' | 'not_detailed' | 'no_documents'
+    feedback_text?: string
+  }) =>
     api.post(`/chat/messages/${messageId}/feedback`, feedback),
+
+  // Track interaction signals for quality analytics
+  trackSignal: (signal: {
+    signal_type: 'session_start' | 'session_end' | 'copy' | 'source_click'
+    conversation_id: string
+    message_id?: string
+    document_id?: string
+  }) =>
+    api.post('/chat/signals/track', signal).catch(() => {
+      // Don't fail on tracking errors - just log and continue
+      console.debug('Signal tracking failed, continuing silently')
+    }),
 
   // Link conversation to a matter (after AI suggestion)
   linkToMatter: (conversationId: string, matterId: string) =>

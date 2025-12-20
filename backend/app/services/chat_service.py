@@ -22,6 +22,34 @@ from app.services.usage_logging import usage_logging_service
 
 logger = logging.getLogger(__name__)
 
+# Test message bypass - for development testing without API calls
+TEST_MESSAGE_TRIGGERS = ["test", "testing", "ping"]
+TEST_RESPONSE = """This is a **test response** from the AI assistant.
+
+---
+
+# Heading 1
+
+## Heading 2
+
+### Heading 3
+
+Here's what this test message includes:
+
+- Markdown formatting support
+- Bullet list item 2
+- Bullet list item 3
+
+A numbered list:
+
+1. First item
+2. Second item
+3. Third item
+
+This response was generated without calling the AI API, saving time and costs during development.
+
+> Note: Send any message other than "test" to get a real AI response."""
+
 
 class ChatService:
     """Service for AI chat with RAG context"""
@@ -29,6 +57,10 @@ class ChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.anthropic = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    def _is_test_message(self, message: str) -> bool:
+        """Check if message is a test trigger (case-insensitive)"""
+        return message.strip().lower() in TEST_MESSAGE_TRIGGERS
 
     async def send_message(
         self,
@@ -66,6 +98,34 @@ class ChatService:
             role="user",
             content=request.message
         )
+
+        # 3b. Check for test message bypass (skip AI for development testing)
+        if self._is_test_message(request.message):
+            logger.info(f"Test message detected, returning mock response")
+            assistant_message = await self._save_message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=TEST_RESPONSE,
+                sources=None,
+                model_name="test-bypass",
+                token_count=0
+            )
+            return ChatResponse(
+                conversation_id=conversation.id,
+                message=MessageResponse(
+                    id=assistant_message.id,
+                    conversation_id=conversation.id,
+                    role="assistant",
+                    content=TEST_RESPONSE,
+                    sources=None,
+                    token_count=0,
+                    model_name="test-bypass",
+                    rating=None,
+                    feedback_text=None,
+                    created_at=assistant_message.created_at
+                ),
+                is_new_conversation=is_new_conversation
+            )
 
         # 4. Retrieve relevant context using RAG
         context_chunks, sources = await self._retrieve_context(
@@ -166,6 +226,28 @@ class ChatService:
             role="user",
             content=request.message
         )
+
+        # 3b. Check for test message bypass (skip AI for development testing)
+        if self._is_test_message(request.message):
+            logger.info(f"Test message detected in stream, returning mock response")
+
+            # Stream the test response character by character (simulating streaming)
+            for char in TEST_RESPONSE:
+                yield f"data: {self._format_sse_chunk('content', char)}\n\n"
+
+            # Save the test response
+            assistant_message = await self._save_message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=TEST_RESPONSE,
+                sources=None,
+                model_name="test-bypass",
+                token_count=0
+            )
+
+            # Send done signal
+            yield f"data: {self._format_sse_chunk('done', {'message_id': str(assistant_message.id), 'conversation_id': str(conversation.id)})}\n\n"
+            return
 
         # 4. Retrieve context
         context_chunks, sources = await self._retrieve_context(

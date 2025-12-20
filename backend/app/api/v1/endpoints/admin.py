@@ -12,6 +12,10 @@ from pydantic import BaseModel
 from app.db.session import get_db
 from app.api.deps import get_platform_admin_user
 from app.models.models import User, Company, ApiUsageLog
+from app.services.feedback_analytics import FeedbackAnalyticsService
+from app.schemas.feedback import (
+    FeedbackStatsResponse, FeedbackAlertResponse, FlaggedMessageResponse
+)
 
 router = APIRouter()
 
@@ -270,3 +274,112 @@ async def list_companies(
         )
         for row in result
     ]
+
+
+# =====================
+# Feedback Analytics Endpoints
+# =====================
+
+@router.get("/feedback/stats", response_model=FeedbackStatsResponse)
+async def get_feedback_statistics(
+    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
+    company_id: Optional[UUID] = Query(default=None, description="Filter by company ID"),
+    granularity: str = Query(default="daily", pattern="^(hourly|daily|weekly)$"),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(get_platform_admin_user)
+):
+    """
+    Get feedback statistics for AI response quality monitoring.
+
+    Provides:
+    - Total counts (messages, feedback, positive, negative)
+    - Rates (positive, rephrase, abandonment, engagement)
+    - Category breakdown
+    - Average quality scores
+
+    Requires platform admin privileges.
+    """
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=days)
+
+    feedback_service = FeedbackAnalyticsService(db)
+    return await feedback_service.get_feedback_stats(
+        company_id=company_id,
+        start_date=period_start,
+        end_date=period_end,
+        granularity=granularity
+    )
+
+
+@router.get("/feedback/alerts", response_model=List[FeedbackAlertResponse])
+async def get_feedback_alerts(
+    company_id: Optional[UUID] = Query(default=None, description="Filter by company ID"),
+    include_resolved: bool = Query(default=False, description="Include resolved alerts"),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(get_platform_admin_user)
+):
+    """
+    Get active (or all) feedback quality alerts.
+
+    Alert types:
+    - `high_negative_rate`: Too many negative feedback in short time
+    - `abandonment_spike`: High session abandonment rate
+    - `rephrase_spike`: Users frequently rephrasing questions
+
+    Requires platform admin privileges.
+    """
+    feedback_service = FeedbackAnalyticsService(db)
+    return await feedback_service.get_active_alerts(
+        company_id=company_id,
+        include_resolved=include_resolved
+    )
+
+
+@router.get("/feedback/flagged", response_model=List[FlaggedMessageResponse])
+async def get_flagged_messages(
+    company_id: Optional[UUID] = Query(default=None, description="Filter by company ID"),
+    limit: int = Query(default=50, ge=1, le=200, description="Max messages to return"),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(get_platform_admin_user)
+):
+    """
+    Get messages flagged for review due to quality issues.
+
+    Includes messages with:
+    - Negative feedback (-1 rating)
+    - Low confidence scores (< 0.3)
+    - High rephrase patterns
+
+    Each flagged message includes the user's question, AI response,
+    feedback details, and confidence scores.
+
+    Requires platform admin privileges.
+    """
+    feedback_service = FeedbackAnalyticsService(db)
+    return await feedback_service.get_flagged_messages(
+        company_id=company_id,
+        limit=limit
+    )
+
+
+@router.post("/feedback/check-alerts")
+async def check_feedback_alerts(
+    company_id: Optional[UUID] = Query(default=None, description="Check for specific company"),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(get_platform_admin_user)
+):
+    """
+    Manually trigger alert threshold checking.
+
+    Normally this runs automatically via Celery, but this endpoint
+    allows manual triggering for testing or immediate checks.
+
+    Requires platform admin privileges.
+    """
+    feedback_service = FeedbackAnalyticsService(db)
+    new_alerts = await feedback_service.check_alert_thresholds(company_id=company_id)
+
+    return {
+        "alerts_created": len(new_alerts),
+        "alert_ids": [str(a.id) for a in new_alerts]
+    }

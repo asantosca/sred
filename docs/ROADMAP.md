@@ -200,9 +200,10 @@ _Required for public launch after beta_
 
 **RAG Quality (Differentiators):**
 
-- [ ] Confidence scoring on AI responses
-  - Lawyers need to know when to double-check
-  - Liability concern without it
+- [x] Confidence scoring on AI responses
+  - Question quality scoring based on length, specificity, context
+  - Response confidence scoring combining explicit feedback and implicit signals
+  - Admin visibility via API endpoints
 
 - [ ] Re-ranking of retrieved chunks
   - Improves answer quality noticeably
@@ -232,7 +233,13 @@ _Required for public launch after beta_
 
 **Chat Features:**
 
-- [ ] Copy-to-clipboard on AI messages
+- [x] Copy-to-clipboard on AI messages
+- [x] AI response feedback analytics
+  - Explicit feedback with categories (incorrect, irrelevant, wrong question, not detailed, no documents)
+  - Implicit behavioral signals (copy events, source clicks, session tracking, rephrase detection)
+  - Question quality scoring and response confidence scores
+  - Admin API endpoints for stats, alerts, and flagged messages
+  - Celery tasks for periodic aggregation and alert checking
 - [ ] Export conversation as PDF/DOCX
 
 **Legal and Compliance:**

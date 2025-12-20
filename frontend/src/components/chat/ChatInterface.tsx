@@ -1,22 +1,26 @@
 // ChatInterface component - Main chat interface with message display and streaming
 
-import { useEffect, useRef } from 'react'
-import { User, Bot, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { User, Bot, ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import type { Message } from '@/types/chat'
 import SourceCitations from './SourceCitations'
+import FeedbackModal from './FeedbackModal'
+import { useChatTracking } from '@/hooks/useChatTracking'
 
 interface ChatInterfaceProps {
   messages: Message[]
+  conversationId?: string | null
   streamingContent?: string
   isStreaming?: boolean
   pendingUserMessage?: string | null
-  onSubmitFeedback?: (messageId: string, rating: number) => void
+  onSubmitFeedback?: (messageId: string, rating: number, category?: string) => void
   onViewDocument?: (documentId: string) => void
 }
 
 export default function ChatInterface({
   messages,
+  conversationId,
   streamingContent,
   isStreaming = false,
   pendingUserMessage = null,
@@ -26,12 +30,52 @@ export default function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
+  // Feedback modal state
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean
+    messageId: string
+    rating: -1 | 1
+  } | null>(null)
+
+  // Copy feedback state (show checkmark briefly after copy)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+
+  // Use the chat tracking hook for implicit signals
+  const { trackCopy, trackSourceClick } = useChatTracking(conversationId || null)
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, streamingContent, pendingUserMessage])
+
+  // Handle copying message content
+  const handleCopyMessage = useCallback((messageId: string, content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedMessageId(messageId)
+      trackCopy(messageId)
+      setTimeout(() => setCopiedMessageId(null), 2000)
+    })
+  }, [trackCopy])
+
+  // Handle source click with tracking
+  const handleSourceClick = useCallback((messageId: string, documentId: string) => {
+    trackSourceClick(messageId, documentId)
+    onViewDocument?.(documentId)
+  }, [trackSourceClick, onViewDocument])
+
+  // Open feedback modal instead of submitting directly
+  const handleFeedbackClick = useCallback((messageId: string, rating: -1 | 1) => {
+    setFeedbackModal({ isOpen: true, messageId, rating })
+  }, [])
+
+  // Handle successful feedback submission
+  const handleFeedbackSuccess = useCallback(() => {
+    if (feedbackModal && onSubmitFeedback) {
+      onSubmitFeedback(feedbackModal.messageId, feedbackModal.rating)
+    }
+  }, [feedbackModal, onSubmitFeedback])
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -108,36 +152,55 @@ export default function ChatInterface({
             <div className="mt-2">
               <SourceCitations
                 sources={message.sources}
-                onViewDocument={onViewDocument}
+                onViewDocument={(docId) => handleSourceClick(message.id, docId)}
               />
             </div>
           )}
 
-          {/* Feedback buttons for assistant messages */}
-          {!isUser && onSubmitFeedback && (
+          {/* Action buttons for assistant messages */}
+          {!isUser && (
             <div className="mt-2 flex items-center gap-2">
+              {/* Copy button */}
               <button
-                onClick={() => onSubmitFeedback(message.id, 1)}
-                className={`rounded p-1 transition-colors ${
-                  message.rating === 1
-                    ? 'bg-green-100 text-green-600'
-                    : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
-                }`}
-                title="Helpful"
+                onClick={() => handleCopyMessage(message.id, message.content)}
+                className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                title="Copy response"
               >
-                <ThumbsUp className="h-4 w-4" />
+                {copiedMessageId === message.id ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </button>
-              <button
-                onClick={() => onSubmitFeedback(message.id, -1)}
-                className={`rounded p-1 transition-colors ${
-                  message.rating === -1
-                    ? 'bg-red-100 text-red-600'
-                    : 'text-gray-400 hover:bg-gray-100 hover:text-red-600'
-                }`}
-                title="Not helpful"
-              >
-                <ThumbsDown className="h-4 w-4" />
-              </button>
+
+              {/* Feedback buttons */}
+              {onSubmitFeedback && (
+                <>
+                  <button
+                    onClick={() => handleFeedbackClick(message.id, 1)}
+                    className={`rounded p-1 transition-colors ${
+                      message.rating === 1
+                        ? 'bg-green-100 text-green-600'
+                        : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
+                    }`}
+                    title="Helpful"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleFeedbackClick(message.id, -1)}
+                    className={`rounded p-1 transition-colors ${
+                      message.rating === -1
+                        ? 'bg-red-100 text-red-600'
+                        : 'text-gray-400 hover:bg-gray-100 hover:text-red-600'
+                    }`}
+                    title="Not helpful"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+
               {message.model_name && (
                 <span className="ml-2 text-xs text-gray-400">
                   {message.model_name}
@@ -215,6 +278,17 @@ export default function ChatInterface({
 
           <div ref={messagesEndRef} />
         </div>
+      )}
+
+      {/* Feedback Modal */}
+      {feedbackModal && (
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal(null)}
+          messageId={feedbackModal.messageId}
+          rating={feedbackModal.rating}
+          onSuccess={handleFeedbackSuccess}
+        />
       )}
     </div>
   )

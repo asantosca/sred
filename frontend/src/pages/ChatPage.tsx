@@ -366,6 +366,7 @@ export default function ChatPage() {
 
           <ChatInterface
             messages={messages}
+            conversationId={selectedConversationId}
             streamingContent={streamingContent}
             isStreaming={isStreaming}
             pendingUserMessage={pendingUserMessage}

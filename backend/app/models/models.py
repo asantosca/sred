@@ -402,7 +402,8 @@ class Message(Base):
     # User feedback
     rating = Column(Integer, nullable=True)  # 1-5 stars, or -1/1 for thumbs down/up
     feedback_text = Column(Text, nullable=True)
-    
+    feedback_category = Column(String(50), nullable=True)  # incorrect, irrelevant, wrong_question, not_detailed, no_documents
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
@@ -535,3 +536,157 @@ class WaitlistSignup(Base):
 
     # Relationships
     user = relationship("User")
+
+
+# =====================
+# Feedback Analytics Models
+# =====================
+
+class MessageFeedbackDetails(Base):
+    """Extended feedback details for AI messages"""
+    __tablename__ = "message_feedback_details"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), nullable=False, unique=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Explicit feedback
+    rating = Column(Integer, nullable=True)  # -1/1 for thumbs
+    feedback_category = Column(String(50), nullable=True)  # incorrect, irrelevant, wrong_question, not_detailed, no_documents
+    feedback_text = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    message = relationship("Message")
+    company = relationship("Company")
+    user = relationship("User")
+
+
+class ConversationSignals(Base):
+    """Implicit behavioral signals for a conversation session"""
+    __tablename__ = "conversation_signals"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    # Session tracking
+    session_started_at = Column(DateTime(timezone=True), nullable=False)
+    session_ended_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Implicit signals
+    rephrase_count = Column(Integer, default=0)
+    copy_events = Column(Integer, default=0)
+    source_clicks = Column(Integer, default=0)
+    is_abandoned = Column(Boolean, default=False)
+    conversation_continued = Column(Boolean, default=False)
+    billable_created = Column(Boolean, default=False)
+
+    # Last activity tracking
+    last_user_message_at = Column(DateTime(timezone=True), nullable=True)
+    last_ai_response_at = Column(DateTime(timezone=True), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    conversation = relationship("Conversation")
+    company = relationship("Company")
+    user = relationship("User")
+
+
+class MessageQualityScore(Base):
+    """Calculated quality/confidence scores per message"""
+    __tablename__ = "message_quality_scores"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), nullable=False, unique=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+
+    # Question quality metrics (for user messages)
+    query_length = Column(Integer, nullable=True)
+    query_word_count = Column(Integer, nullable=True)
+    has_matter_context = Column(Boolean, default=False)
+    has_document_context = Column(Boolean, default=False)
+    is_follow_up_to_rephrase = Column(Boolean, default=False)
+    question_quality_score = Column(Float, nullable=True)
+
+    # Response confidence metrics (for assistant messages)
+    explicit_feedback_score = Column(Float, nullable=True)
+    implicit_signal_score = Column(Float, nullable=True)
+    context_relevance_score = Column(Float, nullable=True)
+    overall_confidence_score = Column(Float, nullable=True)
+
+    # Scoring metadata
+    scored_at = Column(DateTime(timezone=True), server_default=func.now())
+    score_version = Column(String(10), default="1.0")
+
+    # Relationships
+    message = relationship("Message")
+    company = relationship("Company")
+
+
+class FeedbackAggregate(Base):
+    """Pre-computed feedback aggregates for reporting"""
+    __tablename__ = "feedback_aggregates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)  # Null for system-wide
+
+    # Time period
+    period_type = Column(String(20), nullable=False)  # 'hourly', 'daily', 'weekly'
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
+
+    # Counts
+    total_messages = Column(Integer, default=0)
+    total_feedback = Column(Integer, default=0)
+    positive_count = Column(Integer, default=0)
+    negative_count = Column(Integer, default=0)
+
+    # Rates (0.0 - 1.0)
+    positive_rate = Column(Float, nullable=True)
+    rephrase_rate = Column(Float, nullable=True)
+    abandonment_rate = Column(Float, nullable=True)
+    engagement_rate = Column(Float, nullable=True)
+
+    # Category breakdown
+    feedback_by_category = Column(JSON, nullable=True)
+
+    # Quality scores
+    avg_question_quality = Column(Float, nullable=True)
+    avg_response_confidence = Column(Float, nullable=True)
+
+    computed_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    company = relationship("Company")
+
+
+class FeedbackAlert(Base):
+    """Alerts for feedback quality issues"""
+    __tablename__ = "feedback_alerts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)  # Null for system-wide
+
+    alert_type = Column(String(50), nullable=False)  # 'high_negative_rate', 'abandonment_spike', 'rephrase_spike'
+    severity = Column(String(20), nullable=False)  # 'warning', 'critical'
+    threshold_value = Column(Float, nullable=False)
+    current_value = Column(Float, nullable=False)
+
+    # Context
+    time_window_minutes = Column(Integer, nullable=False)
+    triggered_at = Column(DateTime(timezone=True), server_default=func.now())
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True)
+
+    # Details
+    alert_details = Column(JSON, nullable=True)
+
+    # Relationships
+    company = relationship("Company")

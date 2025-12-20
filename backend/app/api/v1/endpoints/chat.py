@@ -17,7 +17,12 @@ from app.schemas.chat import (
     ConversationListResponse, MessageFeedback, LinkMatterRequest,
     HelpRequest, HelpResponse
 )
+from app.schemas.feedback import (
+    EnhancedMessageFeedback, FeedbackResponse, InteractionSignal,
+    SignalTrackingResponse
+)
 from app.services.chat_service import ChatService
+from app.services.feedback_analytics import FeedbackAnalyticsService
 from app.services.usage_tracker import UsageTracker
 from app.core.rate_limit import limiter, get_rate_limit
 
@@ -321,12 +326,12 @@ async def link_conversation_to_matter(
         raise HTTPException(status_code=500, detail=f"Failed to link conversation: {str(e)}")
 
 
-@router.post("/messages/{message_id}/feedback", response_model=None)
+@router.post("/messages/{message_id}/feedback", response_model=FeedbackResponse)
 @limiter.limit(get_rate_limit("chat_feedback"))
 async def submit_message_feedback(
     request: Request,
     message_id: UUID,
-    feedback: MessageFeedback,
+    feedback: EnhancedMessageFeedback,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -336,23 +341,75 @@ async def submit_message_feedback(
     **Rating values**:
     - `-1`: Thumbs down
     - `1`: Thumbs up
-    - `1-5`: Star rating (1 = poor, 5 = excellent)
+
+    **Feedback categories** (for negative feedback):
+    - `incorrect`: Answer was factually incorrect
+    - `irrelevant`: Answer wasn't relevant to my question
+    - `wrong_question`: I asked the wrong question
+    - `not_detailed`: Not enough detail provided
+    - `no_documents`: Couldn't find relevant documents
 
     **Rate limit**: 120 requests per minute
     """
     try:
-        chat_service = ChatService(db)
-        await chat_service.submit_feedback(
+        feedback_service = FeedbackAnalyticsService(db)
+        result = await feedback_service.submit_feedback(
             message_id=message_id,
             feedback=feedback,
             current_user=current_user
         )
-        return {"status": "success", "message": "Feedback submitted"}
+        return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Error submitting feedback: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(e)}")
+
+
+@router.post("/signals/track", response_model=SignalTrackingResponse, status_code=202)
+@limiter.limit(get_rate_limit("default"))
+async def track_interaction_signal(
+    request: Request,
+    signal: InteractionSignal,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Track implicit interaction signals from frontend for quality analytics.
+
+    **Signal types**:
+    - `session_start`: User started a chat session
+    - `session_end`: User left the chat
+    - `copy`: User copied response text
+    - `source_click`: User clicked a cited source
+
+    These signals help us understand response quality beyond explicit feedback.
+
+    **Rate limit**: 120 requests per minute
+    """
+    try:
+        feedback_service = FeedbackAnalyticsService(db)
+
+        if signal.signal_type.value == "session_start":
+            await feedback_service.track_session_start(signal.conversation_id, current_user)
+        elif signal.signal_type.value == "session_end":
+            await feedback_service.track_session_end(signal.conversation_id, current_user)
+        elif signal.signal_type.value == "copy":
+            if signal.message_id:
+                await feedback_service.track_copy_event(
+                    signal.conversation_id, signal.message_id, current_user
+                )
+        elif signal.signal_type.value == "source_click":
+            if signal.message_id and signal.document_id:
+                await feedback_service.track_source_click(
+                    signal.conversation_id, signal.message_id, signal.document_id, current_user
+                )
+
+        return SignalTrackingResponse(status="accepted", signal_type=signal.signal_type.value)
+    except Exception as e:
+        logger.error(f"Error tracking signal: {str(e)}", exc_info=True)
+        # Don't fail on tracking errors - just log
+        return SignalTrackingResponse(status="accepted", signal_type=signal.signal_type.value)
 
 
 @router.post("/help", response_model=HelpResponse)
