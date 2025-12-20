@@ -10,6 +10,7 @@ FastAPI backend for AI-powered legal document intelligence platform.
 - [Environment Variables](#environment-variables)
 - [API Endpoints](#api-endpoints)
 - [Platform Admin & Cost Reporting](#platform-admin--cost-reporting)
+- [Feedback Analytics](#feedback-analytics)
 - [Document Processing Pipeline](#document-processing-pipeline)
 
 ## Architecture Overview
@@ -308,6 +309,12 @@ DEBUG=true
 - `GET /api/v1/admin/usage/daily` - Get daily usage for trending
 - `GET /api/v1/admin/companies` - List all companies
 
+### Platform Admin (Feedback Analytics)
+- `GET /api/v1/admin/feedback/stats` - Get feedback statistics (rates, categories, quality scores)
+- `GET /api/v1/admin/feedback/alerts` - Get active quality alerts
+- `GET /api/v1/admin/feedback/flagged` - Get messages flagged for review
+- `POST /api/v1/admin/feedback/check-alerts` - Manually trigger alert checking
+
 ## Platform Admin & Cost Reporting
 
 The platform includes API usage tracking and cost estimation for monitoring during Beta.
@@ -410,6 +417,60 @@ The `/admin/usage` endpoint returns:
 | `textract_ocr` | pages processed | ~$0.015 per page |
 
 Costs are estimated in USD cents for precision. Actual billing may vary.
+
+## Feedback Analytics
+
+The platform tracks AI response quality through explicit user feedback and implicit behavioral signals.
+
+### Feedback Endpoints
+
+```bash
+# Get feedback statistics (last 30 days)
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/feedback/stats"
+
+# Get stats for specific period and company
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/feedback/stats?days=7&company_id=<uuid>"
+
+# Get active quality alerts
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/feedback/alerts"
+
+# Get messages flagged for review (low confidence or negative feedback)
+curl -H "Authorization: Bearer <your-token>" \
+  "http://localhost:8000/api/v1/admin/feedback/flagged?limit=50"
+```
+
+### Tracked Signals
+
+| Signal Type | Description |
+|-------------|-------------|
+| Explicit feedback | Thumbs up/down with optional category |
+| Copy events | User copied AI response text |
+| Source clicks | User clicked on cited document |
+| Session duration | Time spent in conversation |
+| Rephrase detection | User rephrased question within 60s (Jaccard similarity > 0.6) |
+
+### Feedback Categories (Negative)
+
+- `incorrect` - Answer was factually wrong
+- `irrelevant` - Answer didn't address the question
+- `wrong_question` - User asked the wrong question
+- `not_detailed` - Answer lacked specifics
+- `no_documents` - Relevant documents weren't found
+
+### Quality Scores
+
+- **Question quality** (0.0-1.0): Based on length, specificity, and context
+- **Response confidence** (0.0-1.0): Combines explicit feedback and implicit signals
+
+### Background Tasks
+
+Celery Beat runs periodic tasks:
+- Every 15 min: Check alert thresholds
+- Hourly: Compute feedback aggregates
+- Hourly (offset): Resolve stale alerts
 
 ## Document Processing Pipeline
 
