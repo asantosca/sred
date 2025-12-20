@@ -314,6 +314,7 @@ _Future features after public launch. Prioritize based on customer feedback._
 
 **UI/UX Enhancements:**
 
+- [x] Marketing site redesign (refined editorial dark theme with Playfair Display + Sora fonts)
 - [ ] Dark mode support
 - [ ] In-app tutorials/tooltips
 - [ ] Video walkthrough (5-10 min)

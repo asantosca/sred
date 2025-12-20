@@ -1,10 +1,20 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Playfair_Display, Sora } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
 import CookieConsent from '@/components/CookieConsent'
 
-const inter = Inter({ subsets: ['latin'] })
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+const sora = Sora({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'BC Legal Tech - AI-Powered Legal Document Intelligence',
@@ -22,10 +32,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={`${playfair.variable} ${sora.variable}`}>
+      <body className="font-body bg-ink-950 text-cream-100 antialiased">
+        {/* Noise texture overlay for depth */}
+        <div className="noise-overlay" aria-hidden="true" />
+
         <Header />
-        {children}
+        <main>{children}</main>
         <CookieConsent />
       </body>
     </html>
