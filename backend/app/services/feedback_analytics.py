@@ -396,6 +396,33 @@ class FeedbackAnalyticsService:
         await self.db.commit()
         return quality_score
 
+    async def update_context_relevance_score(
+        self,
+        message_id: UUID,
+        context_relevance_score: float
+    ) -> bool:
+        """
+        Update the context_relevance_score for a message after RAG retrieval.
+
+        Args:
+            message_id: The user message ID
+            context_relevance_score: Average similarity from retrieved context (0.0-1.0)
+
+        Returns:
+            True if updated successfully, False if score not found
+        """
+        query = select(MessageQualityScore).where(
+            MessageQualityScore.message_id == message_id
+        )
+        result = await self.db.execute(query)
+        quality_score = result.scalar_one_or_none()
+
+        if quality_score:
+            quality_score.context_relevance_score = max(0.0, min(1.0, context_relevance_score))
+            await self.db.commit()
+            return True
+        return False
+
     # ==================
     # Aggregation & Reporting
     # ==================

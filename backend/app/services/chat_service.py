@@ -19,6 +19,8 @@ from app.schemas.chat import (
 from app.services.embeddings import embedding_service
 from app.services.vector_storage import vector_storage_service
 from app.services.usage_logging import usage_logging_service
+from app.services.feedback_analytics import FeedbackAnalyticsService
+from app.services.question_suggestions import QuestionSuggestionService
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,18 @@ class ChatService:
             content=request.message
         )
 
+        # 3a. Save question quality score for analytics
+        try:
+            feedback_service = FeedbackAnalyticsService(self.db)
+            await feedback_service.save_question_quality_score(
+                message_id=user_message.id,
+                conversation=conversation,
+                content=request.message,
+                company_id=current_user.company_id
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save question quality score: {e}")
+
         # 3b. Check for test message bypass (skip AI for development testing)
         if self._is_test_message(request.message):
             logger.info(f"Test message detected, returning mock response")
@@ -149,7 +163,7 @@ class ChatService:
 
         # 6. Call Claude API
         try:
-            assistant_content, usage = await self._call_claude(
+            raw_assistant_content, usage = await self._call_claude(
                 system_prompt=system_prompt,
                 user_message=request.message,
                 conversation_history=history
@@ -171,7 +185,42 @@ class ChatService:
             logger.error(f"Claude API error: {str(e)}", exc_info=True)
             raise Exception(f"Failed to generate response: {str(e)}")
 
-        # 7. Save assistant message with sources
+        # 6b. Parse confidence from response and get clean content
+        assistant_content, confidence = self._parse_confidence(raw_assistant_content)
+
+        # 6c. Calculate avg similarity for suggestion generation
+        avg_similarity = None
+        if sources:
+            similarities = [s.similarity_score for s in sources if s.similarity_score]
+            if similarities:
+                avg_similarity = sum(similarities) / len(similarities)
+
+                # Update context_relevance_score in MessageQualityScore
+                try:
+                    feedback_service = FeedbackAnalyticsService(self.db)
+                    await feedback_service.update_context_relevance_score(
+                        message_id=user_message.id,
+                        context_relevance_score=avg_similarity
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update context_relevance_score: {e}")
+
+        # 6d. Generate question improvement suggestions
+        suggestion_service = QuestionSuggestionService()
+        # Simple question quality score approximation
+        words = request.message.split()
+        question_quality = 0.5 + (0.1 if len(request.message) >= 50 else 0) + (0.1 if len(words) >= 10 else 0)
+        suggestions = suggestion_service.generate_suggestions(
+            question=request.message,
+            has_matter=not is_discovery_mode,
+            avg_similarity=avg_similarity,
+            confidence=confidence,
+            question_quality_score=question_quality
+        )
+        logger.info(f"Suggestions generated: confidence={confidence}, avg_similarity={avg_similarity}, "
+                    f"has_matter={not is_discovery_mode}, suggestions={suggestions}")
+
+        # 7. Save assistant message with sources (using clean content without confidence marker)
         assistant_message = await self._save_message(
             conversation_id=conversation.id,
             role="assistant",
@@ -189,11 +238,13 @@ class ChatService:
         conversation.updated_at = datetime.utcnow()
         await self.db.commit()
 
-        # 9. Return response
+        # 9. Return response with suggestions and confidence
         return ChatResponse(
             conversation_id=conversation.id,
             message=MessageResponse.model_validate(assistant_message),
-            is_new_conversation=is_new_conversation
+            is_new_conversation=is_new_conversation,
+            suggestions=suggestions if suggestions else None,
+            confidence=confidence
         )
 
     async def send_message_stream(
@@ -226,6 +277,18 @@ class ChatService:
             role="user",
             content=request.message
         )
+
+        # 3a. Save question quality score for analytics
+        try:
+            feedback_service = FeedbackAnalyticsService(self.db)
+            await feedback_service.save_question_quality_score(
+                message_id=user_message.id,
+                conversation=conversation,
+                content=request.message,
+                company_id=current_user.company_id
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save question quality score: {e}")
 
         # 3b. Check for test message bypass (skip AI for development testing)
         if self._is_test_message(request.message):
@@ -315,11 +378,45 @@ class ChatService:
             yield f"data: {self._format_sse_chunk('error', str(e))}\n\n"
             return
 
-        # 6. Save assistant message
+        # 5b. Parse confidence from streamed content
+        clean_content, confidence = self._parse_confidence(full_content)
+
+        # 5c. Calculate avg similarity for suggestion generation
+        avg_similarity = None
+        if sources:
+            similarities = [s.similarity_score for s in sources if s.similarity_score]
+            if similarities:
+                avg_similarity = sum(similarities) / len(similarities)
+
+                # Update context_relevance_score in MessageQualityScore
+                try:
+                    feedback_service = FeedbackAnalyticsService(self.db)
+                    await feedback_service.update_context_relevance_score(
+                        message_id=user_message.id,
+                        context_relevance_score=avg_similarity
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update context_relevance_score: {e}")
+
+        # 5d. Generate question improvement suggestions
+        suggestion_service = QuestionSuggestionService()
+        words = request.message.split()
+        question_quality = 0.5 + (0.1 if len(request.message) >= 50 else 0) + (0.1 if len(words) >= 10 else 0)
+        suggestions = suggestion_service.generate_suggestions(
+            question=request.message,
+            has_matter=not is_discovery_mode,
+            avg_similarity=avg_similarity,
+            confidence=confidence,
+            question_quality_score=question_quality
+        )
+        logger.info(f"[stream] Suggestions generated: confidence={confidence}, avg_similarity={avg_similarity}, "
+                    f"has_matter={not is_discovery_mode}, suggestions={suggestions}")
+
+        # 6. Save assistant message (with clean content, confidence marker stripped)
         assistant_message = await self._save_message(
             conversation_id=conversation.id,
             role="assistant",
-            content=full_content,
+            content=clean_content,
             sources=sources if request.include_sources else None,
             model_name=settings.ANTHROPIC_MODEL,
             token_count=usage.get("output_tokens"),
@@ -344,8 +441,15 @@ class ChatService:
             if suggested_matter:
                 yield f"data: {self._format_sse_chunk('matter_suggestion', suggested_matter)}\n\n"
 
-        # 9. Send done signal with message ID and conversation ID
-        yield f"data: {self._format_sse_chunk('done', {'message_id': str(assistant_message.id), 'conversation_id': str(conversation.id)})}\n\n"
+        # 9. Send done signal with message ID, conversation ID, suggestions, and confidence
+        done_payload = {
+            'message_id': str(assistant_message.id),
+            'conversation_id': str(conversation.id),
+            'confidence': confidence
+        }
+        if suggestions:
+            done_payload['suggestions'] = suggestions
+        yield f"data: {self._format_sse_chunk('done', done_payload)}\n\n"
 
     async def get_conversation_with_messages(
         self,
@@ -984,6 +1088,14 @@ Summary:"""
         logger.info(f"Retrieved {len(summaries)} document summaries for RAG context")
         return summaries
 
+    # Confidence indicator instruction - added to all system prompts
+    CONFIDENCE_INSTRUCTION = """
+
+IMPORTANT: At the very end of your response, on its own line, include exactly one of:
+[CONFIDENCE: HIGH] - You are confident in the accuracy of your answer
+[CONFIDENCE: MEDIUM] - Your answer is reasonable but should be verified
+[CONFIDENCE: LOW] - You are uncertain or the question is unclear"""
+
     def _build_system_prompt(
         self,
         context_chunks: List[Dict],
@@ -1002,7 +1114,7 @@ Guidelines:
 - If the user asks about specific documents, contracts, or cases they're working on, suggest they select a matter to search their documents
 - Be concise and professional
 - Always remind users to verify with qualified legal counsel for specific legal advice
-- You can discuss general legal principles without needing document context"""
+- You can discuss general legal principles without needing document context""" + self.CONFIDENCE_INSTRUCTION
 
         if not context_chunks:
             return """You are a legal AI assistant for BC Legal Tech, helping lawyers analyze their documents.
@@ -1012,7 +1124,7 @@ Important guidelines:
 - You may reference information the user has shared directly in the conversation
 - If asked about something not in any documents or the conversation, say "I don't have information about that"
 - Be concise and professional
-- For legal advice, remind users to verify with qualified counsel"""
+- For legal advice, remind users to verify with qualified counsel""" + self.CONFIDENCE_INSTRUCTION
 
         # Build document summaries section (if available)
         summaries_text = ""
@@ -1042,7 +1154,7 @@ Important guidelines:
 - You may also reference information the user has shared directly in the conversation
 - If asked about something not in the documents or conversation, say "I don't have information about that"
 - Be concise and professional
-- For legal advice, remind users to verify with qualified counsel"""
+- For legal advice, remind users to verify with qualified counsel""" + self.CONFIDENCE_INSTRUCTION
 
     async def _get_conversation_history(
         self,
@@ -1097,6 +1209,23 @@ Important guidelines:
         }
 
         return content, usage
+
+    def _parse_confidence(self, response: str) -> tuple:
+        """
+        Extract confidence level from Claude's response and return clean response.
+
+        Returns:
+            (clean_response, confidence) where confidence is HIGH/MEDIUM/LOW
+        """
+        import re
+        match = re.search(r'\[CONFIDENCE:\s*(HIGH|MEDIUM|LOW)\]', response)
+        if match:
+            confidence = match.group(1)
+            # Remove the confidence indicator from the response
+            clean_response = re.sub(r'\n?\[CONFIDENCE:\s*(HIGH|MEDIUM|LOW)\]', '', response).strip()
+            return clean_response, confidence
+        # Default to MEDIUM if not found (shouldn't happen if prompts work)
+        return response, "MEDIUM"
 
     def _format_sse_chunk(self, chunk_type: str, data: Any) -> str:
         """Format chunk as JSON for SSE"""

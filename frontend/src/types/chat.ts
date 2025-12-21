@@ -81,6 +81,8 @@ export interface ChatStreamChunk {
   conversation_id?: string
   error?: string
   matter_suggestion?: MatterSuggestion
+  suggestions?: string[]  // Question improvement tips
+  confidence?: 'HIGH' | 'MEDIUM' | 'LOW'  // AI confidence level
 }
 
 export interface MessageFeedback {

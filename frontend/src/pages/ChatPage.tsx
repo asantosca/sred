@@ -40,6 +40,7 @@ export default function ChatPage() {
   const [matterSuggestion, setMatterSuggestion] = useState<MatterSuggestion | null>(null)
   const [isLinkingMatter, setIsLinkingMatter] = useState(false)
   const [conversationMatterFilter, setConversationMatterFilter] = useState<string | null>(null)
+  const [questionSuggestions, setQuestionSuggestions] = useState<string[] | null>(null)
 
   // Fetch matters for filter dropdown
   const { data: mattersData } = useQuery({
@@ -163,6 +164,7 @@ export default function ChatPage() {
     setStreamingContent('')
     setIsStreaming(true)
     setPendingUserMessage(message) // Show user's message immediately
+    setQuestionSuggestions(null) // Clear previous suggestions
 
     try {
       const response = await chatApi.sendMessageStream({
@@ -222,6 +224,11 @@ export default function ChatPage() {
               setPendingUserMessage(null)
             }
 
+            // Store question improvement suggestions if any
+            if (parsed.suggestions && parsed.suggestions.length > 0) {
+              setQuestionSuggestions(parsed.suggestions)
+            }
+
             // Clear streaming state AFTER messages are loaded
             setIsStreaming(false)
             setStreamingContent('')
@@ -261,6 +268,7 @@ export default function ChatPage() {
     setLocalMessages([])
     setPendingUserMessage(null)
     setMatterSuggestion(null)
+    setQuestionSuggestions(null)
     // Clear the matter query param from URL
     if (searchParams.has('matter')) {
       searchParams.delete('matter')
@@ -374,6 +382,8 @@ export default function ChatPage() {
               submitFeedbackMutation.mutate({ messageId, rating })
             }
             onViewDocument={handleViewDocument}
+            suggestions={questionSuggestions}
+            onDismissSuggestions={() => setQuestionSuggestions(null)}
           />
 
           {/* Matter suggestion banner - shown when AI detects related matter */}

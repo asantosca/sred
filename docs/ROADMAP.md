@@ -240,6 +240,10 @@ _Required for public launch after beta_
   - Question quality scoring and response confidence scores
   - Admin API endpoints for stats, alerts, and flagged messages
   - Celery tasks for periodic aggregation and alert checking
+- [x] Question improvement suggestions
+  - Displays tips to improve question quality after AI responses
+  - Uses RAG similarity scores, Claude confidence, and question heuristics
+  - Collapsible UI with contextual suggestions
 - [ ] Export conversation as PDF/DOCX
 
 **Legal and Compliance:**

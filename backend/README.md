@@ -328,9 +328,28 @@ The platform includes API usage tracking and cost estimation for monitoring duri
 
 2. Restart the backend to load the new configuration.
 
-### Generating Cost Reports
+### Admin CLI Tool
 
-First, obtain a JWT token by logging in:
+An interactive CLI tool is available for testing admin endpoints without manually managing tokens:
+
+```bash
+# Windows (PowerShell)
+.\scripts\admin-cli.ps1
+
+# Linux/macOS
+chmod +x scripts/admin-cli.sh
+./scripts/admin-cli.sh
+```
+
+The CLI will:
+1. Prompt for your admin credentials
+2. Authenticate and store the token
+3. Show a menu of available admin commands
+4. Execute commands and display formatted results
+
+### Manual API Access (curl)
+
+If you prefer manual curl commands, first obtain a JWT token:
 
 ```bash
 # Login to get access token
@@ -421,6 +440,8 @@ Costs are estimated in USD cents for precision. Actual billing may vary.
 ## Feedback Analytics
 
 The platform tracks AI response quality through explicit user feedback and implicit behavioral signals.
+
+These endpoints are available in the Admin CLI tool (options 6-10), or via manual curl commands:
 
 ### Feedback Endpoints
 

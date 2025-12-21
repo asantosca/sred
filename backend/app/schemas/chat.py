@@ -132,6 +132,8 @@ class ChatResponse(BaseModel):
     conversation_id: UUID
     message: MessageResponse
     is_new_conversation: bool = Field(False, description="Whether a new conversation was created")
+    suggestions: Optional[List[str]] = Field(None, description="Suggestions to improve question quality")
+    confidence: Optional[str] = Field(None, description="AI confidence level: HIGH, MEDIUM, or LOW")
 
 
 class ChatStreamChunk(BaseModel):
@@ -141,3 +143,5 @@ class ChatStreamChunk(BaseModel):
     source: Optional[MessageSource] = Field(None, description="Source citation (for type='source')")
     message_id: Optional[UUID] = Field(None, description="Final message ID (for type='done')")
     error: Optional[str] = Field(None, description="Error message (for type='error')")
+    suggestions: Optional[List[str]] = Field(None, description="Suggestions (for type='done')")
+    confidence: Optional[str] = Field(None, description="AI confidence level (for type='done')")

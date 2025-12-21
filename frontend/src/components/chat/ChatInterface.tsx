@@ -1,7 +1,7 @@
 // ChatInterface component - Main chat interface with message display and streaming
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { User, Bot, ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react'
+import { User, Bot, ThumbsUp, ThumbsDown, Copy, Check, Lightbulb, X, ChevronDown, ChevronUp } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import type { Message } from '@/types/chat'
 import SourceCitations from './SourceCitations'
@@ -16,6 +16,8 @@ interface ChatInterfaceProps {
   pendingUserMessage?: string | null
   onSubmitFeedback?: (messageId: string, rating: number, category?: string) => void
   onViewDocument?: (documentId: string) => void
+  suggestions?: string[] | null
+  onDismissSuggestions?: () => void
 }
 
 export default function ChatInterface({
@@ -26,6 +28,8 @@ export default function ChatInterface({
   pendingUserMessage = null,
   onSubmitFeedback,
   onViewDocument,
+  suggestions = null,
+  onDismissSuggestions,
 }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -39,6 +43,9 @@ export default function ChatInterface({
 
   // Copy feedback state (show checkmark briefly after copy)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+
+  // Suggestions expanded state
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(true)
 
   // Use the chat tracking hook for implicit signals
   const { trackCopy, trackSourceClick } = useChatTracking(conversationId || null)
@@ -268,11 +275,56 @@ export default function ChatInterface({
                 </div>
                 <div className="inline-block max-w-3xl rounded-lg bg-gray-100 px-4 py-2 text-gray-900">
                   <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
-                    <ReactMarkdown>{streamingContent}</ReactMarkdown>
+                    <ReactMarkdown>{streamingContent.replace(/\[CONFIDENCE:\s*(HIGH|MEDIUM|LOW)\]/g, '')}</ReactMarkdown>
                   </div>
                   <span className="inline-block h-4 w-1 animate-pulse bg-gray-900"></span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Question improvement suggestions */}
+          {suggestions && suggestions.length > 0 && !isStreaming && (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50">
+              <div
+                className="flex cursor-pointer items-center justify-between px-4 py-2"
+                onClick={() => setSuggestionsExpanded(!suggestionsExpanded)}
+              >
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">
+                    Tips to improve your question
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {suggestionsExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-amber-600" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-amber-600" />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDismissSuggestions?.()
+                    }}
+                    className="rounded p-1 text-amber-600 hover:bg-amber-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              {suggestionsExpanded && (
+                <div className="border-t border-amber-200 px-4 py-3">
+                  <ul className="space-y-1.5">
+                    {suggestions.map((suggestion, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-amber-800">
+                        <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
