@@ -137,7 +137,7 @@ export default function ChatInterface({
           </div>
 
           <div
-            className={`inline-block max-w-3xl rounded-lg px-4 py-2 ${
+            className={`inline-block max-w-[85%] rounded-lg px-4 py-2 ${
               isUser
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-900'
@@ -237,7 +237,7 @@ export default function ChatInterface({
           </p>
         </div>
       ) : (
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="space-y-6 px-2">
           {messages.map(renderMessage)}
 
           {/* Pending user message (optimistic update) */}
@@ -251,7 +251,7 @@ export default function ChatInterface({
                   <span className="text-xs text-gray-500">Just now</span>
                   <span className="text-sm font-medium text-gray-900">You</span>
                 </div>
-                <div className="inline-block max-w-3xl rounded-lg bg-blue-600 px-4 py-2 text-white">
+                <div className="inline-block max-w-[85%] rounded-lg bg-blue-600 px-4 py-2 text-white">
                   <div className="whitespace-pre-wrap break-words text-sm">
                     {pendingUserMessage}
                   </div>
@@ -273,7 +273,7 @@ export default function ChatInterface({
                   </span>
                   <span className="text-xs text-gray-500">typing...</span>
                 </div>
-                <div className="inline-block max-w-3xl rounded-lg bg-gray-100 px-4 py-2 text-gray-900">
+                <div className="inline-block max-w-[85%] rounded-lg bg-gray-100 px-4 py-2 text-gray-900">
                   <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
                     <ReactMarkdown>{streamingContent.replace(/\[CONFIDENCE:\s*(HIGH|MEDIUM|LOW)\]/g, '')}</ReactMarkdown>
                   </div>
