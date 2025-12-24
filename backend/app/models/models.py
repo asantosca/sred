@@ -42,6 +42,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_active = Column(DateTime(timezone=True), nullable=True)
     
     # Relationships
@@ -59,6 +60,7 @@ class Group(Base):
     permissions_json = Column(JSON, nullable=False, default=list)
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     company = relationship("Company", back_populates="groups")
@@ -167,10 +169,11 @@ class MatterAccess(Base):
 class Document(Base):
     """Document metadata and file information"""
     __tablename__ = "documents"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)  # Denormalized for RLS performance
     matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=False)
-    
+
     # File Information
     filename = Column(String(500), nullable=False)
     original_filename = Column(String(500), nullable=False)
@@ -282,6 +285,7 @@ class Document(Base):
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
     # Relationships
+    company = relationship("Company")
     matter = relationship("Matter", back_populates="documents")
     parent_document = relationship("Document", remote_side=[id], foreign_keys=[parent_document_id])
     root_document = relationship("Document", remote_side=[id], foreign_keys=[root_document_id])

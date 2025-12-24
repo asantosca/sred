@@ -512,6 +512,7 @@ async def _process_document_upload(
         # Create document model
         document = DocumentModel(
             id=document_id,
+            company_id=current_user.company_id,  # Denormalized for RLS performance
             matter_id=upload_data.matter_id,
             filename=file.filename,
             original_filename=file.filename,

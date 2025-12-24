@@ -1,12 +1,63 @@
--- BC Legal Tech Database Setup
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "vector";
+-- ============================================================================
+-- BC Legal Tech - DEVELOPMENT ONLY Database Setup
+-- ============================================================================
+--
+-- WARNING: DO NOT USE IN PRODUCTION!
+--
+-- This script is for SCRATCH/DEVELOPMENT environments only.
+-- It drops and recreates the entire schema, destroying all data.
+--
+-- FOR PRODUCTION, use:
+--   1. Alembic migrations: `alembic upgrade head`
+--   2. RLS setup: `psql -f apply-rls.sql`
+--
+-- This file exists for quick local development resets and may be
+-- out of sync with the actual Alembic-managed schema.
+--
+-- ============================================================================
+
+-- CLEANUP: Drop existing schema to ensure clean slate
+DROP SCHEMA IF EXISTS bc_legal_ds CASCADE;
+
+-- Create schema for the application
+CREATE SCHEMA IF NOT EXISTS bc_legal_ds;
+
+-- Set search path so all subsequent commands affect this schema
+SET search_path TO bc_legal_ds, public;
+
+-- Enable required extensions (in public schema)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "vector" SCHEMA public;
+
+-- Create roles (MUST be done before policies reference them)
+DO
+$do$
+BEGIN
+   IF NOT EXISTS (
+      SELECT FROM pg_catalog.pg_roles
+      WHERE  rolname = 'authenticated_users') THEN
+
+      CREATE ROLE authenticated_users;
+   END IF;
+END
+$do$;
+
+DO
+$do$
+BEGIN
+   IF NOT EXISTS (
+      SELECT FROM pg_catalog.pg_roles
+      WHERE  rolname = 'bc_legal_app') THEN
+
+      CREATE ROLE bc_legal_app WITH LOGIN PASSWORD 'your_secure_password_here';
+   END IF;
+END
+$do$;
 
 -- Create companies table
 CREATE TABLE companies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     name TEXT NOT NULL,
     subdomain TEXT UNIQUE,
     plan_tier TEXT DEFAULT 'starter' CHECK (plan_tier IN ('starter', 'professional', 'enterprise')),
@@ -20,7 +71,7 @@ CREATE TABLE companies (
 
 -- Create users table
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT,
     first_name TEXT,
@@ -35,7 +86,7 @@ CREATE TABLE users (
 
 -- Create groups table
 CREATE TABLE groups (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
@@ -56,7 +107,7 @@ CREATE TABLE user_groups (
 
 -- Create documents table
 CREATE TABLE documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     filename TEXT NOT NULL,
     original_filename TEXT NOT NULL,
     s3_path TEXT NOT NULL,
@@ -73,7 +124,7 @@ CREATE TABLE documents (
 
 -- Create document_chunks table for RAG
 CREATE TABLE document_chunks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     chunk_index INTEGER NOT NULL,
     content TEXT NOT NULL,
@@ -85,7 +136,7 @@ CREATE TABLE document_chunks (
 
 -- Create conversations table
 CREATE TABLE conversations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -95,7 +146,7 @@ CREATE TABLE conversations (
 
 -- Create messages table
 CREATE TABLE messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     sender_type TEXT NOT NULL CHECK (sender_type IN ('user', 'ai')),
@@ -180,7 +231,7 @@ BEGIN
     (NEW.id, 'Associates', 'Standard access for associates', '{
         "users": {"create": false, "read": true, "update": false, "delete": false},
         "documents": {"create": true, "read": true, "update": false, "delete": false},
-        "conversations": {"create": true, "read": true, "update": true, "delete": true},
+        "conversations": {"create": true, "read": true, "update": true, "delete": false},
         "company": {"read": false, "update": false}
     }'),
     (NEW.id, 'Paralegals', 'Limited access for paralegals', '{
@@ -205,11 +256,11 @@ CREATE TRIGGER create_default_groups_trigger
     FOR EACH ROW
     EXECUTE FUNCTION create_default_groups();
 
--- Create role for application
-CREATE ROLE bc_legal_app WITH LOGIN PASSWORD 'your_secure_password_here';
+-- Grant permissions (schema usage is key here)
+GRANT USAGE ON SCHEMA bc_legal_ds TO bc_legal_app;
 GRANT USAGE ON SCHEMA public TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO bc_legal_app;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bc_legal_ds TO bc_legal_app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bc_legal_ds TO bc_legal_app;
 
 -- Grant permissions for RLS
 GRANT authenticated_users TO bc_legal_app;

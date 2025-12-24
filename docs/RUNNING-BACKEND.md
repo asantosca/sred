@@ -107,7 +107,7 @@ EMAIL_FROM_NAME=BC Legal Tech
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_ENDPOINT_URL=http://localhost:4566
-AWS_REGION=us-east-1
+AWS_REGION=ca-central-1
 S3_BUCKET_NAME=bc-legal-documents
 
 # App
@@ -457,7 +457,7 @@ EMAIL_FROM=noreply@yourdomain.com
 AWS_ACCESS_KEY_ID=<your-aws-key>
 AWS_SECRET_ACCESS_KEY=<your-aws-secret>
 AWS_ENDPOINT_URL=  # Leave empty for real AWS
-AWS_REGION=us-east-1
+AWS_REGION=ca-central-1
 S3_BUCKET_NAME=your-prod-bucket
 
 # App

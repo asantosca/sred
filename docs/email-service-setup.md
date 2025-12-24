@@ -169,7 +169,7 @@ Override with environment variables:
 
 ```bash
 # AWS SES Example
-SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_HOST=email-smtp.ca-central-1.amazonaws.com
 SMTP_PORT=587
 SMTP_USER=your_aws_smtp_username
 SMTP_PASSWORD=your_aws_smtp_password

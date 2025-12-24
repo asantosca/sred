@@ -360,6 +360,13 @@ async def confirm_email(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
+    
+    # Set RLS Context to allow updates to the user (e.g. is_active)
+    from sqlalchemy import text
+    await db.execute(
+        text("SELECT set_config('app.current_company_id', :cid, true)"),
+        {"cid": str(user.company_id)}
+    )
 
     # Track if this is a new activation (for welcome data)
     is_new_activation = not user.is_active

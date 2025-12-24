@@ -74,6 +74,10 @@ app.add_middleware(InputValidationMiddleware)
 # Add JWT Authentication middleware
 app.add_middleware(JWTAuthMiddleware)
 
+# Add Tenant Context middleware (enforces RLS context from JWT)
+from app.middleware.tenant_context import TenantContextMiddleware
+app.add_middleware(TenantContextMiddleware)
+
 # Add Security Headers middleware (runs on every response)
 app.add_middleware(SecurityHeadersMiddleware)
 

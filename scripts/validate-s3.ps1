@@ -133,7 +133,7 @@ try:
                       endpoint_url='http://localhost:4566',
                       aws_access_key_id='test', 
                       aws_secret_access_key='test',
-                      region_name='us-west-2')
+                      region_name='ca-central-1')
     
     buckets = s3.list_buckets()
     print(f'✅ Python S3 client working. Found {len(buckets["Buckets"])} buckets.')

@@ -97,27 +97,47 @@ class AuthService:
                 self.db.add(admin_user)
             await self.db.flush()  # Get the user ID
             
-            # Create default groups (or get existing ones if company existed)
-            default_groups = await self._create_default_groups(company.id, skip_if_exist=bool(existing_company_obj))
-
-            # Assign admin to Administrator group (check if assignment already exists)
-            admin_group = next((g for g in default_groups if g.name == "Administrators"), None)
-            if admin_group:
-                # Check if user is already assigned to this group
-                existing_assignment = await self.db.execute(
-                    select(UserGroup).where(
-                        UserGroup.user_id == admin_user.id,
-                        UserGroup.group_id == admin_group.id
+            # Set RLS Context for the current transaction so we can access/create related records
+            from sqlalchemy import text
+            await self.db.execute(
+                text("SELECT set_config('app.current_company_id', :cid, true)"),
+                {"cid": str(company.id)}
+            )
+            
+            # Create default groups logic is handled by SQL Trigger "create_default_groups_trigger"
+            # We just need to fetch them to assign the user.
+            
+            # Fetch the Administrators group (created by trigger)
+            try:
+                # We need to flush/commit to ensure trigger has fired? 
+                # Trigger fires on INSERT of company. We added company to session.
+                # db.flush() sends INSERT. Trigger runs. Data should be visible in transaction.
+                
+                result = await self.db.execute(
+                    select(Group).where(
+                        Group.company_id == company.id,
+                        Group.name == "Administrators"
                     )
                 )
-                if not existing_assignment.scalar_one_or_none():
+                admin_group = result.scalar_one_or_none()
+                
+                if admin_group:
+                    # Assign admin to Administrator group
                     user_group = UserGroup(
                         user_id=admin_user.id,
                         group_id=admin_group.id,
                         assigned_by=admin_user.id
                     )
                     self.db.add(user_group)
-            
+                else:
+                    logger.warning(f"Administrators group not found for company {company.id} after trigger")
+                    
+            except Exception as e:
+                logger.error(f"Error assigning admin group: {e}")
+                # Don't fail the registration if just group assignment fails?
+                # But typically we want atomic failure.
+                raise e
+
             await self.db.commit()
             
             logger.info(f"Created company '{company.name}' with admin user '{admin_user.email}'")
@@ -130,76 +150,6 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create company"
             )
-    
-    async def _create_default_groups(self, company_id: uuid.UUID, skip_if_exist: bool = False) -> list[Group]:
-        """Create default groups for a new company"""
-
-        # If company already existed, fetch and return existing groups
-        if skip_if_exist:
-            result = await self.db.execute(
-                select(Group).where(
-                    Group.company_id == company_id,
-                    Group.is_default == True
-                )
-            )
-            existing_groups = list(result.scalars().all())
-            if existing_groups:
-                return existing_groups
-
-        default_groups_data = [
-            {
-                "name": "Administrators",
-                "description": "Full system access and user management",
-                "permissions": [
-                    "manage_users", "manage_documents", "manage_settings",
-                    "view_analytics", "export_data", "manage_billing"
-                ]
-            },
-            {
-                "name": "Partners",
-                "description": "Senior legal professionals with broad access",
-                "permissions": [
-                    "upload_documents", "chat_advanced", "view_analytics",
-                    "export_conversations", "manage_team_documents"
-                ]
-            },
-            {
-                "name": "Associates",
-                "description": "Legal professionals with standard access",
-                "permissions": [
-                    "upload_documents", "chat_basic", "export_conversations"
-                ]
-            },
-            {
-                "name": "Paralegals",
-                "description": "Support staff with limited access",
-                "permissions": [
-                    "chat_basic", "view_documents"
-                ]
-            },
-            {
-                "name": "Guests",
-                "description": "Read-only access for external users",
-                "permissions": [
-                    "chat_basic"
-                ]
-            }
-        ]
-        
-        groups = []
-        for group_data in default_groups_data:
-            group = Group(
-                id=uuid.uuid4(),
-                company_id=company_id,
-                name=group_data["name"],
-                description=group_data["description"],
-                permissions_json=group_data["permissions"],
-                is_default=True
-            )
-            self.db.add(group)
-            groups.append(group)
-        
-        return groups
     
     async def authenticate_user(self, login: UserLogin) -> tuple[User, Company]:
         """Authenticate user and return user with company"""
@@ -544,6 +494,13 @@ class AuthService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+
+        # Set RLS Context to allow updates to the user
+        from sqlalchemy import text
+        await self.db.execute(
+            text("SELECT set_config('app.current_company_id', :cid, true)"),
+            {"cid": str(user.company_id)}
+        )
 
         # Update password
         user.password_hash = get_password_hash(new_password)

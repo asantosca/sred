@@ -6,6 +6,7 @@ FastAPI backend for AI-powered legal document intelligence platform.
 
 - [Architecture Overview](#architecture-overview)
 - [Hybrid Database Architecture](#hybrid-database-architecture)
+- [Row-Level Security (RLS)](#row-level-security-rls)
 - [Setup](#setup)
 - [Environment Variables](#environment-variables)
 - [API Endpoints](#api-endpoints)
@@ -176,6 +177,83 @@ async def process_embeddings(self, document_id: UUID) -> bool:
 2. **Learning Curve**: Developers need to understand when to use each approach
 3. **Testing**: Need to test both ORM and raw SQL paths
 
+## Row-Level Security (RLS)
+
+The platform uses PostgreSQL Row-Level Security for database-enforced multi-tenant isolation. This provides defense-in-depth beyond application-level filtering.
+
+### How It Works
+
+1. **JWT Authentication**: User logs in and receives JWT containing `company_id`
+2. **Middleware Extraction**: `TenantContextMiddleware` extracts `company_id` from JWT and attaches to `request.state`
+3. **Session Variable**: `get_db()` dependency sets `app.current_company_id` PostgreSQL session variable
+4. **RLS Policies**: All queries automatically filtered by `company_id` at database level
+
+```
+Request → JWT Decode → Middleware → get_db() → SET app.current_company_id → Query with RLS
+```
+
+### Database Configuration
+
+RLS is configured in `apply-rls.sql` (run after Alembic migrations):
+
+```sql
+-- Enable RLS on table
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+
+-- Create isolation policy
+CREATE POLICY company_isolation_documents ON documents
+    FOR ALL TO authenticated_users
+    USING (company_id = current_setting('app.current_company_id', true)::UUID);
+```
+
+### Tables with RLS Policies
+
+| Table | Isolation Method |
+|-------|------------------|
+| `companies` | Public read, tenant update |
+| `users` | Public read (login), tenant update |
+| `groups` | Direct `company_id` |
+| `documents` | Direct `company_id` (denormalized) |
+| `document_chunks` | Via `documents.company_id` |
+| `matters` | Direct `company_id` |
+| `conversations` | Direct `company_id` |
+| `messages` | Via `conversations.company_id` |
+| `billable_sessions` | Direct `company_id` |
+| `daily_briefings` | Direct `company_id` |
+
+### Setting RLS Context Manually
+
+For operations outside the normal request flow (e.g., email confirmation, password reset):
+
+```python
+from sqlalchemy import text
+
+# Set RLS context before tenant-specific operations
+await db.execute(
+    text("SELECT set_config('app.current_company_id', :cid, true)"),
+    {"cid": str(company_id)}
+)
+```
+
+### Testing RLS
+
+A verification script is available to test cross-tenant isolation:
+
+```bash
+cd scripts
+python verify_rls.py
+```
+
+This creates two test companies and verifies that Company B cannot access Company A's documents.
+
+### Key Files
+
+- `app/middleware/tenant_context.py` - Extracts company_id from JWT
+- `app/db/session.py` - Sets RLS session variable in `get_db()`
+- `app/core/tenant.py` - Tenant context utilities
+- `apply-rls.sql` - RLS policies (run after migrations)
+- `scripts/verify_rls.py` - RLS verification script
+
 ### Guidelines for Future Development
 
 **DO:**
@@ -263,7 +341,7 @@ REDIS_URL=redis://localhost:6379
 # S3 Storage
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
-AWS_REGION=us-east-1
+AWS_REGION=ca-central-1
 S3_BUCKET_NAME=bc-legal-docs
 S3_ENDPOINT_URL=http://localhost:4566  # LocalStack for development
 

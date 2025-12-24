@@ -12,7 +12,7 @@ terraform {
     # Configure this with your S3 bucket for state storage
     # bucket = "bc-legal-terraform-state"
     # key    = "terraform.tfstate"
-    # region = "us-west-2"
+    # region = "ca-central-1"
   }
 }
 
@@ -32,7 +32,7 @@ provider "aws" {
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-west-2"
+  default     = "ca-central-1"
 }
 
 variable "environment" {

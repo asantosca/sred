@@ -45,6 +45,7 @@ def upgrade() -> None:
     sa.Column('permissions_json', sa.JSON(), nullable=False),
     sa.Column('is_default', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['bc_legal_ds.companies.id'], ),
     sa.PrimaryKeyConstraint('id'),
     schema='bc_legal_ds'
@@ -60,6 +61,7 @@ def upgrade() -> None:
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('company_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('last_active', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['bc_legal_ds.companies.id'], ),
     sa.PrimaryKeyConstraint('id'),

@@ -36,14 +36,50 @@ async_session_factory = async_sessionmaker(
 Base = declarative_base()
 Base.metadata.schema = 'bc_legal_ds'
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Get database session."""
+from fastapi import Request
+from sqlalchemy import text
+from app.core.tenant import get_tenant_context
+
+async def get_db(request: Request = None) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Get database session with RLS context set if authenticated.
+    
+    This dependency yields a session that has the `app.current_company_id` 
+    variable set for Row-Level Security (RLS) enforcement.
+    """
     async with async_session_factory() as session:
         try:
+            # Enforce Row-Level Security (RLS)
+            if request:
+                company_id = None
+                
+                # 1. Try to get from request state (set by middleware)
+                if hasattr(request.state, "company_id"):
+                    company_id = request.state.company_id
+                
+                # 2. Fallback: Extract directly if middleware didn't run
+                if not company_id:
+                    try:
+                        # We use a local import if needed, but top-level is fine 
+                        # as long as app.core.tenant doesn't import get_db
+                        ctx = await get_tenant_context(request)
+                        if ctx:
+                            company_id = ctx.company_id
+                    except Exception:
+                        pass
+                
+                # 3. Set the RLS variable in the database session
+                if company_id:
+                    await session.execute(
+                        text("SELECT set_config('app.current_company_id', :cid, true)"),
+                        {"cid": str(company_id)}
+                    )
+
             yield session
         except Exception:
             await session.rollback()
             raise
         finally:
             await session.close()
+
             

@@ -41,8 +41,9 @@ Serve law firms of different sizes, from solo lawyers to large firms:
 
 ### Multi-Tenancy
 
-- **Approach**: Row-level security (company_id filtering)
-- **Isolation**: Company-based with JWT tokens
+- **Approach**: PostgreSQL Row-Level Security (RLS) policies
+- **Isolation**: Company-based with JWT tokens containing `company_id`
+- **Enforcement**: Database-level via `app.current_company_id` session variable
 
 ---
 
@@ -79,6 +80,12 @@ Recruit 3-5 small law firms in BC, onboard each firm (1-2 users per firm), weekl
 - [x] Security scanning and vulnerability assessment
 - [x] SQL injection audit (verify ORM usage)
 - [x] Tenant isolation audit (company_id filtering on all queries)
+- [x] PostgreSQL Row-Level Security (RLS) implementation
+  - Database-enforced tenant isolation via RLS policies
+  - JWT middleware extracts company_id and sets `app.current_company_id` session variable
+  - All tenant tables have RLS policies filtering by company_id
+  - Documents table denormalized with company_id for RLS query performance
+  - Verification script to test cross-tenant isolation
 - [x] CORS configuration review (add production domains)
 - [x] Sample data on signup (welcome matter and getting started conversation)
 - [x] Matter-scoped conversations
