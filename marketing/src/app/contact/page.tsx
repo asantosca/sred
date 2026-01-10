@@ -131,7 +131,7 @@ export default function ContactPage() {
                     },
                   })}
                   className="input-field"
-                  placeholder="john@lawfirm.ca"
+                  placeholder="email@address.ca"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
@@ -240,7 +240,7 @@ export default function ContactPage() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-1 gap-6 max-w-4xl mx-auto">
             <div className="glass-card rounded-sm p-8 group hover:glow-copper transition-all duration-500">
               <div className="w-12 h-12 rounded-sm bg-copper-500/10 flex items-center justify-center mb-6 group-hover:bg-copper-500/20 transition-colors">
                 <svg className="w-6 h-6 text-copper-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@ export default function ContactPage() {
               </a>
             </div>
 
-            <div className="glass-card rounded-sm p-8 group hover:glow-copper transition-all duration-500">
+            {/* <div className="glass-card rounded-sm p-8 group hover:glow-copper transition-all duration-500">
               <div className="w-12 h-12 rounded-sm bg-copper-500/10 flex items-center justify-center mb-6 group-hover:bg-copper-500/20 transition-colors">
                 <svg className="w-6 h-6 text-copper-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -276,7 +276,7 @@ export default function ContactPage() {
               <p className="text-ink-400 mt-2">
                 Serving BC law firms province-wide
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

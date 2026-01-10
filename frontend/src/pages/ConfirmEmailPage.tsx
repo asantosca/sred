@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
+import { trackSignUpConfirmed } from '@/utils/analytics'
 import Button from '@/components/ui/Button'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import Alert from '@/components/ui/Alert'
@@ -43,6 +44,7 @@ export default function ConfirmEmailPage() {
         // Auto-login after email confirmation
         setAuth(response.data)
         setSuccess(true)
+        trackSignUpConfirmed()
 
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {
