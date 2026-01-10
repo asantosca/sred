@@ -121,23 +121,23 @@ _Must complete before beta users can test with real documents_
 
 _Lawyers fear AI hallucination. Rather than building a full legal research platform, we focus on transparency about knowledge sources and easy verification._
 
-- [ ] Epistemic honesty in Claude prompts
+- [x] Epistemic honesty in Claude prompts
   - Distinguish "from your documents" vs "general legal knowledge"
   - Require Claude to flag unverified legal claims
   - Never invent case names or statute section numbers
   - Explicitly state when verification is needed
 
-- [ ] UI source distinction
+- [x] UI source distinction
   - Visual separation: "From Your Documents" vs "General Legal Knowledge (Verify)"
   - Different styling/icons for each source type
   - Clear indication when AI is uncertain
 
-- [ ] Auto-link statutes to BC Laws
+- [x] Auto-link statutes to BC Laws
   - Regex detection of statute references (e.g., "Limitation Act, SBC 2012, c 13")
   - Auto-generate links to bclaws.gov.bc.ca for verification
   - No embedding/indexing required - just linking
 
-- [ ] Auto-link cases to CanLII search
+- [x] Auto-link cases to CanLII search
   - Regex detection of case citations (e.g., "2024 SCC 15", "2023 BCCA 412")
   - Auto-generate CanLII search links for verification
   - No API key required - just search URL generation
