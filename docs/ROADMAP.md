@@ -117,6 +117,36 @@ _Must complete before beta users can test with real documents_
   - Hierarchical summarization for very long documents
   - Internal only (not exposed to users), improves answer quality
 
+**Legal Source Transparency (Addressing Hallucination Concerns):**
+
+_Lawyers fear AI hallucination. Rather than building a full legal research platform, we focus on transparency about knowledge sources and easy verification._
+
+- [ ] Epistemic honesty in Claude prompts
+  - Distinguish "from your documents" vs "general legal knowledge"
+  - Require Claude to flag unverified legal claims
+  - Never invent case names or statute section numbers
+  - Explicitly state when verification is needed
+
+- [ ] UI source distinction
+  - Visual separation: "From Your Documents" vs "General Legal Knowledge (Verify)"
+  - Different styling/icons for each source type
+  - Clear indication when AI is uncertain
+
+- [ ] Auto-link statutes to BC Laws
+  - Regex detection of statute references (e.g., "Limitation Act, SBC 2012, c 13")
+  - Auto-generate links to bclaws.gov.bc.ca for verification
+  - No embedding/indexing required - just linking
+
+- [ ] Auto-link cases to CanLII search
+  - Regex detection of case citations (e.g., "2024 SCC 15", "2023 BCCA 412")
+  - Auto-generate CanLII search links for verification
+  - No API key required - just search URL generation
+
+_Future (only if customer demand):_
+- BC Laws statute full-text search integration
+- CanLII case retrieval with API
+- Authority ranking (binding vs persuasive)
+
 **Performance:**
 
 - [ ] CI/CD pipeline (GitHub Actions)
@@ -294,6 +324,21 @@ _Future features after public launch. Prioritize based on customer feedback._
 - [ ] Evaluate Voyage AI voyage-law-2 embeddings (legal-specific)
   - Would require schema migration (1536 -> 1024 dimensions)
   - Test after sufficient usage data to benchmark
+
+**Agentic RAG (Complex Query Handling):**
+
+- [ ] Query decomposition for multi-part questions
+  - Break complex legal questions into sub-queries
+  - Aggregate results across multiple retrieval steps
+- [ ] Checklist verification against matter documents
+  - "Has client provided all required intake documents?"
+  - Compare requirements against uploaded documents
+- [ ] Compliance gap analysis
+  - "What requirements is opposing party not meeting?"
+  - Cross-reference legal requirements with matter facts
+- [ ] Iterative retrieval for research queries
+  - Agent searches, evaluates relevance, refines, searches again
+  - Self-correcting search for ambiguous queries
 
 **Document Features:**
 
