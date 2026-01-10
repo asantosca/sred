@@ -1,7 +1,7 @@
 // ChatInterface component - Main chat interface with message display and streaming
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { User, Bot, ThumbsUp, ThumbsDown, Copy, Check, Lightbulb, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { User, Bot, ThumbsUp, ThumbsDown, Copy, Check, Lightbulb, X, ChevronDown, ChevronUp, AlertTriangle, FileText } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import type { Message } from '@/types/chat'
 import SourceCitations from './SourceCitations'
@@ -157,10 +157,25 @@ export default function ChatInterface({
           {/* Source citations for assistant messages */}
           {!isUser && message.sources && message.sources.length > 0 && (
             <div className="mt-2">
+              <div className="mb-1 flex items-center gap-1.5 text-xs text-green-700">
+                <FileText className="h-3 w-3" />
+                <span className="font-medium">From Your Documents</span>
+              </div>
               <SourceCitations
                 sources={message.sources}
                 onViewDocument={(docId) => handleSourceClick(message.id, docId)}
               />
+            </div>
+          )}
+
+          {/* General knowledge indicator for messages without document sources */}
+          {!isUser && (!message.sources || message.sources.length === 0) && (
+            <div className="mt-2 flex items-start gap-1.5 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+              <AlertTriangle className="mt-0.5 h-3 w-3 flex-shrink-0" />
+              <span>
+                <span className="font-medium">General legal knowledge.</span>{' '}
+                Verify all claims with current statutes and case law.
+              </span>
             </div>
           )}
 
