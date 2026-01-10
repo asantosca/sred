@@ -274,6 +274,8 @@ export default function ChatPage() {
       searchParams.delete('matter')
       setSearchParams(searchParams, { replace: true })
     }
+    // Focus the message input
+    setTimeout(() => messageInputRef.current?.focus(), 100)
   }
 
   // Handle accepting matter suggestion
