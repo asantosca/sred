@@ -83,7 +83,7 @@ class BillableService:
             company_id=current_user.company_id,
             user_id=current_user.id,
             conversation_id=conversation_id,
-            matter_id=conversation.matter_id,
+            matter_id=conversation.claim_id,
             started_at=started_at,
             ended_at=ended_at,
             duration_minutes=duration_minutes,
@@ -184,7 +184,7 @@ Generate ONLY the billing description, nothing else:"""
         )
 
         if matter_id:
-            query = query.where(BillableSession.matter_id == matter_id)
+            query = query.where(BillableSession.claim_id == matter_id)
 
         if not include_exported:
             query = query.where(BillableSession.is_exported == False)
@@ -320,8 +320,8 @@ Generate ONLY the billing description, nothing else:"""
             session.activity_code = updates.activity_code
         if updates.is_billable is not None:
             session.is_billable = updates.is_billable
-        if updates.matter_id is not None:
-            session.matter_id = updates.matter_id
+        if updates.claim_id is not None:
+            session.claim_id = updates.claim_id
 
         await self.db.commit()
         await self.db.refresh(session)

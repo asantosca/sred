@@ -38,7 +38,7 @@ async def list_matters(
     # Build base query for matters user has access to
     query = (
         select(MatterModel)
-        .join(MatterAccessModel, MatterModel.id == MatterAccessModel.matter_id)
+        .join(MatterAccessModel, MatterModel.id == MatterAccessModel.claim_id)
         .where(
             and_(
                 MatterModel.company_id == current_user.company_id,
@@ -164,7 +164,7 @@ async def get_matter(
     # Check if user has access to this matter and get their permissions
     access_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id
         )
     )
@@ -214,7 +214,7 @@ async def update_matter(
     # Check if user has edit access to this matter
     access_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
             MatterAccessModel.can_edit == True
         )
@@ -264,7 +264,7 @@ async def delete_matter(
     # Check if user has delete access to this matter
     access_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
             MatterAccessModel.can_delete == True
         )
@@ -288,7 +288,7 @@ async def delete_matter(
         )
 
     # Check for linked conversations
-    conv_count_query = select(func.count()).where(Conversation.matter_id == matter_id)
+    conv_count_query = select(func.count()).where(Conversation.claim_id == matter_id)
     conv_result = await db.execute(conv_count_query)
     conv_count = conv_result.scalar() or 0
 
@@ -299,7 +299,7 @@ async def delete_matter(
         )
 
     # Check for linked billable sessions
-    session_count_query = select(func.count()).where(BillableSession.matter_id == matter_id)
+    session_count_query = select(func.count()).where(BillableSession.claim_id == matter_id)
     session_result = await db.execute(session_count_query)
     session_count = session_result.scalar() or 0
 
@@ -325,7 +325,7 @@ async def list_matter_access(
     # Check if user has access to this matter
     access_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id
         )
     )
@@ -344,7 +344,7 @@ async def list_matter_access(
     # Get all access records for this matter
     access_query = (
         select(MatterAccessModel)
-        .where(MatterAccessModel.matter_id == matter_id)
+        .where(MatterAccessModel.claim_id == matter_id)
         .order_by(MatterAccessModel.granted_at.desc())
     )
     access_result = await db.execute(access_query)
@@ -379,7 +379,7 @@ async def grant_matter_access(
     # Check if current user has access to manage this matter
     access_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
             MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
@@ -394,7 +394,7 @@ async def grant_matter_access(
     # Check if user already has access
     existing_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == access_data.user_id
         )
     )
@@ -444,7 +444,7 @@ async def update_matter_access(
     # Check if current user has permission to manage access
     manager_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
             MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
@@ -460,7 +460,7 @@ async def update_matter_access(
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.id == access_id,
-            MatterAccessModel.matter_id == matter_id
+            MatterAccessModel.claim_id == matter_id
         )
     )
     access_result = await db.execute(access_query)
@@ -494,7 +494,7 @@ async def revoke_matter_access(
     # Check if current user has permission to manage access
     manager_query = select(MatterAccessModel).where(
         and_(
-            MatterAccessModel.matter_id == matter_id,
+            MatterAccessModel.claim_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
             MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
@@ -510,7 +510,7 @@ async def revoke_matter_access(
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.id == access_id,
-            MatterAccessModel.matter_id == matter_id
+            MatterAccessModel.claim_id == matter_id
         )
     )
     access_result = await db.execute(access_query)
@@ -526,7 +526,7 @@ async def revoke_matter_access(
     if access_record.access_role == "lead_consultant":
         lead_count_query = select(func.count()).where(
             and_(
-                MatterAccessModel.matter_id == matter_id,
+                MatterAccessModel.claim_id == matter_id,
                 MatterAccessModel.access_role == "lead_consultant"
             )
         )

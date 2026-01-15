@@ -65,7 +65,7 @@ async def list_events(
 
     # Apply filters
     if matter_id:
-        query = query.where(DocumentEvent.matter_id == matter_id)
+        query = query.where(DocumentEvent.claim_id == matter_id)
 
     if document_id:
         query = query.where(DocumentEvent.document_id == document_id)
@@ -108,13 +108,13 @@ async def list_events(
         # Get matter info
         matter_name = None
         matter_number = None
-        if event.matter_id:
-            matter_query = select(Matter).where(Matter.id == event.matter_id)
+        if event.claim_id:
+            matter_query = select(Matter).where(Matter.id == event.claim_id)
             matter_result = await db.execute(matter_query)
             matter = matter_result.scalar()
             if matter:
-                matter_name = matter.client_name
-                matter_number = matter.matter_number
+                matter_name = matter.company_name
+                matter_number = matter.claim_number
 
         # Get chunk content if available
         chunk_content = None
@@ -129,7 +129,7 @@ async def list_events(
         enriched_events.append(DocumentEventWithContext(
             id=event.id,
             company_id=event.company_id,
-            matter_id=event.matter_id,
+            matter_id=event.claim_id,
             document_id=event.document_id,
             chunk_id=event.chunk_id,
             event_date=event.event_date,
@@ -251,7 +251,7 @@ async def create_event(
         )
 
     # Use matter_id from document if not provided
-    matter_id = event_data.matter_id or document.matter_id
+    matter_id = event_data.matter_id or document.claim_id
 
     event = DocumentEvent(
         company_id=current_user.company_id,
@@ -306,13 +306,13 @@ async def get_event(
     # Get matter info
     matter_name = None
     matter_number = None
-    if event.matter_id:
-        matter_query = select(Matter).where(Matter.id == event.matter_id)
+    if event.claim_id:
+        matter_query = select(Matter).where(Matter.id == event.claim_id)
         matter_result = await db.execute(matter_query)
         matter = matter_result.scalar()
         if matter:
-            matter_name = matter.client_name
-            matter_number = matter.matter_number
+            matter_name = matter.company_name
+            matter_number = matter.claim_number
 
     # Get chunk content
     chunk_content = None
@@ -324,7 +324,7 @@ async def get_event(
     return DocumentEventWithContext(
         id=event.id,
         company_id=event.company_id,
-        matter_id=event.matter_id,
+        matter_id=event.claim_id,
         document_id=event.document_id,
         chunk_id=event.chunk_id,
         event_date=event.event_date,

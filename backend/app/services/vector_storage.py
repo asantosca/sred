@@ -90,7 +90,7 @@ class VectorStorageService:
                     SELECT dc.id
                     FROM bc_legal_ds.document_chunks dc
                     JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                    JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                    JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                     WHERE dc.id = ANY($1::uuid[])
                     AND m.company_id = $2
                 """
@@ -154,7 +154,7 @@ class VectorStorageService:
                     SELECT dc.id, dc.embedding, dc.embedding_model
                     FROM bc_legal_ds.document_chunks dc
                     JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                    JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                    JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                     WHERE dc.document_id = $1
                     AND m.company_id = $2
                     AND dc.embedding IS NOT NULL
@@ -213,9 +213,9 @@ class VectorStorageService:
                             ts_rank_cd(dc.search_vector, plainto_tsquery('english', $1), 32) as keyword_score
                         FROM bc_legal_ds.document_chunks dc
                         JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                         WHERE m.company_id = $2
-                        AND d.matter_id = $3
+                        AND d.claim_id = $3
                         AND dc.search_vector IS NOT NULL
                         AND dc.search_vector @@ plainto_tsquery('english', $1)
                         ORDER BY keyword_score DESC
@@ -232,7 +232,7 @@ class VectorStorageService:
                             ts_rank_cd(dc.search_vector, plainto_tsquery('english', $1), 32) as keyword_score
                         FROM bc_legal_ds.document_chunks dc
                         JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                         WHERE m.company_id = $2
                         AND dc.search_vector IS NOT NULL
                         AND dc.search_vector @@ plainto_tsquery('english', $1)
@@ -315,9 +315,9 @@ class VectorStorageService:
                                 ROW_NUMBER() OVER (ORDER BY dc.embedding <=> $1::vector(1536)) as semantic_rank
                             FROM bc_legal_ds.document_chunks dc
                             JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                            JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                            JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                             WHERE m.company_id = $2
-                            AND d.matter_id = $3
+                            AND d.claim_id = $3
                             AND dc.embedding IS NOT NULL
                             AND dc.embedding <=> $1::vector(1536) < $4
                             LIMIT $5 * 2
@@ -332,9 +332,9 @@ class VectorStorageService:
                                 ROW_NUMBER() OVER (ORDER BY ts_rank_cd(dc.search_vector, plainto_tsquery('english', $6), 32) DESC) as keyword_rank
                             FROM bc_legal_ds.document_chunks dc
                             JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                            JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                            JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                             WHERE m.company_id = $2
-                            AND d.matter_id = $3
+                            AND d.claim_id = $3
                             AND dc.search_vector IS NOT NULL
                             AND dc.search_vector @@ plainto_tsquery('english', $6)
                             LIMIT $5 * 2
@@ -395,7 +395,7 @@ class VectorStorageService:
                                 ROW_NUMBER() OVER (ORDER BY dc.embedding <=> $1::vector(1536)) as semantic_rank
                             FROM bc_legal_ds.document_chunks dc
                             JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                            JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                            JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                             WHERE m.company_id = $2
                             AND dc.embedding IS NOT NULL
                             AND dc.embedding <=> $1::vector(1536) < $3
@@ -411,7 +411,7 @@ class VectorStorageService:
                                 ROW_NUMBER() OVER (ORDER BY ts_rank_cd(dc.search_vector, plainto_tsquery('english', $5), 32) DESC) as keyword_rank
                             FROM bc_legal_ds.document_chunks dc
                             JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                            JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                            JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                             WHERE m.company_id = $2
                             AND dc.search_vector IS NOT NULL
                             AND dc.search_vector @@ plainto_tsquery('english', $5)
@@ -519,9 +519,9 @@ class VectorStorageService:
                             1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
                         FROM bc_legal_ds.document_chunks dc
                         JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                         WHERE m.company_id = $2
-                        AND d.matter_id = $3
+                        AND d.claim_id = $3
                         AND dc.embedding IS NOT NULL
                         AND dc.embedding <=> $1::vector(1536) < $4
                         ORDER BY dc.embedding <=> $1::vector(1536)
@@ -541,7 +541,7 @@ class VectorStorageService:
                             1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
                         FROM bc_legal_ds.document_chunks dc
                         JOIN bc_legal_ds.documents d ON d.id = dc.document_id
-                        JOIN bc_legal_ds.matters m ON m.id = d.matter_id
+                        JOIN bc_legal_ds.claims m ON m.id = d.claim_id
                         WHERE m.company_id = $2
                         AND dc.embedding IS NOT NULL
                         AND dc.embedding <=> $1::vector(1536) < $3

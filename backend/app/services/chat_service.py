@@ -144,7 +144,7 @@ class ChatService:
         # 4. Retrieve relevant context using RAG
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
-            matter_id=conversation.matter_id,
+            matter_id=conversation.claim_id,
             max_chunks=request.max_context_chunks,
             similarity_threshold=request.similarity_threshold,
             user=current_user
@@ -156,7 +156,7 @@ class ChatService:
         )
 
         # 5. Build prompt with context
-        is_discovery_mode = conversation.matter_id is None
+        is_discovery_mode = conversation.claim_id is None
         system_prompt = self._build_system_prompt(
             context_chunks, is_discovery_mode, document_summaries
         )
@@ -315,7 +315,7 @@ class ChatService:
         # 4. Retrieve context
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
-            matter_id=conversation.matter_id,
+            matter_id=conversation.claim_id,
             max_chunks=request.max_context_chunks,
             similarity_threshold=request.similarity_threshold,
             user=current_user
@@ -327,7 +327,7 @@ class ChatService:
         )
 
         # 5. Build prompt
-        is_discovery_mode = conversation.matter_id is None
+        is_discovery_mode = conversation.claim_id is None
         system_prompt = self._build_system_prompt(
             context_chunks, is_discovery_mode, document_summaries
         )
@@ -469,8 +469,8 @@ class ChatService:
 
         # Get matter name if matter_id exists
         matter_name = None
-        if conversation.matter_id:
-            matter_query = select(Matter.client_name).where(Matter.id == conversation.matter_id)
+        if conversation.claim_id:
+            matter_query = select(Matter.company_name).where(Matter.id == conversation.claim_id)
             matter_result = await self.db.execute(matter_query)
             matter_name = matter_result.scalar()
 
@@ -503,7 +503,7 @@ class ChatService:
 
         # Filter by matter if specified
         if matter_id:
-            query = query.where(Conversation.matter_id == matter_id)
+            query = query.where(Conversation.claim_id == matter_id)
 
         query = query.order_by(
             Conversation.is_pinned.desc(),
@@ -542,8 +542,8 @@ class ChatService:
 
             # Get matter name if matter_id exists
             matter_name = None
-            if conv.matter_id:
-                matter_query = select(Matter.client_name).where(Matter.id == conv.matter_id)
+            if conv.claim_id:
+                matter_query = select(Matter.company_name).where(Matter.id == conv.claim_id)
                 matter_result = await self.db.execute(matter_query)
                 matter_name = matter_result.scalar()
 
@@ -650,8 +650,8 @@ class ChatService:
                 preview = last_msg.content[:100] + "..." if len(last_msg.content) > 100 else last_msg.content
 
             matter_name = None
-            if conv.matter_id:
-                matter_query = select(Matter.client_name).where(Matter.id == conv.matter_id)
+            if conv.claim_id:
+                matter_query = select(Matter.company_name).where(Matter.id == conv.claim_id)
                 matter_result = await self.db.execute(matter_query)
                 matter_name = matter_result.scalar()
 
@@ -862,7 +862,7 @@ Summary:"""
             raise ValueError("Matter not found or access denied")
 
         # Update conversation
-        conversation.matter_id = matter_id
+        conversation.claim_id = matter_id
 
         # Update title to include matter name if not already
         if not conversation.title.startswith("["):

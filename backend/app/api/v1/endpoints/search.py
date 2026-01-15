@@ -161,7 +161,7 @@ async def _enrich_search_results(
     # This is a belt-and-suspenders check to ensure no cross-tenant data leakage
     query = (
         select(Document, Matter, DocumentChunk)
-        .join(Matter, Document.matter_id == Matter.id)
+        .join(Matter, Document.claim_id == Matter.id)
         .join(DocumentChunk, DocumentChunk.document_id == Document.id)
         .where(Document.id.in_(document_ids))
         .where(Matter.company_id == current_user.company_id)  # Belt-and-suspenders check

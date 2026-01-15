@@ -262,7 +262,7 @@ async def _process_document_upload(
     # 1. Validate user has upload access to the matter
     matter_access_query = select(MatterAccess).where(
         and_(
-            MatterAccess.matter_id == upload_data.matter_id,
+            MatterAccess.claim_id == upload_data.matter_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_upload == True
         )
@@ -457,7 +457,7 @@ async def _process_document_upload(
     # Check for duplicate file in the same matter
     duplicate_query = select(DocumentModel).where(
         and_(
-            DocumentModel.matter_id == upload_data.matter_id,
+            DocumentModel.claim_id == upload_data.matter_id,
             DocumentModel.file_hash == file_hash
         )
     )
@@ -660,8 +660,8 @@ async def list_documents(
             Matter.company_name,
             Matter.claim_status
         )
-        .join(Matter, DocumentModel.matter_id == Matter.id)
-        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .join(Matter, DocumentModel.claim_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.claim_id)
         .where(
             and_(
                 Matter.company_id == current_user.company_id,
@@ -672,7 +672,7 @@ async def list_documents(
     
     # Apply filters
     if matter_id:
-        query = query.where(DocumentModel.matter_id == matter_id)
+        query = query.where(DocumentModel.claim_id == matter_id)
     
     if document_type:
         query = query.where(DocumentModel.document_type == document_type)
@@ -759,20 +759,20 @@ async def advanced_document_search(
     # Build base query with user access control
     query = select(DocumentModel).join(
         MatterAccess, and_(
-            MatterAccess.matter_id == DocumentModel.matter_id,
+            MatterAccess.claim_id == DocumentModel.claim_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_view == True
         )
     ).join(
         Matter, and_(
-            Matter.id == DocumentModel.matter_id,
+            Matter.id == DocumentModel.claim_id,
             Matter.company_id == current_user.company_id
         )
     )
     
     # Apply filters
     if matter_id:
-        query = query.where(DocumentModel.matter_id == matter_id)
+        query = query.where(DocumentModel.claim_id == matter_id)
     
     if query_text:
         search_term = f"%{query_text}%"
@@ -875,13 +875,13 @@ async def check_for_duplicates(
             # Check within specific matter
             query = select(DocumentModel).join(
                 MatterAccess, and_(
-                    MatterAccess.matter_id == DocumentModel.matter_id,
+                    MatterAccess.claim_id == DocumentModel.claim_id,
                     MatterAccess.user_id == current_user.id,
                     MatterAccess.can_view == True
                 )
             ).where(
                 and_(
-                    DocumentModel.matter_id == matter_id,
+                    DocumentModel.claim_id == matter_id,
                     DocumentModel.file_hash == file_hash
                 )
             )
@@ -889,13 +889,13 @@ async def check_for_duplicates(
             # Check across all accessible documents in company
             query = select(DocumentModel).join(
                 MatterAccess, and_(
-                    MatterAccess.matter_id == DocumentModel.matter_id,
+                    MatterAccess.claim_id == DocumentModel.claim_id,
                     MatterAccess.user_id == current_user.id,
                     MatterAccess.can_view == True
                 )
             ).join(
                 Matter, and_(
-                    Matter.id == DocumentModel.matter_id,
+                    Matter.id == DocumentModel.claim_id,
                     Matter.company_id == current_user.company_id
                 )
             ).where(DocumentModel.file_hash == file_hash)
@@ -980,13 +980,13 @@ async def update_document_status(
     # Check document access
     document_query = select(DocumentModel).join(
         MatterAccess, and_(
-            MatterAccess.matter_id == DocumentModel.matter_id,
+            MatterAccess.claim_id == DocumentModel.claim_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_edit == True
         )
     ).join(
         Matter, and_(
-            Matter.id == DocumentModel.matter_id,
+            Matter.id == DocumentModel.claim_id,
             Matter.company_id == current_user.company_id
         )
     ).where(DocumentModel.id == document_id)
@@ -1083,13 +1083,13 @@ async def get_document_status_history(
     # Check document access
     document_query = select(DocumentModel).join(
         MatterAccess, and_(
-            MatterAccess.matter_id == DocumentModel.matter_id,
+            MatterAccess.claim_id == DocumentModel.claim_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_view == True
         )
     ).join(
         Matter, and_(
-            Matter.id == DocumentModel.matter_id,
+            Matter.id == DocumentModel.claim_id,
             Matter.company_id == current_user.company_id
         )
     ).where(DocumentModel.id == document_id)
@@ -1145,8 +1145,8 @@ async def get_document_download_url(
     # Check if user has access to this document
     access_query = (
         select(DocumentModel)
-        .join(Matter, DocumentModel.matter_id == Matter.id)
-        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .join(Matter, DocumentModel.claim_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.claim_id)
         .where(
             and_(
                 DocumentModel.id == document_id,
@@ -1190,8 +1190,8 @@ async def get_document(
     # Check access and get document
     access_query = (
         select(DocumentModel)
-        .join(Matter, DocumentModel.matter_id == Matter.id)
-        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .join(Matter, DocumentModel.claim_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.claim_id)
         .where(
             and_(
                 DocumentModel.id == document_id,
@@ -1226,8 +1226,8 @@ async def update_document(
     # Check if user has edit access
     access_query = (
         select(DocumentModel, MatterAccess.can_edit)
-        .join(Matter, DocumentModel.matter_id == Matter.id)
-        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .join(Matter, DocumentModel.claim_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.claim_id)
         .where(
             and_(
                 DocumentModel.id == document_id,
@@ -1278,8 +1278,8 @@ async def delete_document(
     # Check if user has delete access
     access_query = (
         select(DocumentModel, MatterAccess.can_delete)
-        .join(Matter, DocumentModel.matter_id == Matter.id)
-        .join(MatterAccess, Matter.id == MatterAccess.matter_id)
+        .join(Matter, DocumentModel.claim_id == Matter.id)
+        .join(MatterAccess, Matter.id == MatterAccess.claim_id)
         .where(
             and_(
                 DocumentModel.id == document_id,
@@ -1333,13 +1333,13 @@ async def get_document_processing_status(
     # Get document and verify access with tenant isolation
     document_query = select(DocumentModel).join(
         MatterAccess, and_(
-            MatterAccess.matter_id == DocumentModel.matter_id,
+            MatterAccess.claim_id == DocumentModel.claim_id,
             MatterAccess.user_id == current_user.id,
             MatterAccess.can_view == True
         )
     ).join(
         Matter, and_(
-            Matter.id == DocumentModel.matter_id,
+            Matter.id == DocumentModel.claim_id,
             Matter.company_id == current_user.company_id  # Tenant isolation
         )
     ).where(DocumentModel.id == document_id)

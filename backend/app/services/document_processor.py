@@ -45,7 +45,7 @@ class DocumentProcessor:
             # Get document from database with tenant isolation
             query = (
                 select(Document)
-                .join(Matter, Document.matter_id == Matter.id)
+                .join(Matter, Document.claim_id == Matter.id)
                 .where(Document.id == document_id)
                 .where(Matter.company_id == company_id)  # Tenant isolation
             )
@@ -177,7 +177,7 @@ class DocumentProcessor:
             # Get document from database with tenant isolation
             query = (
                 select(Document)
-                .join(Matter, Document.matter_id == Matter.id)
+                .join(Matter, Document.claim_id == Matter.id)
                 .where(Document.id == document_id)
                 .where(Matter.company_id == company_id)  # Tenant isolation
             )
@@ -264,7 +264,7 @@ class DocumentProcessor:
             # Get document from database with tenant isolation (ORM)
             query = (
                 select(Document)
-                .join(Matter, Document.matter_id == Matter.id)
+                .join(Matter, Document.claim_id == Matter.id)
                 .where(Document.id == document_id)
                 .where(Matter.company_id == company_id)  # Tenant isolation
             )
@@ -377,7 +377,7 @@ class DocumentProcessor:
         """
         query = (
             select(Document)
-            .join(Matter, Document.matter_id == Matter.id)
+            .join(Matter, Document.claim_id == Matter.id)
             .where(Document.id == document_id)
             .where(Matter.company_id == company_id)  # Tenant isolation
         )

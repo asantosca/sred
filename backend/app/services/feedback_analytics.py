@@ -326,7 +326,7 @@ class FeedbackAnalyticsService:
             score += 0.10
 
         # Context bonuses
-        has_matter = conversation.matter_id is not None
+        has_matter = conversation.claim_id is not None
         if has_matter:
             score += 0.20
 
@@ -357,7 +357,7 @@ class FeedbackAnalyticsService:
         company_id: UUID
     ) -> MessageQualityScore:
         """Save question quality score for a user message"""
-        has_matter = conversation.matter_id is not None
+        has_matter = conversation.claim_id is not None
         words = content.split()
         doc_refs = ['document', 'file', 'page', 'contract', 'agreement']
         has_doc_context = any(ref in content.lower() for ref in doc_refs)
