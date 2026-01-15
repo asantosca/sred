@@ -26,7 +26,7 @@ export default function ClaimsPage() {
       setLoading(true)
       setError(null)
       const response = await mattersApi.list()
-      setClaims(response.data.matters)
+      setClaims(response.data.claims || [])
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claims')
     } finally {
@@ -37,12 +37,12 @@ export default function ClaimsPage() {
   // Filter claims based on search and status
   const filteredClaims = claims.filter((claim) => {
     const matchesSearch =
-      claim.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.matter_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.matter_type.toLowerCase().includes(searchTerm.toLowerCase())
+      (claim.company_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (claim.claim_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (claim.project_type || '').toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus =
-      statusFilter === 'all' || claim.matter_status === statusFilter
+      statusFilter === 'all' || claim.claim_status === statusFilter
 
     return matchesSearch && matchesStatus
   })
@@ -173,24 +173,24 @@ export default function ClaimsPage() {
                     <div className="flex items-start justify-between mb-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          claim.matter_status
+                          claim.claim_status
                         )}`}
                       >
-                        {claim.matter_status}
+                        {claim.claim_status}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {claim.matter_number}
+                        {claim.claim_number}
                       </span>
                     </div>
 
                     {/* Company Name */}
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {claim.client_name}
+                      {claim.company_name}
                     </h3>
 
                     {/* Project Type */}
                     <p className="text-sm text-gray-600 mb-4">
-                      {claim.matter_type}
+                      {claim.project_type}
                     </p>
 
                     {/* Description (truncated) */}

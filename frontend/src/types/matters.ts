@@ -1,50 +1,74 @@
-// Matter/Case type definitions (maps to backend API)
+// Claim type definitions (maps to backend API)
 
 export interface Matter {
   id: string
   company_id: string
-  matter_number: string
-  client_name: string
-  matter_type: string
-  matter_status: string
+  // New SR&ED field names
+  claim_number: string
+  company_name: string
+  project_type: string
+  claim_status: string
+  // Legacy aliases for backwards compatibility
+  matter_number?: string
+  client_name?: string
+  matter_type?: string
+  matter_status?: string
+  // Common fields
   description: string | null
   opened_date: string // ISO date string
   closed_date: string | null // ISO date string
-  lead_attorney_user_id: string | null
+  lead_consultant_user_id: string | null
+  // SR&ED-specific fields
+  fiscal_year_end?: string | null
+  naics_code?: string | null
+  cra_business_number?: string | null
+  total_eligible_expenditures?: number | null
+  federal_credit_estimate?: number | null
+  provincial_credit_estimate?: number | null
+  // Audit fields
   created_at: string
   created_by: string
   updated_at: string | null
   updated_by: string
-  // Current user's permissions (from MatterWithDetails)
+  // Current user's permissions (from ClaimWithDetails)
   user_can_upload?: boolean
   user_can_edit?: boolean
   user_can_delete?: boolean
 }
 
 export interface MatterCreate {
-  matter_number: string
-  client_name: string
-  matter_type: string
-  matter_status?: string
+  claim_number: string
+  company_name: string
+  project_type: string
+  claim_status?: string
   description?: string
   opened_date: string // ISO date string YYYY-MM-DD
   closed_date?: string | null
-  lead_attorney_user_id?: string | null
+  lead_consultant_user_id?: string | null
+  fiscal_year_end?: string | null
+  naics_code?: string | null
+  cra_business_number?: string | null
 }
 
 export interface MatterUpdate {
-  matter_number?: string
-  client_name?: string
-  matter_type?: string
-  matter_status?: string
+  claim_number?: string
+  company_name?: string
+  project_type?: string
+  claim_status?: string
   description?: string
   opened_date?: string
   closed_date?: string | null
-  lead_attorney_user_id?: string | null
+  lead_consultant_user_id?: string | null
+  fiscal_year_end?: string | null
+  naics_code?: string | null
+  cra_business_number?: string | null
+  total_eligible_expenditures?: number | null
+  federal_credit_estimate?: number | null
+  provincial_credit_estimate?: number | null
 }
 
 export interface MatterListResponse {
-  matters: Matter[]
+  claims: Matter[]
   total: number
   page: number
   size: number
