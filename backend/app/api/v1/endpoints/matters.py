@@ -95,7 +95,7 @@ async def list_matters(
         matters_with_details.append(MatterWithDetails(**matter_dict))
     
     return MatterListResponse(
-        matters=matters_with_details,
+        claims=matters_with_details,
         total=total,
         page=page,
         size=size,
@@ -363,9 +363,9 @@ async def list_matter_access(
     
     return MatterAccessListResponse(
         access_list=access_with_details,
-        matter_id=matter_id,
-        matter_number=matter.claim_number,
-        client_name=matter.company_name
+        claim_id=matter_id,
+        claim_number=matter.claim_number,
+        company_name=matter.company_name
     )
 
 @router.post("/{matter_id}/access", response_model=MatterAccess, status_code=status.HTTP_201_CREATED)
