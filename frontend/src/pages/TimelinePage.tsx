@@ -161,9 +161,9 @@ export default function TimelinePage() {
       <div className="mx-auto max-w-6xl p-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Document Timeline</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Project Timeline</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Chronological view of events extracted from your documents
+            Chronological view of R&D milestones extracted from your documents
           </p>
         </div>
 
@@ -174,10 +174,10 @@ export default function TimelinePage() {
             <span className="text-sm font-medium text-gray-700">Filters</span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Matter filter */}
+            {/* Claim filter */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
-                Matter
+                Claim
               </label>
               <select
                 value={matterId}
@@ -187,7 +187,7 @@ export default function TimelinePage() {
                 }}
                 className="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                <option value="">All matters</option>
+                <option value="">All claims</option>
                 {matters.map((matter: Matter) => (
                   <option key={matter.id} value={matter.id}>
                     {matter.matter_number} - {matter.client_name}
@@ -272,7 +272,7 @@ export default function TimelinePage() {
             <h3 className="mt-4 text-lg font-medium text-gray-900">No events found</h3>
             <p className="mt-2 text-sm text-gray-500">
               Events will appear here once documents are processed.
-              {matterId && ' Try clearing the matter filter to see all events.'}
+              {matterId && ' Try clearing the claim filter to see all events.'}
             </p>
           </div>
         ) : (

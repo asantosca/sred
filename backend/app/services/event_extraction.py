@@ -12,35 +12,42 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.models import Document, DocumentChunk, DocumentEvent, Matter
+from app.models.models import Document, DocumentChunk, DocumentEvent, Claim
 from app.schemas.timeline import ExtractedEvent, EventExtractionResult
 
 logger = logging.getLogger(__name__)
 
 
 # Extraction prompt for Claude
-EVENT_EXTRACTION_PROMPT = """You are a legal document analyst. Extract all events with dates from the following text.
+EVENT_EXTRACTION_PROMPT = """You are an SR&ED project document analyst. Extract project milestones and dated events from the following text.
 
 For each event, provide:
 1. event_date: The date in ISO format (YYYY-MM-DD). If only month/year is known, use the first day (e.g., "October 2020" → "2020-10-01")
 2. event_description: A concise description of what happened (1-2 sentences max)
-3. date_precision: How precise is the date?
+3. event_type: One of:
+   - "project_start" = Project initiation or kickoff
+   - "milestone" = Technical milestone achieved
+   - "uncertainty_identified" = Technical challenge or uncertainty discovered
+   - "experiment" = Test, experiment, or prototype iteration
+   - "breakthrough" = Technological advancement achieved
+   - "project_end" = Project completion or phase end
+   - "other" = Other significant dated event
+4. date_precision: How precise is the date?
    - "day" = exact date known (e.g., "December 30, 2020")
    - "month" = only month and year known (e.g., "October 2020")
    - "year" = only year known (e.g., "sometime in 2020")
    - "unknown" = date is inferred or very uncertain
-4. confidence: How confident are you in this extraction?
+5. confidence: How confident are you in this extraction?
    - "high" = date and event are clearly stated
    - "medium" = date is relative but can be resolved, or event is somewhat unclear
    - "low" = significant uncertainty about date or event
-5. raw_date_text: The exact text from the document that indicates the date
+6. raw_date_text: The exact text from the document that indicates the date
 
-IMPORTANT for relative dates:
-- "3 days after the accident" - resolve using context if the anchor date is mentioned
-- "the following week" - resolve if the reference week is known
-- If you cannot resolve a relative date, use your best estimate and set confidence to "low"
-
-Only extract events that have temporal significance. Skip generic statements without dates.
+IMPORTANT: Focus on events that demonstrate:
+- Systematic investigation and iterative work
+- Technological advancement attempts
+- Technical challenges and how they were addressed
+- Project phases and milestones
 
 Respond with a JSON array of events. If no events found, return an empty array [].
 
@@ -48,17 +55,19 @@ Example output:
 [
   {{
     "event_date": "2020-12-30",
-    "event_description": "Contract was executed by both parties",
+    "event_description": "Prototype v2 testing began with new algorithm implementation",
+    "event_type": "experiment",
     "date_precision": "day",
     "confidence": "high",
     "raw_date_text": "December 30, 2020"
   }},
   {{
     "event_date": "2020-10-01",
-    "event_description": "Initial negotiations began between the parties",
+    "event_description": "Identified performance bottleneck in data processing module requiring novel approach",
+    "event_type": "uncertainty_identified",
     "date_precision": "month",
     "confidence": "medium",
-    "raw_date_text": "sometime in October 2020"
+    "raw_date_text": "early October 2020"
   }}
 ]
 
@@ -67,7 +76,7 @@ Document text to analyze:
 {text}
 ---
 
-Extract all events with dates from the above text. Respond ONLY with the JSON array, no other text."""
+Extract all R&D project events with dates from the above text. Respond ONLY with the JSON array, no other text."""
 
 
 class EventExtractionService:
@@ -95,9 +104,9 @@ class EventExtractionService:
         logger.info(f"Starting event extraction for document {document_id}, company {company_id}")
 
         # Get document with tenant isolation
-        doc_query = select(Document).join(Matter).where(
+        doc_query = select(Document).join(Claim).where(
             Document.id == document_id,
-            Matter.company_id == company_id
+            Claim.company_id == company_id
         )
         doc_result = await self.db.execute(doc_query)
         document = doc_result.scalar()
@@ -111,7 +120,7 @@ class EventExtractionService:
                 extraction_errors=["Document not found or access denied"]
             )
 
-        logger.info(f"Found document: {document.document_title}, matter_id: {document.matter_id}")
+        logger.info(f"Found document: {document.document_title}, claim_id: {document.claim_id}")
 
         # Get document chunks
         chunks_query = select(DocumentChunk).where(
@@ -334,7 +343,7 @@ class EventExtractionService:
 
                 db_event = DocumentEvent(
                     company_id=company_id,
-                    matter_id=document.matter_id,
+                    claim_id=document.claim_id,
                     document_id=document.id,
                     chunk_id=chunk_id,
                     event_date=event_date,

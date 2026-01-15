@@ -350,7 +350,7 @@ export default function ChatPage() {
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                    AI Discovery
+                    General Analysis
                   </span>
                 )}
               </div>
@@ -415,8 +415,8 @@ export default function ChatPage() {
               selectedConversationId
                 ? 'Ask a follow-up question...'
                 : selectedMatterId
-                  ? 'Ask about documents in this matter...'
-                  : 'Ask a general legal question...'
+                  ? 'Ask about documents in this project...'
+                  : 'Ask a general SR&ED question...'
             }
           />
         </div>

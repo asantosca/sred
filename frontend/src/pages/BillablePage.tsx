@@ -160,9 +160,9 @@ export default function BillablePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Billable Hours</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Consulting Hours</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Track time spent on AI-assisted legal research
+              Track time spent on AI-assisted SR&ED research
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -170,7 +170,7 @@ export default function BillablePage() {
               <div className="text-2xl font-bold text-gray-900">
                 {totalHours}h {remainingMinutes}m
               </div>
-              <div className="text-sm text-gray-500">Total billable time</div>
+              <div className="text-sm text-gray-500">Total consulting time</div>
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function BillablePage() {
                     Conversation
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Matter
+                    Claim
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Description

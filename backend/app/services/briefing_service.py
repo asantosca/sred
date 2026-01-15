@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.models import (
-    DailyBriefing, User, Matter, Document, Conversation,
+    DailyBriefing, User, Claim, Document, Conversation,
     Message, BillableSession
 )
 
@@ -118,7 +118,7 @@ class BriefingService:
         context = {
             "user_first_name": user.first_name or user.email.split("@")[0],
             "briefing_date": briefing_date.isoformat(),
-            "matters": await self._get_matter_summary(user, week_ago),
+            "claims": await self._get_claim_summary(user, week_ago),
             "recent_documents": await self._get_recent_documents(user, week_ago),
             "recent_conversations": await self._get_recent_conversations(user, week_ago),
             "unbilled_sessions": await self._get_unbilled_sessions(user),
@@ -127,22 +127,22 @@ class BriefingService:
 
         return context
 
-    async def _get_matter_summary(self, user: User, since: date) -> list:
-        """Get summary of matters with recent activity."""
+    async def _get_claim_summary(self, user: User, since: date) -> list:
+        """Get summary of claims with recent activity."""
         query = select(
-            Matter.id,
-            Matter.client_name,
-            Matter.matter_number,
-            Matter.matter_type,
+            Claim.id,
+            Claim.company_name,
+            Claim.claim_number,
+            Claim.project_type,
             func.count(Document.id).label("doc_count"),
             func.max(Document.created_at).label("last_doc_upload")
         ).outerjoin(
-            Document, Document.matter_id == Matter.id
+            Document, Document.claim_id == Claim.id
         ).where(
-            Matter.company_id == user.company_id,
-            Matter.matter_status == "active"
+            Claim.company_id == user.company_id,
+            Claim.claim_status == "in_progress"
         ).group_by(
-            Matter.id
+            Claim.id
         ).order_by(
             desc(func.max(Document.created_at))
         ).limit(10)
@@ -150,18 +150,18 @@ class BriefingService:
         result = await self.db.execute(query)
         rows = result.all()
 
-        matters = []
+        claims = []
         for row in rows:
-            matters.append({
+            claims.append({
                 "id": str(row.id),
-                "client_name": row.client_name,
-                "matter_number": row.matter_number,
-                "matter_type": row.matter_type,
+                "company_name": row.company_name,
+                "claim_number": row.claim_number,
+                "project_type": row.project_type,
                 "document_count": row.doc_count or 0,
                 "last_activity": row.last_doc_upload.isoformat() if row.last_doc_upload else None
             })
 
-        return matters
+        return claims
 
     async def _get_recent_documents(self, user: User, since: date) -> list:
         """Get documents uploaded in the last week."""
@@ -170,11 +170,11 @@ class BriefingService:
             Document.document_title,
             Document.document_type,
             Document.created_at,
-            Matter.client_name
+            Claim.company_name
         ).join(
-            Matter, Document.matter_id == Matter.id
+            Claim, Document.claim_id == Claim.id
         ).where(
-            Matter.company_id == user.company_id,
+            Claim.company_id == user.company_id,
             Document.created_at >= since
         ).order_by(
             desc(Document.created_at)
@@ -188,7 +188,7 @@ class BriefingService:
                 "title": row.document_title,
                 "type": row.document_type,
                 "uploaded": row.created_at.isoformat(),
-                "matter": row.client_name
+                "claim": row.company_name
             }
             for row in rows
         ]
@@ -200,9 +200,9 @@ class BriefingService:
             Conversation.title,
             Conversation.updated_at,
             func.count(Message.id).label("message_count"),
-            Matter.client_name
+            Claim.company_name
         ).outerjoin(
-            Matter, Conversation.matter_id == Matter.id
+            Claim, Conversation.claim_id == Claim.id
         ).join(
             Message, Message.conversation_id == Conversation.id
         ).where(
@@ -210,7 +210,7 @@ class BriefingService:
             Conversation.updated_at >= since
         ).group_by(
             Conversation.id,
-            Matter.client_name
+            Claim.company_name
         ).order_by(
             desc(Conversation.updated_at)
         ).limit(5)
@@ -223,7 +223,7 @@ class BriefingService:
                 "title": row.title or "Untitled conversation",
                 "last_activity": row.updated_at.isoformat() if row.updated_at else None,
                 "message_count": row.message_count,
-                "matter": row.client_name
+                "claim": row.company_name
             }
             for row in rows
         ]
@@ -235,9 +235,9 @@ class BriefingService:
             BillableSession.duration_minutes,
             BillableSession.ai_description,
             BillableSession.started_at,
-            Matter.client_name
+            Claim.company_name
         ).outerjoin(
-            Matter, BillableSession.matter_id == Matter.id
+            Claim, BillableSession.claim_id == Claim.id
         ).where(
             BillableSession.user_id == user.id,
             BillableSession.is_exported == False,
@@ -254,7 +254,7 @@ class BriefingService:
                 "duration_minutes": row.duration_minutes,
                 "description": row.ai_description[:100] if row.ai_description else "No description",
                 "date": row.started_at.date().isoformat() if row.started_at else None,
-                "matter": row.client_name
+                "claim": row.company_name
             }
             for row in rows
         ]
@@ -272,43 +272,43 @@ class BriefingService:
     async def _generate_content(self, user: User, context: Dict[str, Any]) -> tuple[str, int]:
         """Generate briefing content using Claude."""
 
-        system_prompt = f"""You are an AI assistant for a legal document management platform.
-Generate a brief, friendly daily briefing in Markdown format for a user with first name {context['user_first_name']}.
+        system_prompt = f"""You are an AI assistant for an SR&ED tax credit consulting platform.
+Generate a brief, friendly daily briefing in Markdown format for a PwC consultant named {context['user_first_name']}.
 
 Keep it concise and actionable. Focus on:
 1. A warm greeting with their name
-2. Key matters with recent activity (if any)
-3. Recent documents uploaded (if any)
-4. Unbilled time that needs attention (if any)
+2. Active claims with recent document uploads (if any)
+3. Recent project documentation added (if any)
+4. Unbilled consulting time that needs attention (if any)
 
 Use these formatting guidelines:
 - Use ## for the greeting header
-- Use **bold** for emphasis on important items
+- Use **bold** for emphasis on important items (deadlines, large claims)
 - Use bullet points for lists
 - Keep the total length under 300 words
 - Be professional but warm
-- If there's no activity, encourage them to create a matter, upload a document, or start chatting.
+- If there's no activity, encourage them to upload project documentation or start analyzing a claim.
 
 Do NOT include fictional data. Only reference what's in the context provided."""
 
         # Build the user prompt with context
         user_prompt = f"""Generate a daily briefing for today ({context['briefing_date']}).
 
-User: {context['user_first_name']}
+Consultant: {context['user_first_name']}
 
 Context data:
-- Active matters: {len(context['matters'])}
+- Active claims: {len(context['claims'])}
 - Documents uploaded this week: {len(context['recent_documents'])}
 - Recent conversations: {len(context['recent_conversations'])}
 - Unbilled sessions pending: {len(context['unbilled_sessions'])}
 
-Matters with activity:
-{self._format_matters(context['matters'][:5])}
+Claims with activity:
+{self._format_claims(context['claims'][:5])}
 
 Recent documents:
 {self._format_documents(context['recent_documents'][:5])}
 
-Unbilled time:
+Unbilled consulting time:
 {self._format_unbilled(context['unbilled_sessions'][:5])}
 
 Generate the briefing now."""
@@ -327,12 +327,12 @@ Generate the briefing now."""
 
         return content, token_count
 
-    def _format_matters(self, matters: list) -> str:
-        if not matters:
-            return "No active matters"
+    def _format_claims(self, claims: list) -> str:
+        if not claims:
+            return "No active claims"
         lines = []
-        for m in matters:
-            lines.append(f"- {m['client_name']} ({m['matter_number']}): {m['document_count']} documents")
+        for c in claims:
+            lines.append(f"- {c['company_name']} ({c['claim_number']}): {c['document_count']} documents")
         return "\n".join(lines)
 
     def _format_documents(self, documents: list) -> str:
@@ -340,7 +340,7 @@ Generate the briefing now."""
             return "No documents uploaded this week"
         lines = []
         for d in documents:
-            lines.append(f"- {d['title']} ({d['type']}) for {d['matter']}")
+            lines.append(f"- {d['title']} ({d['type']}) for {d['claim']}")
         return "\n".join(lines)
 
     def _format_unbilled(self, sessions: list) -> str:

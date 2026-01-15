@@ -1,4 +1,4 @@
-// Compact matter selector for chat - shows as a dropdown above the message input
+// Compact claim selector for chat - shows as a dropdown above the message input
 
 import { useQuery } from '@tanstack/react-query'
 import { mattersApi } from '@/lib/api'
@@ -16,7 +16,7 @@ export default function MatterSelectorCompact({
   onChange,
   disabled = false,
 }: MatterSelectorCompactProps) {
-  // Fetch matters list
+  // Fetch claims list
   const { data: mattersResponse, isLoading } = useQuery({
     queryKey: ['matters', 'active'],
     queryFn: async () => {
@@ -31,7 +31,7 @@ export default function MatterSelectorCompact({
     return (
       <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500">
         <Briefcase className="h-4 w-4 animate-pulse" />
-        <span>Loading matters...</span>
+        <span>Loading claims...</span>
       </div>
     )
   }

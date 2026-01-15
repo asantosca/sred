@@ -1,4 +1,4 @@
-// Matters page - List and manage legal matters/cases
+// Claims page - List and manage SR&ED claims
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -8,41 +8,41 @@ import { Matter } from '@/types/matters'
 import { Briefcase, Plus, Search, Filter } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
-export default function MattersPage() {
+export default function ClaimsPage() {
   const navigate = useNavigate()
-  const [matters, setMatters] = useState<Matter[]>([])
+  const [claims, setClaims] = useState<Matter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Fetch matters on mount
+  // Fetch claims on mount
   useEffect(() => {
-    fetchMatters()
+    fetchClaims()
   }, [])
 
-  const fetchMatters = async () => {
+  const fetchClaims = async () => {
     try {
       setLoading(true)
       setError(null)
       const response = await mattersApi.list()
-      setMatters(response.data.matters)
+      setClaims(response.data.matters)
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load matters')
+      setError(err.response?.data?.detail || 'Failed to load claims')
     } finally {
       setLoading(false)
     }
   }
 
-  // Filter matters based on search and status
-  const filteredMatters = matters.filter((matter) => {
+  // Filter claims based on search and status
+  const filteredClaims = claims.filter((claim) => {
     const matchesSearch =
-      matter.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      matter.matter_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      matter.matter_type.toLowerCase().includes(searchTerm.toLowerCase())
+      claim.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      claim.matter_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      claim.matter_type.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus =
-      statusFilter === 'all' || matter.matter_status === statusFilter
+      statusFilter === 'all' || claim.matter_status === statusFilter
 
     return matchesSearch && matchesStatus
   })
@@ -76,9 +76,9 @@ export default function MattersPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Matters</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Claims</h1>
             <p className="mt-1 text-sm text-gray-600">
-              Manage your legal matters and cases
+              Manage your SR&ED claims and projects
             </p>
           </div>
           <Button
@@ -86,7 +86,7 @@ export default function MattersPage() {
             onClick={() => navigate('/matters/new')}
             icon={<Plus className="h-4 w-4" />}
           >
-            New Matter
+            New Claim
           </Button>
         </div>
 
@@ -96,7 +96,7 @@ export default function MattersPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search matters by client, number, or type..."
+              placeholder="Search claims by company, number, or project type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
@@ -121,7 +121,7 @@ export default function MattersPage() {
         {/* Error State */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <p className="font-medium">Error loading matters</p>
+            <p className="font-medium">Error loading claims</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
         )}
@@ -130,25 +130,25 @@ export default function MattersPage() {
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
-            <span className="ml-3 text-gray-600">Loading matters...</span>
+            <span className="ml-3 text-gray-600">Loading claims...</span>
           </div>
         )}
 
-        {/* Matters Grid */}
+        {/* Claims Grid */}
         {!loading && !error && (
           <>
-            {filteredMatters.length === 0 ? (
+            {filteredClaims.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
                 <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900">
                   {searchTerm || statusFilter !== 'all'
-                    ? 'No matters found'
-                    : 'No matters yet'}
+                    ? 'No claims found'
+                    : 'No claims yet'}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600">
                   {searchTerm || statusFilter !== 'all'
                     ? 'Try adjusting your search or filters'
-                    : 'Get started by creating your first matter'}
+                    : 'Get started by creating your first claim'}
                 </p>
                 {!searchTerm && statusFilter === 'all' && (
                   <Button
@@ -157,54 +157,54 @@ export default function MattersPage() {
                     className="mt-4"
                     icon={<Plus className="h-4 w-4" />}
                   >
-                    Create Matter
+                    Create Claim
                   </Button>
                 )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMatters.map((matter) => (
+                {filteredClaims.map((claim) => (
                   <div
-                    key={matter.id}
-                    onClick={() => navigate(`/matters/${matter.id}`)}
+                    key={claim.id}
+                    onClick={() => navigate(`/matters/${claim.id}`)}
                     className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                   >
-                    {/* Status Badge */}
+                    {/* Claim Status Badge */}
                     <div className="flex items-start justify-between mb-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          matter.matter_status
+                          claim.matter_status
                         )}`}
                       >
-                        {matter.matter_status}
+                        {claim.matter_status}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {matter.matter_number}
+                        {claim.matter_number}
                       </span>
                     </div>
 
-                    {/* Client Name */}
+                    {/* Company Name */}
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {matter.client_name}
+                      {claim.client_name}
                     </h3>
 
-                    {/* Matter Type */}
+                    {/* Project Type */}
                     <p className="text-sm text-gray-600 mb-4">
-                      {matter.matter_type}
+                      {claim.matter_type}
                     </p>
 
                     {/* Description (truncated) */}
-                    {matter.description && (
+                    {claim.description && (
                       <p className="text-sm text-gray-500 mb-4 line-clamp-2">
-                        {matter.description}
+                        {claim.description}
                       </p>
                     )}
 
                     {/* Dates */}
                     <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-100">
-                      <span>Opened {formatDate(matter.opened_date)}</span>
-                      {matter.closed_date && (
-                        <span>Closed {formatDate(matter.closed_date)}</span>
+                      <span>Opened {formatDate(claim.opened_date)}</span>
+                      {claim.closed_date && (
+                        <span>Closed {formatDate(claim.closed_date)}</span>
                       )}
                     </div>
                   </div>
@@ -213,10 +213,10 @@ export default function MattersPage() {
             )}
 
             {/* Results Count */}
-            {filteredMatters.length > 0 && (
+            {filteredClaims.length > 0 && (
               <div className="mt-6 text-center text-sm text-gray-600">
-                Showing {filteredMatters.length} of {matters.length} matter
-                {matters.length !== 1 ? 's' : ''}
+                Showing {filteredClaims.length} of {claims.length} claim
+                {claims.length !== 1 ? 's' : ''}
               </div>
             )}
           </>

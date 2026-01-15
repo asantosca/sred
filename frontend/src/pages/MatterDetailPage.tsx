@@ -1,4 +1,4 @@
-// Matter Detail page - View matter details and manage documents
+// Claim Detail page - View claim details and manage documents
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -9,11 +9,11 @@ import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTrian
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 
-export default function MatterDetailPage() {
+export default function ClaimDetailPage() {
   const { matterId } = useParams<{ matterId: string }>()
   const navigate = useNavigate()
 
-  const [matter, setMatter] = useState<Matter | null>(null)
+  const [claim, setClaim] = useState<Matter | null>(null)
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,26 +25,26 @@ export default function MatterDetailPage() {
 
   useEffect(() => {
     if (matterId) {
-      fetchMatterDetails()
-      fetchMatterDocuments()
+      fetchClaimDetails()
+      fetchClaimDocuments()
       fetchUnbilledCount()
     }
   }, [matterId])
 
-  const fetchMatterDetails = async () => {
+  const fetchClaimDetails = async () => {
     try {
       setLoading(true)
       setError(null)
       const response = await mattersApi.get(matterId!)
-      setMatter(response.data)
+      setClaim(response.data)
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load matter details')
+      setError(err.response?.data?.detail || 'Failed to load claim details')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchMatterDocuments = async () => {
+  const fetchClaimDocuments = async () => {
     try {
       const response = await documentsApi.list({ matter_id: matterId })
       setDocuments(response.data.documents || [])
@@ -64,10 +64,10 @@ export default function MatterDetailPage() {
 
   const handleUploadSuccess = () => {
     setShowUpload(false)
-    fetchMatterDocuments()
+    fetchClaimDocuments()
   }
 
-  const handleDeleteMatter = async () => {
+  const handleDeleteClaim = async () => {
     if (!matterId) return
 
     try {
@@ -76,7 +76,7 @@ export default function MatterDetailPage() {
       await mattersApi.delete(matterId)
       navigate('/matters', { replace: true })
     } catch (err: any) {
-      const errorDetail = err.response?.data?.detail || 'Failed to delete matter'
+      const errorDetail = err.response?.data?.detail || 'Failed to delete claim'
       setDeleteError(errorDetail)
       setDeleting(false)
     }
@@ -110,19 +110,19 @@ export default function MatterDetailPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
-          <span className="ml-3 text-gray-600">Loading matter...</span>
+          <span className="ml-3 text-gray-600">Loading claim...</span>
         </div>
       </DashboardLayout>
     )
   }
 
-  if (error || !matter) {
+  if (error || !claim) {
     return (
       <DashboardLayout>
         <div className="max-w-3xl mx-auto p-6">
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <p className="font-medium">Error loading matter</p>
-            <p className="text-sm mt-1">{error || 'Matter not found'}</p>
+            <p className="font-medium">Error loading claim</p>
+            <p className="text-sm mt-1">{error || 'Claim not found'}</p>
           </div>
           <Button
             variant="secondary"
@@ -130,7 +130,7 @@ export default function MatterDetailPage() {
             className="mt-4"
             icon={<ArrowLeft className="h-4 w-4" />}
           >
-            Back to Matters
+            Back to Claims
           </Button>
         </div>
       </DashboardLayout>
@@ -147,23 +147,23 @@ export default function MatterDetailPage() {
             className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Matters
+            Back to Claims
           </button>
 
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{matter.client_name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{claim.client_name}</h1>
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                    matter.matter_status
+                    claim.matter_status
                   )}`}
                 >
-                  {matter.matter_status}
+                  {claim.matter_status}
                 </span>
               </div>
-              <p className="text-gray-600">{matter.matter_type}</p>
-              <p className="text-sm text-gray-500 mt-1">Matter #{matter.matter_number}</p>
+              <p className="text-gray-600">{claim.matter_type}</p>
+              <p className="text-sm text-gray-500 mt-1">Claim #{claim.matter_number}</p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export default function MatterDetailPage() {
                 {showUpload ? 'Cancel' : 'Upload Document'}
               </Button>
 
-              {matter.user_can_edit && (
+              {claim.user_can_edit && (
                 <Button
                   variant="secondary"
                   onClick={() => navigate(`/matters/${matterId}/edit`)}
@@ -185,7 +185,7 @@ export default function MatterDetailPage() {
                 </Button>
               )}
 
-              {matter.user_can_delete && (
+              {claim.user_can_delete && (
                 <Button
                   variant="secondary"
                   onClick={() => setShowDeleteConfirm(true)}
@@ -207,15 +207,15 @@ export default function MatterDetailPage() {
                 <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Matter</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Claim</h3>
               </div>
 
               <p className="text-gray-600 mb-4">
-                Are you sure you want to delete <strong>{matter.client_name}</strong> (Matter #{matter.matter_number})?
+                Are you sure you want to delete <strong>{claim.client_name}</strong> (Claim #{claim.matter_number})?
               </p>
 
               <p className="text-sm text-gray-500 mb-4">
-                This will permanently delete all documents associated with this matter. This action cannot be undone.
+                This will permanently delete all documents associated with this claim. This action cannot be undone.
               </p>
 
               {deleteError && (
@@ -237,11 +237,11 @@ export default function MatterDetailPage() {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={handleDeleteMatter}
+                  onClick={handleDeleteClaim}
                   disabled={deleting}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  {deleting ? 'Deleting...' : 'Delete Matter'}
+                  {deleting ? 'Deleting...' : 'Delete Claim'}
                 </Button>
               </div>
             </div>
@@ -264,37 +264,37 @@ export default function MatterDetailPage() {
           </div>
         )}
 
-        {/* Matter Details */}
+        {/* Claim Details */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Main Info */}
           <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Matter Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Claim Information</h2>
 
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Client Name</dt>
-                <dd className="mt-1 text-sm text-gray-900">{matter.client_name}</dd>
+                <dt className="text-sm font-medium text-gray-500">Company Name</dt>
+                <dd className="mt-1 text-sm text-gray-900">{claim.client_name}</dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-gray-500">Matter Number</dt>
-                <dd className="mt-1 text-sm text-gray-900">{matter.matter_number}</dd>
+                <dt className="text-sm font-medium text-gray-500">Claim Number</dt>
+                <dd className="mt-1 text-sm text-gray-900">{claim.matter_number}</dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-gray-500">Matter Type</dt>
-                <dd className="mt-1 text-sm text-gray-900">{matter.matter_type}</dd>
+                <dt className="text-sm font-medium text-gray-500">Project Type</dt>
+                <dd className="mt-1 text-sm text-gray-900">{claim.matter_type}</dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                <dt className="text-sm font-medium text-gray-500">Claim Status</dt>
                 <dd className="mt-1">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      matter.matter_status
+                      claim.matter_status
                     )}`}
                   >
-                    {matter.matter_status}
+                    {claim.matter_status}
                   </span>
                 </dd>
               </div>
@@ -304,24 +304,24 @@ export default function MatterDetailPage() {
                   <Calendar className="h-4 w-4 mr-1" />
                   Opened Date
                 </dt>
-                <dd className="mt-1 text-sm text-gray-900">{formatDate(matter.opened_date)}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{formatDate(claim.opened_date)}</dd>
               </div>
 
-              {matter.closed_date && (
+              {claim.closed_date && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500 flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
                     Closed Date
                   </dt>
-                  <dd className="mt-1 text-sm text-gray-900">{formatDate(matter.closed_date)}</dd>
+                  <dd className="mt-1 text-sm text-gray-900">{formatDate(claim.closed_date)}</dd>
                 </div>
               )}
             </dl>
 
-            {matter.description && (
+            {claim.description && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <dt className="text-sm font-medium text-gray-500 mb-2">Description</dt>
-                <dd className="text-sm text-gray-900">{matter.description}</dd>
+                <dd className="text-sm text-gray-900">{claim.description}</dd>
               </div>
             )}
           </div>
@@ -361,7 +361,7 @@ export default function MatterDetailPage() {
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-md font-medium"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Chat about this Matter
+                  Chat about this Claim
                 </button>
                 <button
                   onClick={() => setShowUpload(true)}
@@ -396,7 +396,7 @@ export default function MatterDetailPage() {
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <Clock className="h-4 w-4" />
-                  Billable Hours
+                  Consulting Hours
                 </button>
               </div>
             </div>

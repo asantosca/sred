@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 # Import endpoint routers
-from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, billable, briefing, timeline, sentry_test, public, admin
+from app.api.v1.endpoints import auth, users, matters, documents, usage, search, chat, billable, briefing, timeline, sentry_test, public, admin, eligibility, t661
 
 # Create main API router
 api_router = APIRouter()
@@ -28,3 +28,5 @@ api_router.include_router(briefing.router, prefix="/briefing", tags=["daily-brie
 api_router.include_router(timeline.router, prefix="/timeline", tags=["document-timeline"])
 api_router.include_router(sentry_test.router, prefix="/sentry", tags=["sentry-testing"])
 api_router.include_router(admin.router, prefix="/admin", tags=["platform-admin"])
+api_router.include_router(eligibility.router, prefix="/claims", tags=["sred-eligibility"])
+api_router.include_router(t661.router, prefix="/claims", tags=["sred-t661"])

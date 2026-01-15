@@ -1,4 +1,4 @@
-// Matter/Case type definitions
+// Matter/Case type definitions (maps to backend API)
 
 export interface Matter {
   id: string
@@ -51,28 +51,36 @@ export interface MatterListResponse {
   pages: number
 }
 
-// Matter type options (from backend)
-export const MATTER_TYPES = [
-  'Civil Litigation',
-  'Family Law',
-  'Real Estate',
-  'Corporate',
-  'Employment',
-  'Criminal Defense',
-  'Estate Planning',
-  'Immigration',
-  'Personal Injury',
+// SR&ED Project Type options
+// These represent the categories of R&D projects eligible for SR&ED tax credits
+export const PROJECT_TYPES = [
+  'Software Development',
+  'Manufacturing Process',
+  'Product Design',
+  'Chemical/Biological',
+  'Engineering',
   'Other',
 ] as const
 
-export type MatterType = typeof MATTER_TYPES[number]
+export type ProjectType = typeof PROJECT_TYPES[number]
 
-// Matter status options
-export const MATTER_STATUSES = [
-  'active',
-  'pending',
-  'closed',
-  'on_hold',
+// Legacy alias for compatibility with backend API
+export const MATTER_TYPES = PROJECT_TYPES
+export type MatterType = ProjectType
+
+// SR&ED Claim Status options
+// These track the lifecycle of an SR&ED claim from draft to final resolution
+export const CLAIM_STATUSES = [
+  'draft',
+  'in_progress',
+  'under_review',
+  'submitted',
+  'approved',
+  'rejected',
 ] as const
 
-export type MatterStatus = typeof MATTER_STATUSES[number]
+export type ClaimStatus = typeof CLAIM_STATUSES[number]
+
+// Legacy alias for compatibility with backend API
+export const MATTER_STATUSES = CLAIM_STATUSES
+export type MatterStatus = ClaimStatus

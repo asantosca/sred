@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.models import (
-    BillableSession, Conversation, Message, Matter, User
+    BillableSession, Conversation, Message, Claim, User
 )
 from app.schemas.billable import (
     BillableSessionCreate, BillableSessionUpdate, BillableSessionResponse,
@@ -105,13 +105,13 @@ class BillableService:
             for m in messages[:20]  # Limit to first 20 messages
         ])
 
-        prompt = f"""Based on the following legal research conversation, generate a concise, professional billing description suitable for a legal invoice. The description should:
+        prompt = f"""Based on the following SR&ED analysis conversation, generate a concise, professional billing description suitable for a consulting invoice. The description should:
 
-1. Be written in past tense, third person (e.g., "Conducted legal research...")
-2. Summarize the key legal work performed
+1. Be written in past tense, third person (e.g., "Reviewed project documentation...")
+2. Summarize the SR&ED consulting work performed
 3. Be 1-2 sentences, typically 50-100 words
-4. Sound professional and appropriate for client billing
-5. Focus on the legal task, not the AI interaction
+4. Sound professional and appropriate for PwC client billing
+5. Focus on the SR&ED analysis task, not the AI interaction
 
 Conversation:
 {conversation_text}
@@ -127,7 +127,7 @@ Generate ONLY the billing description, nothing else:"""
             return response.content[0].text.strip()
         except Exception as e:
             logger.error(f"Failed to generate billing description: {e}")
-            return "Legal research and analysis conducted via AI-assisted document review."
+            return "SR&ED analysis and documentation review conducted via AI-assisted platform."
 
     async def regenerate_description(
         self,
@@ -225,18 +225,18 @@ Generate ONLY the billing description, nothing else:"""
             )
             conv_title = conv_result.scalar()
 
-            # Get matter name if exists
-            matter_name = None
-            if session.matter_id:
-                matter_result = await self.db.execute(
-                    select(Matter.client_name).where(Matter.id == session.matter_id)
+            # Get claim company name if exists
+            claim_name = None
+            if session.claim_id:
+                claim_result = await self.db.execute(
+                    select(Claim.company_name).where(Claim.id == session.claim_id)
                 )
-                matter_name = matter_result.scalar()
+                claim_name = claim_result.scalar()
 
             enriched.append(BillableSessionResponse(
                 **{k: v for k, v in session.__dict__.items() if not k.startswith('_')},
                 conversation_title=conv_title,
-                matter_name=matter_name,
+                matter_name=claim_name,  # Keep field name for backward compatibility
             ))
 
         return BillableSessionListResponse(
@@ -274,18 +274,18 @@ Generate ONLY the billing description, nothing else:"""
         )
         conv_title = conv_result.scalar()
 
-        # Get matter name if exists
-        matter_name = None
-        if session.matter_id:
-            matter_result = await self.db.execute(
-                select(Matter.client_name).where(Matter.id == session.matter_id)
+        # Get claim company name if exists
+        claim_name = None
+        if session.claim_id:
+            claim_result = await self.db.execute(
+                select(Claim.company_name).where(Claim.id == session.claim_id)
             )
-            matter_name = matter_result.scalar()
+            claim_name = claim_result.scalar()
 
         return BillableSessionResponse(
             **{k: v for k, v in session.__dict__.items() if not k.startswith('_')},
             conversation_title=conv_title,
-            matter_name=matter_name,
+            matter_name=claim_name,  # Keep field name for backward compatibility
         )
 
     async def update_session(
@@ -395,36 +395,36 @@ Generate ONLY the billing description, nothing else:"""
             .where(BillableSession.company_id == current_user.company_id)
         )
 
-        # Main query: conversations with matter but not in billed list
+        # Main query: conversations with claim but not in billed list
         query = (
-            select(Conversation, Matter.client_name, Matter.matter_number)
-            .join(Matter, Conversation.matter_id == Matter.id)
+            select(Conversation, Claim.company_name, Claim.claim_number)
+            .join(Claim, Conversation.claim_id == Claim.id)
             .where(
                 and_(
                     Conversation.user_id == current_user.id,
                     Conversation.company_id == current_user.company_id,
-                    Conversation.matter_id.isnot(None),
+                    Conversation.claim_id.isnot(None),
                     Conversation.id.notin_(billed_conv_ids)
                 )
             )
             .order_by(Conversation.updated_at.desc())
         )
 
-        # Filter by matter if specified
-        if matter_id:
-            query = query.where(Conversation.matter_id == matter_id)
+        # Filter by claim if specified
+        if matter_id:  # Keep param name for backward compatibility
+            query = query.where(Conversation.claim_id == matter_id)
 
         result = await self.db.execute(query)
         rows = result.all()
 
         # Build response
         conversations = []
-        for conv, client_name, matter_number in rows:
+        for conv, company_name, claim_number in rows:
             conversations.append({
                 "id": str(conv.id),
                 "title": conv.title,
-                "matter_id": str(conv.matter_id),
-                "matter_name": f"{matter_number} - {client_name}",
+                "matter_id": str(conv.claim_id),  # Keep field name for backward compatibility
+                "matter_name": f"{claim_number} - {company_name}",  # Keep field name for backward compatibility
                 "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
                 "created_at": conv.created_at.isoformat() if conv.created_at else None,
             })

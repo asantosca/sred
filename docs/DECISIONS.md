@@ -1,28 +1,27 @@
-# BC Legal Tech - Project Decisions & Context
+# PwC SR&ED Intelligence Platform - Project Decisions & Context
 
 This document captures key strategic decisions and rationale. For implementation details and task tracking, see [ROADMAP.md](./ROADMAP.md).
 
-## Last Updated: 2025-12-07
+## Last Updated: 2025-01-14
 
 ---
 
 ## Strategic Decisions
 
 ### Target Market
-- **Approach**: Build generic, add practice-specific features later (post-MVP)
-- **Rationale**: Different practice areas (real estate, family law, corporate) mainly affect templates, taxonomy, and compliance requirements - not core functionality
-- **Flexibility**: Allows pivoting based on early user feedback
-- **MVP Target**: Solo lawyers and small firms (1-5 users)
+- **Primary Client**: PwC SR&ED consulting practice
+- **Users**: SR&ED consultants (teams of up to 10)
+- **POC Focus**: Demonstrate value with document analysis and T661 drafting
 
 ### Competitive Advantage
-- **Primary Differentiator**: Best-in-class RAG system for legal documents
-- **Focus**: Less susceptible to hallucinations than competitors
-- **Why it matters**: Few existing AI legal tech solutions specialize in RAG; this is our moat
+- **Primary Differentiator**: Best-in-class RAG system for SR&ED documents
+- **Focus**: Accurate eligibility analysis with clear source citations
+- **Why it matters**: Reduces time on document review, improves consistency
 
-### Pricing Strategy
-- **Status**: Deferred until after MVP
-- **Tiers**: Starter, Professional, Enterprise (plan_tier field exists)
-- **Decision point**: After beta feedback
+### Product Positioning
+- **Not a replacement** for consultant expertise
+- **Augmentation tool** that accelerates analysis and drafting
+- **Quality focus** over speed - accuracy is paramount for tax credits
 
 ---
 
@@ -32,106 +31,101 @@ This document captures key strategic decisions and rationale. For implementation
 
 **Embeddings**:
 - **Decision**: OpenAI text-embedding-3-small (1536 dimensions)
-- **Rationale**: Proven, reliable, cost-effective for MVP
-- **Future**: Evaluate Voyage AI voyage-law-2 post-MVP with real usage data
+- **Rationale**: Proven, reliable, cost-effective
+- **Future**: Evaluate domain-specific models if needed
 
 **Chat/Completions**:
-- **Decision**: Claude (currently claude-3-7-sonnet-20250219)
-- **Rationale**: Superior reasoning, less prone to hallucination vs GPT models
-- **Note**: Anthropic does NOT offer embeddings API
+- **Decision**: Claude (claude-3-7-sonnet)
+- **Rationale**: Superior reasoning, better at following complex instructions
+- **Key feature**: Epistemic honesty - clearly distinguishes sources
 
 **Search Strategy**:
-- **Current**: Vector similarity search only (pgvector cosine similarity)
-- **Beta Requirement**: Add hybrid search (vector + BM25) before beta
-- **Rationale**: Lawyers search for exact terms ("Section 12.3", "Smith v. Jones") that vector search misses
+- **Decision**: Hybrid search (vector + BM25)
+- **Rationale**: Consultants search for exact terms ("Phase 2 testing", "Q3 2024")
+- **Implementation**: PostgreSQL tsvector + GIN index with RRF score fusion
 
 ### Document Processing
 
 **Supported Formats**:
-- PDF (pdfplumber) - most common legal format
-- DOCX (python-docx) - drafts, templates
+- PDF (pdfplumber) - most common for technical reports
+- DOCX (python-docx) - project plans, meeting notes
 - TXT (charset detection) - plain text
 
-**Beta Requirement**: Add OCR for scanned documents (many court filings are scanned)
-
-**MVP Requirement**: Add Excel support (common in corporate/real estate law)
+**OCR Support**: AWS Textract (production) with Tesseract fallback (local dev)
 
 **Chunking Strategy**:
 - **Decision**: Semantic chunking (paragraph/section boundaries)
-- **NOT**: Fixed-size chunks
-- **Rationale**: Better preserves legal context and meaning
 - **Parameters**: MIN=100, TARGET=500, MAX=800 tokens per chunk
+- **Rationale**: Preserves context for technical documentation
 
-### Anti-Hallucination Measures
+### SR&ED-Specific Decisions
 
-| Measure | Priority | Status |
-|---------|----------|--------|
-| Source citations ([Source X]) | Beta | Done |
-| "I don't know" responses | Beta | Done |
-| Hybrid search (exact terms) | Beta | Planned |
-| OCR (scanned docs) | Beta | Planned |
-| Confidence scoring | MVP | Planned |
-| Re-ranking of chunks | MVP | Planned |
+**Eligibility Analysis**:
+- Use five-question test framework from CRA
+- Score each criterion (STRONG/MODERATE/WEAK/INSUFFICIENT)
+- Always cite specific document sources
+
+**T661 Form Drafting**:
+- Generate drafts for Parts 3, 4, 5, 6 (the narrative sections)
+- Include source citations in brackets
+- Flag areas needing consultant review
+
+**Document Categories**:
+- Map to SR&ED expenditure types
+- Track project association
+- Support fiscal year filtering
 
 ### Infrastructure
 
 **Decision**: AWS-focused stack
 - **Database**: PostgreSQL 15 + pgvector (RDS in production)
-- **Cache/Broker**: Valkey (20-33% cheaper than Redis on ElastiCache)
+- **Cache/Broker**: Valkey (Redis-compatible)
 - **Storage**: S3
 - **IaC**: Terraform
 
-**Rationale**: Enterprise-ready, scalable, familiar to ops teams
-
 ### Authentication
 
-**Decision**: JWT with email/password first, OAuth later
+**Decision**: JWT with email/password for POC
 - **Current**: JWT with refresh token rotation
-- **Post-MVP**: Add Google and Microsoft OAuth together
-- **Rationale**: Focus on core value prop first; most firms use Microsoft 365
+- **Future**: Microsoft OAuth for PwC integration
+- **Rationale**: Simple for POC, enterprise-ready path
 
 ### Multi-Tenancy
 
 **Decision**: Row-level security from day 1
 - **Implementation**: company_id filtering on all queries
-- **Rationale**: Don't retrofit later; security-critical for legal industry
-
-### Role-Based Access Control
-
-**Current**: Simplified (is_admin boolean + Groups with JSON permissions)
-- **Post-MVP**: Full role hierarchy (Partner, Associate, Paralegal, Guest)
-- **Rationale**: Solo lawyers (MVP target) don't need complex roles
+- **Rationale**: Each PwC client is isolated, critical for confidentiality
 
 ---
 
 ## Open Questions
 
-### To Revisit Post-MVP
+### To Revisit Post-POC
 
-1. **Pricing Model**
-   - Per-user pricing?
-   - Storage-based?
-   - API call limits?
+1. **PwC Integration**
+   - SSO requirements?
+   - Existing tool integrations?
+   - Data retention policies?
 
-2. **Voyage AI Embeddings**
-   - Legal-specific model may improve retrieval
-   - Requires schema migration (1536 -> 1024 dimensions)
-   - Need usage data to benchmark improvement
+2. **Scaling**
+   - Expected claim volume?
+   - Concurrent user expectations?
+   - Geographic distribution?
 
-3. **Practice Area Specialization**
-   - Which vertical to target first?
-   - Custom templates needed?
-   - Practice-specific compliance?
+3. **Advanced Features**
+   - Multi-project claims?
+   - Expenditure calculations?
+   - CRA filing integration?
 
 ---
 
 ## Key Principles
 
-1. **RAG is the moat** - invest heavily in retrieval quality
-2. **Lawyers verify everything** - citations and sources are non-negotiable
-3. **Security-first** - legal industry requires it
-4. **Start simple** - MVP with solo lawyers, expand to firms
-5. **Don't over-engineer** - ship, get feedback, iterate
+1. **Accuracy over speed** - Tax credits require precision
+2. **Source transparency** - Always cite where information comes from
+3. **Consultant augmentation** - Tool assists, doesn't replace expertise
+4. **Security-first** - Client data confidentiality is paramount
+5. **Start simple** - POC with core value, expand based on feedback
 
 ---
 

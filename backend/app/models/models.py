@@ -1,4 +1,4 @@
-# app/models/models.py - Fixed database models for BC Legal Tech
+# app/models/models.py - Database models for PwC SR&ED Intelligence Platform
 
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, JSON, Date, BigInteger, DECIMAL, Float
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, TSVECTOR
@@ -110,59 +110,67 @@ class PasswordResetToken(Base):
     # Relationships
     user = relationship("User")
 
-class Matter(Base):
-    """Matter/Case model for organizing documents and work"""
-    __tablename__ = "matters"
-    
+class Claim(Base):
+    """SR&ED Claim model for organizing projects and documents"""
+    __tablename__ = "claims"
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
-    matter_number = Column(String(50), nullable=False)
-    client_name = Column(String(255), nullable=False)
-    matter_type = Column(String(100), nullable=False)
-    matter_status = Column(String(50), nullable=False, default="active")
+    claim_number = Column(String(50), nullable=False)
+    company_name = Column(String(255), nullable=False)
+    project_type = Column(String(100), nullable=False)
+    claim_status = Column(String(50), nullable=False, default="draft")
     description = Column(Text, nullable=True)
-    
+
     # Dates
     opened_date = Column(Date, nullable=False)
     closed_date = Column(Date, nullable=True)
-    
-    # Lead attorney
-    lead_attorney_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    
+
+    # SR&ED-specific fields
+    fiscal_year_end = Column(Date, nullable=True)
+    naics_code = Column(String(10), nullable=True)
+    cra_business_number = Column(String(15), nullable=True)
+    total_eligible_expenditures = Column(DECIMAL(15, 2), nullable=True)
+    federal_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
+    provincial_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
+
+    # Lead consultant
+    lead_consultant_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    
+
     # Relationships
     company = relationship("Company")
-    lead_attorney = relationship("User", foreign_keys=[lead_attorney_user_id])
+    lead_consultant = relationship("User", foreign_keys=[lead_consultant_user_id])
     created_by_user = relationship("User", foreign_keys=[created_by])
     updated_by_user = relationship("User", foreign_keys=[updated_by])
-    matter_access = relationship("MatterAccess", back_populates="matter", cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="matter", cascade="all, delete-orphan")
+    claim_access = relationship("ClaimAccess", back_populates="claim", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="claim", cascade="all, delete-orphan")
 
-class MatterAccess(Base):
-    """User access control for matters"""
-    __tablename__ = "matter_access"
-    
+class ClaimAccess(Base):
+    """User access control for claims"""
+    __tablename__ = "claim_access"
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=False)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    access_role = Column(String(50), nullable=False)  # lead_attorney, associate, paralegal, read_only
-    
+    access_role = Column(String(50), nullable=False)  # lead_consultant, analyst, reviewer, read_only
+
     # Permissions
     can_upload = Column(Boolean, default=True)
     can_edit = Column(Boolean, default=True)
     can_delete = Column(Boolean, default=False)
-    
+
     # Audit fields
     granted_at = Column(DateTime(timezone=True), server_default=func.now())
     granted_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    
+
     # Relationships
-    matter = relationship("Matter", back_populates="matter_access")
+    claim = relationship("Claim", back_populates="claim_access")
     user = relationship("User", foreign_keys=[user_id])
     granted_by_user = relationship("User", foreign_keys=[granted_by])
 
@@ -172,7 +180,7 @@ class Document(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)  # Denormalized for RLS performance
-    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=False)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=False)
 
     # File Information
     filename = Column(String(500), nullable=False)
@@ -286,7 +294,7 @@ class Document(Base):
     
     # Relationships
     company = relationship("Company")
-    matter = relationship("Matter", back_populates="documents")
+    claim = relationship("Claim", back_populates="documents")
     parent_document = relationship("Document", remote_side=[id], foreign_keys=[parent_document_id])
     root_document = relationship("Document", remote_side=[id], foreign_keys=[root_document_id])
     assigned_to_user = relationship("User", foreign_keys=[assigned_to])
@@ -321,12 +329,12 @@ class DocumentChunk(Base):
 
 
 class DocumentEvent(Base):
-    """Timeline events extracted from documents"""
+    """Timeline events extracted from documents (R&D milestones)"""
     __tablename__ = "document_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
-    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=True)
     document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     chunk_id = Column(UUID(as_uuid=True), ForeignKey("document_chunks.id", ondelete="SET NULL"), nullable=True)
 
@@ -355,7 +363,7 @@ class DocumentEvent(Base):
 
     # Relationships
     company = relationship("Company")
-    matter = relationship("Matter")
+    claim = relationship("Claim")
     document = relationship("Document")
     chunk = relationship("DocumentChunk")
     created_by_user = relationship("User", foreign_keys=[created_by])
@@ -368,7 +376,7 @@ class Conversation(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=True)
     title = Column(String(500), nullable=True)  # Auto-generated from first message
     summary = Column(Text, nullable=True)  # AI-generated summary for search
     summary_generated_at = Column(DateTime(timezone=True), nullable=True)
@@ -379,7 +387,7 @@ class Conversation(Base):
 
     # Relationships
     user = relationship("User")
-    matter = relationship("Matter")
+    claim = relationship("Claim")
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at")
 
 
@@ -414,14 +422,14 @@ class Message(Base):
     conversation = relationship("Conversation", back_populates="messages")
 
 class BillableSession(Base):
-    """Billable session model for tracking time spent on conversations"""
+    """Consulting session model for tracking time spent on conversations"""
     __tablename__ = "billable_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
-    matter_id = Column(UUID(as_uuid=True), ForeignKey("matters.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=True)
 
     # Session timing
     started_at = Column(DateTime(timezone=True), nullable=False)
@@ -433,7 +441,7 @@ class BillableSession(Base):
     description = Column(Text, nullable=True)  # User-edited version (if changed)
 
     # Billing details
-    activity_code = Column(String(50), nullable=True)  # e.g., "A101" for Research
+    activity_code = Column(String(50), nullable=True)  # e.g., "A101" for SR&ED Analysis
     is_billable = Column(Boolean, default=True)
     is_exported = Column(Boolean, default=False)
     exported_at = Column(DateTime(timezone=True), nullable=True)
@@ -445,7 +453,7 @@ class BillableSession(Base):
     # Relationships
     user = relationship("User")
     conversation = relationship("Conversation")
-    matter = relationship("Matter")
+    claim = relationship("Claim")
 
 
 class DailyBriefing(Base):

@@ -23,47 +23,52 @@ CHUNK_TOKENS = 50000
 CHUNK_CHARS = CHUNK_TOKENS * CHARS_PER_TOKEN
 
 
-SUMMARY_PROMPT = """You are a legal document analyst. Summarize this document concisely, focusing on:
-- Document type and purpose
-- Key parties involved
-- Important dates and deadlines
-- Main obligations or terms
-- Any critical conditions or contingencies
+SUMMARY_PROMPT = """You are an SR&ED project document analyst. Summarize this document concisely, focusing on:
+- Document type (technical report, timesheet, project plan, lab notebook, etc.)
+- Project name and fiscal period if mentioned
+- Key R&D activities described
+- Technological uncertainties or challenges mentioned
+- Methodologies or systematic approaches used
+- Results, conclusions, or advancements achieved
+- Personnel or contractors mentioned
 
 Document Title: {document_title}
 
 Document Text:
 {text}
 
-Provide a clear, factual summary in 2-4 paragraphs. Do not include information not present in the document."""
+Provide a clear, factual summary in 2-4 paragraphs focusing on SR&ED eligibility relevance. Do not include information not present in the document."""
 
 
-SECTION_SUMMARY_PROMPT = """You are a legal document analyst. Summarize this section of a document concisely, preserving key details about:
-- Parties mentioned
-- Dates and deadlines
-- Obligations and terms
-- Conditions and contingencies
+SECTION_SUMMARY_PROMPT = """You are an SR&ED project document analyst. Summarize this section of a document concisely, preserving key details about:
+- R&D activities and experiments described
+- Technical challenges or uncertainties
+- Methodologies or approaches used
+- Results or findings
+- Personnel involved and time spent
 
 Section Text:
 {text}
 
-Provide a factual summary in 1-2 paragraphs."""
+Provide a factual summary in 1-2 paragraphs focusing on SR&ED eligibility relevance."""
 
 
-COMBINE_SUMMARIES_PROMPT = """You are a legal document analyst. Below are summaries of different sections of a single document.
+COMBINE_SUMMARIES_PROMPT = """You are an SR&ED project document analyst. Below are summaries of different sections of a single document.
 Combine them into a coherent overall summary focusing on:
-- Document type and purpose
-- Key parties involved
-- Important dates and deadlines
-- Main obligations or terms
-- Any critical conditions or contingencies
+- Document type (technical report, timesheet, project plan, lab notebook, etc.)
+- Project name and fiscal period
+- Key R&D activities and experiments
+- Technological uncertainties addressed
+- Methodologies and systematic approaches
+- Results, conclusions, or advancements achieved
+- Personnel and time tracking information
 
 Document Title: {document_title}
 
 Section Summaries:
 {summaries}
 
-Provide a unified, clear summary in 2-4 paragraphs. Do not include information not present in the summaries."""
+Provide a unified, clear summary in 2-4 paragraphs focusing on SR&ED eligibility relevance. Do not include information not present in the summaries."""
 
 
 class SummarizationService:

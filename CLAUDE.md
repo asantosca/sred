@@ -1,6 +1,6 @@
-# BC Legal Tech
+# PwC SR&ED Intelligence Platform
 
-AI-powered legal document intelligence platform for law firms in British Columbia.
+AI-powered SR&ED (Scientific Research and Experimental Development) tax credit analysis platform for PwC consultants.
 
 ## Quick Context
 
@@ -11,10 +11,20 @@ AI-powered legal document intelligence platform for law firms in British Columbi
 - **Cache/Queue**: Valkey + Celery
 - **Storage**: AWS S3 (LocalStack for local dev)
 
+## Terminology
+
+| Term | Description |
+|------|-------------|
+| Company | PwC client company claiming SR&ED credits |
+| Claim | An SR&ED claim for a specific fiscal year |
+| Project | R&D project within a claim |
+| Consultant | PwC SR&ED team member |
+| T661 | CRA form for SR&ED claims |
+
 ## Project Structure
 
 ```
-bc-legal-tech/
+sred/
 ├── backend/              # FastAPI Python backend
 │   ├── app/
 │   │   ├── api/v1/      # API endpoints
@@ -40,7 +50,6 @@ bc-legal-tech/
 │       └── utils/       # Helper utilities
 ├── docs/                # Project documentation
 ├── .claude/commands/    # Custom slash commands
-├── infrastructure/      # Terraform IaC configs
 └── docker-compose.yml   # Local development services
 ```
 
@@ -48,6 +57,7 @@ bc-legal-tech/
 
 - `docs/ROADMAP.md` - Implementation phases and task tracking
 - `docs/DECISIONS.md` - Strategic and technical decisions
+- `docs/SRED_DOMAIN.md` - SR&ED terminology and CRA requirements
 - `backend/README.md` - Detailed backend architecture
 
 ## Common Tasks
@@ -104,30 +114,34 @@ Vector operations use **raw asyncpg**, NOT SQLAlchemy ORM:
 
 ### Search Modes
 1. **Semantic**: Vector similarity (conceptual queries)
-2. **Keyword**: BM25 full-text search (exact terms like "Section 12.3")
+2. **Keyword**: BM25 full-text search (exact terms like "Phase 2.3")
 3. **Hybrid** (default): Combined with Reciprocal Rank Fusion (RRF)
 
 ## Key Features
 
 - **Authentication**: JWT with refresh token rotation, password reset, email confirmation
-- **Document Management**: Upload PDF/DOCX/TXT, extensive legal metadata, S3 storage
+- **Document Management**: Upload PDF/DOCX/TXT, SR&ED metadata, S3 storage
 - **AI Chat**: Claude with RAG context, streaming responses, source citations
 - **Hybrid Search**: Semantic + BM25 keyword search
-- **Matter Management**: Cases/files with access control
-- **Billable Hours**: Track time from conversations, AI-generated descriptions
+- **Claim Management**: SR&ED claims with fiscal year tracking
+- **Eligibility Reports**: AI-generated SR&ED eligibility assessments
+- **T661 Drafting**: AI-generated draft responses for CRA T661 form sections
+- **Consulting Hours**: Track time from conversations, AI-generated descriptions
 - **Daily Briefings**: AI-generated daily summaries
-- **Document Timeline**: AI-extracted events and dates from documents
+- **Project Timeline**: AI-extracted R&D milestones and events from documents
 
 ## API Endpoints
 
 Main endpoint groups in `backend/app/api/v1/endpoints/`:
 - `auth.py` - Registration, login, password reset, email confirmation
 - `users.py` - User management, profiles
-- `matters.py` - Matter/case management
+- `claims.py` - SR&ED claim management
 - `documents.py` - Document upload, download, metadata
 - `search.py` - Semantic, keyword, hybrid search
 - `chat.py` - AI chat with RAG
-- `billable.py` - Billable hours tracking
+- `eligibility.py` - SR&ED eligibility report generation
+- `t661.py` - T661 form draft generation
+- `billable.py` - Consulting hours tracking
 - `briefing.py` - Daily briefings
 - `timeline.py` - Document event timeline
 - `usage.py` - Usage tracking and plan limits
@@ -135,23 +149,23 @@ Main endpoint groups in `backend/app/api/v1/endpoints/`:
 ## Database Tables
 
 **Core**:
-- `companies` - Tenants (law firms)
+- `companies` - PwC client companies
 - `users` - User accounts with company_id
 - `groups` - RBAC groups with JSON permissions
-- `matters` - Cases/files
-- `matter_access` - User access control per matter
+- `claims` - SR&ED claims (fiscal year, project info)
+- `claim_access` - User access control per claim
 
 **Documents & RAG**:
-- `documents` - Document metadata (extensive legal-specific fields)
+- `documents` - Document metadata (SR&ED-specific fields)
 - `document_chunks` - Text chunks with embeddings (Vector 1536)
 - `document_events` - Timeline events extracted from documents
 
 **AI Chat**:
-- `conversations` - Chat conversations (matter-scoped)
+- `conversations` - Chat conversations (claim-scoped)
 - `messages` - Chat messages with sources and context
 
-**Billing**:
-- `billable_sessions` - Billable time tracking
+**Tracking**:
+- `billable_sessions` - Consulting time tracking
 - `daily_briefings` - AI-generated summaries
 
 ## Frontend Stack
@@ -167,12 +181,12 @@ Main endpoint groups in `backend/app/api/v1/endpoints/`:
 
 Required in `backend/.env`:
 ```
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_db
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/sred_db
 REDIS_URL=redis://localhost:6379
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_ENDPOINT_URL=http://localhost:4566
-S3_BUCKET_NAME=bc-legal-documents
+S3_BUCKET_NAME=sred-documents
 JWT_SECRET_KEY=your-secret-key
 OPENAI_API_KEY=sk-your-key
 ANTHROPIC_API_KEY=sk-ant-your-key
@@ -182,16 +196,35 @@ SMTP_PORT=1025
 
 ## Current Phase
 
-Beta preparation. Completed:
-- Core features (auth, documents, search, chat, matters)
-- Hybrid search (semantic + BM25)
-- Billable hours tracking
-- Daily briefings
-- Document timeline with event extraction
+POC development for PwC. Focus areas:
+1. Document upload and RAG processing
+2. Chat interface with SR&ED expertise
+3. Eligibility report generation
+4. T661 form drafting
 
-Priority gaps before beta:
-1. OCR support - many legal docs are scanned PDFs
-2. CI/CD pipeline
+## SR&ED Domain Context
+
+### Five-Question Test (CRA Eligibility Criteria)
+1. **Technological Uncertainty** - Was there genuine uncertainty about how to achieve the objective?
+2. **Systematic Investigation** - Was there a methodical approach (hypothesis, testing, analysis)?
+3. **Technological Advancement** - Was new knowledge or capability gained?
+4. **Scientific/Technical Content** - Was qualified personnel involved?
+5. **Documentation** - Is there contemporaneous evidence of the work?
+
+### Eligible Expenditures
+- **Salaries**: Time spent directly on R&D activities
+- **Materials**: Consumed in R&D (not capital assets)
+- **Contractors**: Third-party R&D work
+- **Overhead**: Proxy method or traditional allocation
+
+### Document Types for SR&ED
+- `project_plan` - Technical project documentation
+- `timesheet` - Labor hour records
+- `email` - Email communications
+- `financial` - Financial records
+- `technical_report` - Technical/scientific reports
+- `lab_notebook` - R&D notes
+- `invoice` - Contractor invoices
 
 ## Commit Message Rules
 

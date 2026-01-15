@@ -199,7 +199,7 @@ export default function DashboardPage() {
             Welcome back, {user?.first_name || user?.email}!
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Here's what's happening with your legal documents today
+            Here's what's happening with your SR&ED claims today
           </p>
         </div>
 
@@ -363,7 +363,7 @@ export default function DashboardPage() {
                       {unbilledData.total_unbilled} Unbilled Conversation{unbilledData.total_unbilled !== 1 ? 's' : ''}
                     </h3>
                     <p className="text-sm text-amber-700 mt-1">
-                      You have matter-related conversations that haven't been billed yet.
+                      You have claim-related conversations that haven't been billed yet.
                     </p>
                     {unbilledData.by_matter.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -422,7 +422,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <CardDescription>
-              AI-generated insights based on your matters and activity
+              AI-generated insights based on your claims and activity
             </CardDescription>
           </CardHeader>
           <CardContent>

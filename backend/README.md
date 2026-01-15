@@ -1,6 +1,6 @@
-# BC Legal Tech Backend
+# PwC SR&ED Intelligence Platform - Backend
 
-FastAPI backend for AI-powered legal document intelligence platform.
+FastAPI backend for AI-powered SR&ED document intelligence platform.
 
 ## Table of Contents
 
@@ -23,7 +23,7 @@ The backend is built with:
 - **asyncpg** - High-performance PostgreSQL driver
 - **OpenAI** - Embedding generation for semantic search
 - **LocalStack S3** - Document storage (development) / AWS S3 (production)
-- **Valkey** - Caching and task queue (Redis-compatible, 20-33% cheaper on AWS)
+- **Valkey** - Caching and task queue (Redis-compatible)
 
 ## Hybrid Database Architecture
 
@@ -31,9 +31,9 @@ The backend is built with:
 
 We use **pgvector** extension in PostgreSQL to store and query document embeddings (1536-dimensional vectors). However, integrating pgvector with SQLAlchemy's async ORM presents challenges:
 
-1. **Type Registration Issues**: The pgvector type (OID 49747) must be registered with asyncpg connections using `register_vector()` from `pgvector.asyncpg`
-2. **SQLAlchemy Event Limitations**: SQLAlchemy's connection pool event system doesn't reliably work with asyncpg's asynchronous type registration
-3. **Greenlet Context Violations**: Attempting to register types or perform async operations from within SQLAlchemy transaction contexts causes "greenlet_spawn has not been called" errors
+1. **Type Registration Issues**: The pgvector type must be registered with asyncpg connections
+2. **SQLAlchemy Event Limitations**: Connection pool events don't reliably work with asyncpg's async type registration
+3. **Greenlet Context Violations**: Async operations within SQLAlchemy transaction contexts cause errors
 
 ### The Solution: Hybrid Approach
 
@@ -43,7 +43,7 @@ We use **two separate database access patterns**:
 Use for all business logic and standard database operations:
 - User management
 - Document metadata
-- Matters, companies, permissions
+- Claims, companies, permissions
 - Document chunks (content, metadata, token counts)
 - All relationships and foreign keys
 
@@ -60,12 +60,12 @@ async with AsyncSession() as session:
 
 #### 2. Raw asyncpg (Vector operations only)
 Use **only** for operations involving the `embedding` column:
-- Storing embeddings (`UPDATE document_chunks SET embedding = ...`)
-- Querying embeddings (`SELECT ... WHERE embedding <=> ...`)
+- Storing embeddings
+- Querying embeddings (similarity search)
 - Checking if embeddings exist
 
 ```python
-# Example: Vector storage (see app/services/vector_storage.py)
+# Example: Vector storage
 from app.services.vector_storage import vector_storage_service
 
 # Store embeddings using raw SQL
@@ -78,133 +78,33 @@ await vector_storage_service.store_embeddings(
 # Similarity search using raw SQL
 results = await vector_storage_service.similarity_search(
     query_embedding=[0.5, 0.6, ...],
-    matter_id=matter_id,
+    claim_id=claim_id,
     limit=10
 )
 ```
 
-### Implementation Details
+### Guidelines for Development
 
-#### Vector Storage Service (`app/services/vector_storage.py`)
+**DO:**
+- Use SQLAlchemy ORM for all business logic and non-vector columns
+- Use `vector_storage_service` for storing/querying embeddings
+- Keep vector operations isolated in dedicated service classes
 
-The `VectorStorageService` maintains its own asyncpg connection pool:
-
-```python
-class VectorStorageService:
-    async def get_pool(self) -> asyncpg.Pool:
-        if self._pool is None:
-            # Strip +asyncpg dialect for raw asyncpg
-            db_url = settings.DATABASE_URL.replace('postgresql+asyncpg://', 'postgresql://')
-
-            # Create pool with type registration
-            self._pool = await asyncpg.create_pool(
-                db_url,
-                min_size=2,
-                max_size=10,
-                init=self._init_connection  # Register vector type on each connection
-            )
-        return self._pool
-
-    async def _init_connection(self, conn: asyncpg.Connection):
-        """Register pgvector type on each new connection."""
-        await register_vector(conn)
-```
-
-Key points:
-- Separate connection pool from SQLAlchemy
-- Type registration happens via `init` parameter (called for each new connection)
-- Database URL must have `+asyncpg` dialect stripped for raw asyncpg
-
-#### Document Chunk Model (`app/models/models.py`)
-
-The embedding column uses deferred loading to prevent accidental ORM access:
-
-```python
-from sqlalchemy.orm import deferred
-from pgvector.sqlalchemy import Vector
-
-class DocumentChunk(Base):
-    __tablename__ = "document_chunks"
-
-    # ... other columns ...
-
-    # Deferred loading prevents automatic loading of vector column
-    embedding = deferred(Column(Vector(1536), nullable=True))
-    embedding_model = Column(String(100), nullable=True)
-
-    # Important: Database column is 'metadata', Python attribute is 'chunk_metadata'
-    chunk_metadata = Column("metadata", JSON, nullable=True)
-```
-
-#### Document Processor (`app/services/document_processor.py`)
-
-The processor uses ORM for document/chunk retrieval but raw SQL for embeddings:
-
-```python
-async def process_embeddings(self, document_id: UUID) -> bool:
-    # Use ORM to get chunks (but don't load embedding column)
-    chunks_query = select(
-        DocumentChunk.id,
-        DocumentChunk.content,
-        DocumentChunk.chunk_index
-    ).where(DocumentChunk.document_id == document_id)
-
-    chunks_result = await self.db.execute(chunks_query)
-    chunks = chunks_result.all()
-
-    # Generate embeddings
-    embeddings = embedding_service.generate_embeddings_batch([c.content for c in chunks])
-
-    # Store using raw SQL (vector_storage_service)
-    await vector_storage_service.store_embeddings(
-        chunk_ids=[c.id for c in chunks],
-        embeddings=embeddings,
-        model="text-embedding-3-small"
-    )
-```
-
-### Benefits
-
-1. **Reliability**: Raw asyncpg has direct control over type registration
-2. **Performance**: asyncpg is faster than SQLAlchemy ORM for vector operations
-3. **Maintainability**: Clear separation - ORM for business logic, raw SQL for vectors
-4. **Safety**: Deferred loading prevents accidental vector column access via ORM
-5. **Scalability**: Separate connection pool for vector operations
-
-### Trade-offs
-
-1. **Consistency**: Two different database access patterns in the codebase
-2. **Learning Curve**: Developers need to understand when to use each approach
-3. **Testing**: Need to test both ORM and raw SQL paths
+**DON'T:**
+- Access `embedding` column through SQLAlchemy ORM
+- Mix ORM and raw SQL in the same transaction for vector operations
+- Add vector operations to model methods
 
 ## Row-Level Security (RLS)
 
-The platform uses PostgreSQL Row-Level Security for database-enforced multi-tenant isolation. This provides defense-in-depth beyond application-level filtering.
+The platform uses PostgreSQL Row-Level Security for database-enforced multi-tenant isolation.
 
 ### How It Works
 
 1. **JWT Authentication**: User logs in and receives JWT containing `company_id`
-2. **Middleware Extraction**: `TenantContextMiddleware` extracts `company_id` from JWT and attaches to `request.state`
-3. **Session Variable**: `get_db()` dependency sets `app.current_company_id` PostgreSQL session variable
-4. **RLS Policies**: All queries automatically filtered by `company_id` at database level
-
-```
-Request → JWT Decode → Middleware → get_db() → SET app.current_company_id → Query with RLS
-```
-
-### Database Configuration
-
-RLS is configured in `apply-rls.sql` (run after Alembic migrations):
-
-```sql
--- Enable RLS on table
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-
--- Create isolation policy
-CREATE POLICY company_isolation_documents ON documents
-    FOR ALL TO authenticated_users
-    USING (company_id = current_setting('app.current_company_id', true)::UUID);
-```
+2. **Middleware Extraction**: `TenantContextMiddleware` extracts `company_id` from JWT
+3. **Session Variable**: `get_db()` sets `app.current_company_id` PostgreSQL session variable
+4. **RLS Policies**: All queries automatically filtered by `company_id`
 
 ### Tables with RLS Policies
 
@@ -215,58 +115,11 @@ CREATE POLICY company_isolation_documents ON documents
 | `groups` | Direct `company_id` |
 | `documents` | Direct `company_id` (denormalized) |
 | `document_chunks` | Via `documents.company_id` |
-| `matters` | Direct `company_id` |
+| `claims` | Direct `company_id` |
 | `conversations` | Direct `company_id` |
 | `messages` | Via `conversations.company_id` |
 | `billable_sessions` | Direct `company_id` |
 | `daily_briefings` | Direct `company_id` |
-
-### Setting RLS Context Manually
-
-For operations outside the normal request flow (e.g., email confirmation, password reset):
-
-```python
-from sqlalchemy import text
-
-# Set RLS context before tenant-specific operations
-await db.execute(
-    text("SELECT set_config('app.current_company_id', :cid, true)"),
-    {"cid": str(company_id)}
-)
-```
-
-### Testing RLS
-
-A verification script is available to test cross-tenant isolation:
-
-```bash
-cd scripts
-python verify_rls.py
-```
-
-This creates two test companies and verifies that Company B cannot access Company A's documents.
-
-### Key Files
-
-- `app/middleware/tenant_context.py` - Extracts company_id from JWT
-- `app/db/session.py` - Sets RLS session variable in `get_db()`
-- `app/core/tenant.py` - Tenant context utilities
-- `apply-rls.sql` - RLS policies (run after migrations)
-- `scripts/verify_rls.py` - RLS verification script
-
-### Guidelines for Future Development
-
-**DO:**
-- Use SQLAlchemy ORM for all business logic and non-vector columns
-- Use `vector_storage_service` for storing/querying embeddings
-- Keep vector operations isolated in dedicated service classes
-- Document any new vector operations clearly
-
-**DON'T:**
-- Access `embedding` column through SQLAlchemy ORM
-- Try to "fix" the type registration in SQLAlchemy events (we tried, it doesn't work reliably)
-- Mix ORM and raw SQL in the same transaction for vector operations
-- Add vector operations to model methods (keep in services)
 
 ## Setup
 
@@ -281,35 +134,12 @@ pip install -r requirements.txt
 
 ### 2. Install OCR Dependencies (Optional)
 
-OCR is used for extracting text from scanned PDFs. The system supports two OCR engines:
+OCR is used for extracting text from scanned PDFs:
 
 - **AWS Textract** (production) - Used when AWS credentials are configured
 - **Tesseract** (local development) - Free, offline fallback
 
-For local development with Tesseract, install system dependencies:
-
-**Windows:**
-1. Install Tesseract: Download from [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
-2. Install Poppler: Download from [poppler-windows releases](https://github.com/osborber/poppler-windows/releases)
-3. Add both to your PATH
-
-**macOS:**
-```bash
-brew install tesseract poppler
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install tesseract-ocr poppler-utils
-```
-
-**Docker (recommended):** The Celery worker in `docker-compose.yml` already includes Tesseract and Poppler. Just run:
-```bash
-docker-compose up -d
-```
-OCR will work automatically for document processing tasks.
-
-If running FastAPI locally without Docker, OCR dependencies are optional. The system will gracefully skip OCR and log a warning if they're not installed. Documents with selectable text will still be processed normally.
+**Docker (recommended):** The Celery worker in `docker-compose.yml` includes OCR tools.
 
 ### 3. Database Setup
 
@@ -333,20 +163,23 @@ Create a `.env` file in the backend directory:
 
 ```bash
 # Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_db
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/sred_db
 
-# Valkey (Redis-compatible cache/queue - 20-33% cheaper on AWS)
+# Valkey (Redis-compatible cache/queue)
 REDIS_URL=redis://localhost:6379
 
 # S3 Storage
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_REGION=ca-central-1
-S3_BUCKET_NAME=bc-legal-docs
+S3_BUCKET_NAME=sred-documents
 S3_ENDPOINT_URL=http://localhost:4566  # LocalStack for development
 
 # OpenAI (for embeddings)
 OPENAI_API_KEY=sk-...
+
+# Anthropic (for chat)
+ANTHROPIC_API_KEY=sk-ant-...
 
 # JWT
 SECRET_KEY=your-secret-key-here
@@ -372,136 +205,39 @@ DEBUG=true
 - `GET /api/v1/documents` - List documents (with filters)
 - `DELETE /api/v1/documents/{id}` - Delete document
 
-### Matters
-- `POST /api/v1/matters` - Create matter
-- `GET /api/v1/matters/{id}` - Get matter details
-- `GET /api/v1/matters` - List matters
-- `PUT /api/v1/matters/{id}` - Update matter
+### Claims (SR&ED)
+- `POST /api/v1/claims` - Create claim
+- `GET /api/v1/claims/{id}` - Get claim details
+- `GET /api/v1/claims` - List claims
+- `PUT /api/v1/claims/{id}` - Update claim
+
+### SR&ED Analysis
+- `POST /api/v1/eligibility/{claim_id}/report` - Generate eligibility report
+- `POST /api/v1/t661/{claim_id}/draft` - Generate T661 form draft
 
 ### Search
 - `POST /api/v1/search/semantic` - Semantic search across documents
 - `POST /api/v1/search/hybrid` - Hybrid search (keyword + semantic)
 
-### Platform Admin (Cost Reporting)
+### Chat
+- `POST /api/v1/chat/send` - Send message with RAG context
+- `GET /api/v1/chat/conversations` - List conversations
+- `GET /api/v1/chat/conversations/{id}` - Get conversation messages
+
+### Platform Admin
 - `GET /api/v1/admin/usage` - Get API usage summary with cost estimates
 - `GET /api/v1/admin/usage/daily` - Get daily usage for trending
-- `GET /api/v1/admin/companies` - List all companies
-
-### Platform Admin (Feedback Analytics)
-- `GET /api/v1/admin/feedback/stats` - Get feedback statistics (rates, categories, quality scores)
-- `GET /api/v1/admin/feedback/alerts` - Get active quality alerts
-- `GET /api/v1/admin/feedback/flagged` - Get messages flagged for review
-- `POST /api/v1/admin/feedback/check-alerts` - Manually trigger alert checking
+- `GET /api/v1/admin/feedback/stats` - Get feedback statistics
 
 ## Platform Admin & Cost Reporting
 
-The platform includes API usage tracking and cost estimation for monitoring during Beta.
+The platform includes API usage tracking and cost estimation.
 
 ### Setup
 
-1. Add your email to `.env`:
-   ```bash
-   PLATFORM_ADMIN_EMAILS=admin@yourcompany.com,another@yourcompany.com
-   ```
-
-2. Restart the backend to load the new configuration.
-
-### Admin CLI Tool
-
-An interactive CLI tool is available for testing admin endpoints without manually managing tokens:
-
+Add your email to `.env`:
 ```bash
-# Windows (PowerShell)
-.\scripts\admin-cli.ps1
-
-# Linux/macOS
-chmod +x scripts/admin-cli.sh
-./scripts/admin-cli.sh
-```
-
-The CLI will:
-1. Prompt for your admin credentials
-2. Authenticate and store the token
-3. Show a menu of available admin commands
-4. Execute commands and display formatted results
-
-### Manual API Access (curl)
-
-If you prefer manual curl commands, first obtain a JWT token:
-
-```bash
-# Login to get access token
-curl -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@yourcompany.com", "password": "your-password"}'
-```
-
-Then use the token to access admin endpoints:
-
-```bash
-# Get usage summary (last 30 days by default)
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/usage"
-
-# Get usage for specific period (e.g., last 7 days)
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/usage?days=7"
-
-# Get usage for a specific company
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/usage?company_id=<uuid>"
-
-# Get daily usage for cost trending
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/usage/daily"
-
-# Filter daily usage by service
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/usage/daily?service=claude_chat"
-
-# List all companies
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/companies"
-```
-
-### Response Format
-
-The `/admin/usage` endpoint returns:
-
-```json
-{
-  "period_start": "2025-11-16T00:00:00",
-  "period_end": "2025-12-16T00:00:00",
-  "overall": {
-    "total_requests": 150,
-    "total_input_tokens": 500000,
-    "total_output_tokens": 75000,
-    "total_chunks_processed": 1200,
-    "total_pages_ocr": 45,
-    "estimated_cost_cents": 285
-  },
-  "by_company": [
-    {
-      "company_id": "uuid",
-      "company_name": "Acme Law Firm",
-      "usage": { ... }
-    }
-  ],
-  "by_service": [
-    {
-      "service": "claude_chat",
-      "request_count": 100,
-      "input_tokens": 400000,
-      "output_tokens": 60000,
-      "estimated_cost_cents": 210
-    },
-    {
-      "service": "openai_embeddings",
-      "chunks_processed": 1200,
-      "estimated_cost_cents": 12
-    }
-  ]
-}
+PLATFORM_ADMIN_EMAILS=admin@pwc.com
 ```
 
 ### Services Tracked
@@ -513,33 +249,9 @@ The `/admin/usage` endpoint returns:
 | `openai_embeddings` | chunks processed | $0.02 per 1M tokens |
 | `textract_ocr` | pages processed | ~$0.015 per page |
 
-Costs are estimated in USD cents for precision. Actual billing may vary.
-
 ## Feedback Analytics
 
 The platform tracks AI response quality through explicit user feedback and implicit behavioral signals.
-
-These endpoints are available in the Admin CLI tool (options 6-10), or via manual curl commands:
-
-### Feedback Endpoints
-
-```bash
-# Get feedback statistics (last 30 days)
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/feedback/stats"
-
-# Get stats for specific period and company
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/feedback/stats?days=7&company_id=<uuid>"
-
-# Get active quality alerts
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/feedback/alerts"
-
-# Get messages flagged for review (low confidence or negative feedback)
-curl -H "Authorization: Bearer <your-token>" \
-  "http://localhost:8000/api/v1/admin/feedback/flagged?limit=50"
-```
 
 ### Tracked Signals
 
@@ -549,104 +261,27 @@ curl -H "Authorization: Bearer <your-token>" \
 | Copy events | User copied AI response text |
 | Source clicks | User clicked on cited document |
 | Session duration | Time spent in conversation |
-| Rephrase detection | User rephrased question within 60s (Jaccard similarity > 0.6) |
-
-### Feedback Categories (Negative)
-
-- `incorrect` - Answer was factually wrong
-- `irrelevant` - Answer didn't address the question
-- `wrong_question` - User asked the wrong question
-- `not_detailed` - Answer lacked specifics
-- `no_documents` - Relevant documents weren't found
-
-### Quality Scores
-
-- **Question quality** (0.0-1.0): Based on length, specificity, and context
-- **Response confidence** (0.0-1.0): Combines explicit feedback and implicit signals
-
-### Background Tasks
-
-Celery Beat runs periodic tasks:
-- Every 15 min: Check alert thresholds
-- Hourly: Compute feedback aggregates
-- Hourly (offset): Resolve stale alerts
+| Rephrase detection | User rephrased question |
 
 ## Document Processing Pipeline
-
-The document processing pipeline consists of several stages:
 
 ### 1. Upload
 Document uploaded to S3 and metadata stored in database.
 
-**Status:** `pending`
-
 ### 2. Text Extraction
-Extract text content from PDF, DOCX, TXT files using `pdfplumber`, `python-docx`, and `charset_normalizer`.
-
-For scanned PDFs (detected by low text density < 100 chars/page), OCR is automatically triggered:
-- **AWS Textract** - Used in production when AWS credentials are configured
-- **Tesseract** - Fallback for local development
-
-**Status:** `text_extracted`
-
-**Files:**
-- `app/services/text_extraction.py` - Main extraction logic
-- `app/services/ocr.py` - OCR service (Textract + Tesseract fallback)
-
-**OCR Metadata:** When OCR is applied, the document record stores:
-- `ocr_applied` - Boolean indicating OCR was used
-- `ocr_engine` - Which engine was used (`textract` or `tesseract`)
-- `ocr_pages_processed` - Number of pages processed
-- `ocr_confidence_avg` - Average OCR confidence score
+Extract text from PDF, DOCX, TXT files. For scanned PDFs, OCR is automatically triggered.
 
 ### 3. Chunking
-Split text into semantic chunks using `semantic-text-splitter` with sentence-aware splitting.
-
-**Status:** `chunked`
-
-**Files:**
-- `app/services/chunking.py`
-- `app/models/models.py` - DocumentChunk model
-
-**Configuration:**
-- Chunk size: 500-800 tokens
-- Overlap: 50 tokens
-- Sentence-aware splitting
+Split text into semantic chunks (500-800 tokens) using sentence-aware splitting.
 
 ### 4. Embedding Generation
-Generate vector embeddings for each chunk using OpenAI's text-embedding-3-small model.
+Generate vector embeddings using OpenAI text-embedding-3-small (1536 dimensions).
 
-**Status:** `embedded`
+### 5. Event Extraction
+Extract R&D milestones and dated events for project timeline.
 
-**Files:**
-- `app/services/embeddings.py` - OpenAI integration
-- `app/services/vector_storage.py` - Raw asyncpg vector operations
-- `app/services/document_processor.py` - Pipeline orchestration
-
-**Configuration:**
-- Model: text-embedding-3-small
-- Dimensions: 1536
-- Batch size: 100 chunks per API call
-- Retry logic: 3 attempts with exponential backoff
-
-### Manual Pipeline Triggering
-
-Since automatic pipeline progression was removed (to prevent greenlet context errors), you can manually trigger pipeline stages:
-
-```python
-from app.services.document_processor import DocumentProcessor
-
-async with AsyncSession() as session:
-    processor = DocumentProcessor(session)
-
-    # Trigger chunking
-    await processor.process_chunking(document_id)
-
-    # Trigger embedding generation
-    await processor.process_embeddings(document_id)
-```
-
-Future enhancement: Add background task queue (Celery/RQ) for automatic progression.
+### 6. Summarization
+Generate AI summary for improved RAG context.
 
 ## Testing
 
@@ -658,10 +293,7 @@ pytest
 pytest --cov=app --cov-report=html
 
 # Run specific test file
-pytest tests/test_embeddings.py
-
-# Manual pipeline test
-python test_manual_pipeline.py
+pytest tests/test_claims.py
 ```
 
 ## Project Structure
@@ -674,12 +306,15 @@ backend/
 │   ├── models/           # SQLAlchemy models
 │   ├── schemas/          # Pydantic schemas
 │   ├── services/         # Business logic
-│   │   ├── embeddings.py         # OpenAI integration
-│   │   ├── vector_storage.py     # Raw asyncpg for vectors
-│   │   ├── document_processor.py # Pipeline orchestration
-│   │   ├── chunking.py           # Text chunking
-│   │   ├── text_extraction.py    # Text extraction
-│   │   └── ocr.py                # OCR (Textract + Tesseract)
+│   │   ├── embeddings.py           # OpenAI integration
+│   │   ├── vector_storage.py       # Raw asyncpg for vectors
+│   │   ├── document_processor.py   # Pipeline orchestration
+│   │   ├── chat_service.py         # AI chat with RAG
+│   │   ├── eligibility_report_service.py  # SR&ED eligibility
+│   │   ├── t661_service.py         # T661 form drafting
+│   │   ├── chunking.py             # Text chunking
+│   │   ├── text_extraction.py      # Text extraction
+│   │   └── ocr.py                  # OCR (Textract + Tesseract)
 │   ├── db/               # Database connection
 │   └── main.py           # FastAPI application
 ├── alembic/              # Database migrations
@@ -694,5 +329,5 @@ When adding new features:
 1. Use SQLAlchemy ORM for business logic
 2. Use `vector_storage_service` for vector operations
 3. Write tests for both paths
-4. Document any new vector operations
+4. Document any new SR&ED-specific services
 5. Update this README if adding new services

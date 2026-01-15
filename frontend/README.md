@@ -1,6 +1,6 @@
-# BC Legal Tech - Frontend
+# PwC SR&ED Intelligence Platform - Frontend
 
-AI-Powered Legal Document Intelligence Platform
+AI-Powered SR&ED Document Intelligence Platform
 
 ## Tech Stack
 
@@ -21,16 +21,19 @@ AI-Powered Legal Document Intelligence Platform
 - [x] User Login with JWT
 - [x] Company Registration with admin user
 - [x] Email Confirmation Flow
-- [x] Password Reset Flow (Request → Verify → Confirm)
+- [x] Password Reset Flow
 - [x] Protected Routes
 - [x] Auto Token Refresh
 - [x] Logout with Token Revocation
 
-### User Management
-- [x] User Profile View
-- [x] User Profile Editing (name only, email immutable)
-- [x] Avatar Upload (base64 MVP)
-- [x] Company Information Display
+### SR&ED Features
+- [x] Claim Management (create, view, edit)
+- [x] Document Upload with SR&ED metadata
+- [x] AI Chat with RAG context
+- [x] Project Timeline view
+- [x] Consulting Hours tracking
+- [ ] Eligibility Report generation
+- [ ] T661 Form drafting
 
 ### UI Components
 - [x] Button (variants: primary, secondary, outline, ghost, danger)
@@ -43,10 +46,14 @@ AI-Powered Legal Document Intelligence Platform
 ### Pages
 - [x] Login Page
 - [x] Registration Page
-- [x] Forgot Password Page
-- [x] Reset Password Page
-- [x] Email Confirmation Page
 - [x] Dashboard Page
+- [x] Claims Page (list claims)
+- [x] Claim Detail Page
+- [x] Create/Edit Claim Pages
+- [x] Documents Page
+- [x] Chat Page
+- [x] Timeline Page
+- [x] Consulting Hours Page
 - [x] Profile Page
 
 ## Getting Started
@@ -82,12 +89,6 @@ npm run build
 
 Outputs to `dist/` directory.
 
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
 ## Project Structure
 
 ```
@@ -95,24 +96,29 @@ frontend/
 ├── public/              # Static assets
 ├── src/
 │   ├── components/      # Reusable components
-│   │   ├── layout/      # Layout components (DashboardLayout, ProtectedRoute)
-│   │   └── ui/          # UI components (Button, Input, Card, Alert)
+│   │   ├── layout/      # Layout components
+│   │   ├── chat/        # Chat components
+│   │   ├── documents/   # Document components
+│   │   ├── eligibility/ # Eligibility report components
+│   │   ├── t661/        # T661 form components
+│   │   └── ui/          # UI components
 │   ├── lib/             # Utilities and libraries
 │   │   └── api.ts       # Axios client with interceptors
 │   ├── pages/           # Page components
-│   │   ├── LoginPage.tsx
-│   │   ├── RegisterPage.tsx
-│   │   ├── ForgotPasswordPage.tsx
-│   │   ├── ResetPasswordPage.tsx
-│   │   ├── ConfirmEmailPage.tsx
-│   │   ├── DashboardPage.tsx
-│   │   └── ProfilePage.tsx
+│   │   ├── ClaimsPage.tsx
+│   │   ├── ClaimDetailPage.tsx
+│   │   ├── CreateClaimPage.tsx
+│   │   ├── ChatPage.tsx
+│   │   ├── DocumentsPage.tsx
+│   │   ├── TimelinePage.tsx
+│   │   └── ...
 │   ├── store/           # State management
 │   │   └── authStore.ts # Zustand auth store
 │   ├── types/           # TypeScript types
-│   │   └── auth.ts      # Auth-related types
+│   │   ├── auth.ts
+│   │   ├── claims.ts
+│   │   └── documents.ts
 │   ├── utils/           # Utility functions
-│   │   └── cn.ts        # TailwindCSS class merger
 │   ├── App.tsx          # Main app with routing
 │   ├── main.tsx         # Entry point
 │   └── index.css        # Global styles + Tailwind
@@ -133,7 +139,6 @@ The auth store manages:
 - Access & refresh tokens
 - Authentication state
 - Login/logout actions
-- Token refresh
 
 Data is persisted to localStorage via the `persist` middleware.
 
@@ -143,8 +148,12 @@ The Axios client (`src/lib/api.ts`) includes:
 
 1. **Request Interceptor**: Automatically adds JWT token to requests
 2. **Response Interceptor**: Handles 401 errors and auto-refreshes tokens
-3. **Auth API**: All authentication endpoints
-4. **User API**: User management endpoints
+3. **Auth API**: Authentication endpoints
+4. **Claims API**: Claim management endpoints
+5. **Documents API**: Document upload and management
+6. **Chat API**: AI chat endpoints
+7. **Eligibility API**: Eligibility report generation
+8. **T661 API**: T661 form drafting
 
 ## Forms & Validation
 
@@ -153,26 +162,12 @@ Forms use:
 - **Zod** for schema validation
 - Custom Input components with error display
 
-Example validation (Registration):
-```typescript
-const registerSchema = z.object({
-  company_name: z.string().min(2),
-  admin_email: z.string().email(),
-  admin_password: z.string()
-    .min(8)
-    .regex(/[A-Z]/, 'Must contain uppercase')
-    .regex(/[a-z]/, 'Must contain lowercase')
-    .regex(/[0-9]/, 'Must contain digit'),
-})
-```
-
 ## Styling
 
 TailwindCSS is used for all styling with:
 - Custom color palette (primary colors)
 - Responsive design
-- Dark mode support (future)
-- Custom scrollbar styles
+- PwC-inspired branding
 
 ## Security Features
 
@@ -185,28 +180,43 @@ TailwindCSS is used for all styling with:
    - Redirect to login if not authenticated
    - Save attempted location for post-login redirect
 
-3. **Email Immutability**:
-   - Users cannot change email via self-service
-   - Requires admin/support contact
+## SR&ED-Specific Types
 
-4. **Password Validation**:
-   - Min 8 characters
-   - Uppercase, lowercase, digit required
+```typescript
+// types/claims.ts
+export const PROJECT_TYPES = [
+  'Software Development',
+  'Manufacturing Process',
+  'Product Design',
+  'Chemical/Biological',
+  'Engineering',
+  'Other'
+] as const;
 
-## Next Steps (Future Milestones)
+export const CLAIM_STATUSES = [
+  'draft',
+  'in_progress',
+  'under_review',
+  'submitted',
+  'approved',
+  'rejected'
+] as const;
 
-- [ ] Document Management (upload, view, organize)
-- [ ] AI Chat with Documents
-- [ ] User Management (for admins)
-- [ ] Team Collaboration
-- [ ] Settings & Preferences
-- [ ] S3 Avatar Upload (replace base64 MVP)
-- [ ] Dark Mode
-- [ ] Mobile Responsive Improvements
+export interface Claim {
+  id: string;
+  company_id: string;
+  claim_number: string;
+  company_name: string;
+  project_type: string;
+  claim_status: string;
+  fiscal_year_end: string;
+  naics_code?: string;
+  // ...
+}
+```
 
 ## Notes
 
-- Avatar upload is MVP implementation (base64 storage)
 - Email changes require admin/support (security requirement)
 - All auth flows match backend implementation
 - Token refresh is automatic and transparent

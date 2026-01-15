@@ -40,11 +40,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Matters', href: '/matters', icon: Briefcase },
+    { name: 'Claims', href: '/matters', icon: Briefcase },
     { name: 'Documents', href: '/documents', icon: FileText },
-    { name: 'Timeline', href: '/timeline', icon: Calendar },
+    { name: 'Project Timeline', href: '/timeline', icon: Calendar },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
-    { name: 'Billable Hours', href: '/billable', icon: Clock },
+    { name: 'Consulting Hours', href: '/billable', icon: Clock },
     { name: 'Users', href: '/users', icon: Users, adminOnly: true },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           />
           <nav className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
             <div className="flex h-16 items-center justify-between px-4">
-              <span className="text-xl font-bold text-gray-900">BC Legal Tech</span>
+              <span className="text-xl font-bold text-gray-900">PwC SR&ED Intelligence</span>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -93,7 +93,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="hidden lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 border-r border-gray-200 bg-white">
           <div className="flex h-16 items-center border-b border-gray-200 px-4">
-            <span className="text-xl font-bold text-gray-900">BC Legal Tech</span>
+            <span className="text-xl font-bold text-gray-900">PwC SR&ED Intelligence</span>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {filteredNavigation.map((item) => (

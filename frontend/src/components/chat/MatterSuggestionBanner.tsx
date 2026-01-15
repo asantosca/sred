@@ -1,4 +1,4 @@
-// MatterSuggestionBanner - Displays when AI detects a query may relate to a matter
+// MatterSuggestionBanner - Displays when AI detects a query may relate to a claim
 
 import { Briefcase, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -28,7 +28,7 @@ export default function MatterSuggestionBanner({
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-blue-900">
-              This may relate to: {suggestion.matter_name}
+              This may relate to claim: {suggestion.matter_name}
             </p>
             <p className="mt-0.5 text-xs text-blue-700">
               Matched "{suggestion.matched_document}" ({confidencePercent}% confidence)
@@ -45,7 +45,7 @@ export default function MatterSuggestionBanner({
             onClick={onAccept}
             disabled={loading}
           >
-            {loading ? 'Linking...' : 'Link to Matter'}
+            {loading ? 'Linking...' : 'Link to Claim'}
           </Button>
           <button
             type="button"

@@ -1,4 +1,4 @@
-// Matter selector with create new matter functionality
+// Claim selector with create new claim functionality
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -26,7 +26,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
   const queryClient = useQueryClient()
 
-  // Fetch matters list
+  // Fetch claims list
   const { data: mattersResponse, isLoading } = useQuery({
     queryKey: ['matters', 'active'],
     queryFn: async () => {
@@ -37,7 +37,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
   const matters = mattersResponse?.matters || []
 
-  // Create matter mutation
+  // Create claim mutation
   const createMutation = useMutation({
     mutationFn: (data: MatterCreate) => mattersApi.create(data),
     onSuccess: (response) => {
@@ -57,7 +57,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
     },
     onError: (error: any) => {
       setCreateError(
-        error.response?.data?.detail || 'Failed to create matter'
+        error.response?.data?.detail || 'Failed to create claim'
       )
     },
   })
@@ -83,11 +83,11 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
   return (
     <div className="space-y-4">
-      {/* Matter selector */}
+      {/* Claim selector */}
       {!showCreateForm && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Matter <span className="text-red-500">*</span>
+            Claim <span className="text-red-500">*</span>
           </label>
           <div className="flex gap-2">
             <select
@@ -99,7 +99,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                   : 'border-gray-300'
               }`}
             >
-              <option value="">Select a matter...</option>
+              <option value="">Select a claim...</option>
               {matters.map((matter: Matter) => (
                 <option key={matter.id} value={matter.id}>
                   {matter.matter_number} - {matter.client_name}
@@ -110,7 +110,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
               type="button"
               onClick={() => setShowCreateForm(true)}
               className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              title="Create new matter"
+              title="Create new claim"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -124,17 +124,17 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
         </div>
       )}
 
-      {/* Create new matter form */}
+      {/* Create new claim form */}
       {showCreateForm && (
         <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
           <h3 className="text-sm font-medium text-gray-900 mb-4">
-            Create New Matter
+            Create New Claim
           </h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Matter Number <span className="text-red-500">*</span>
+                  Claim Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -153,7 +153,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Client Name <span className="text-red-500">*</span>
+                  Company Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -165,14 +165,14 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                       client_name: e.target.value,
                     })
                   }
-                  placeholder="e.g., John Doe"
+                  placeholder="e.g., Acme Corp"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Matter Type <span className="text-red-500">*</span>
+                  Project Type <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -184,7 +184,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                       matter_type: e.target.value,
                     })
                   }
-                  placeholder="e.g., Personal Injury, Contract Dispute"
+                  placeholder="e.g., Software Development, Engineering"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
@@ -210,7 +210,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Matter Description
+                Claim Description
               </label>
               <textarea
                 value={createFormData.description || ''}
@@ -220,7 +220,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                     description: e.target.value,
                   })
                 }
-                placeholder="Brief description of the matter (optional)"
+                placeholder="Brief description of the SR&ED claim (optional)"
                 rows={3}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
@@ -258,7 +258,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2" />
-                    Create Matter
+                    Create Claim
                   </>
                 )}
               </button>
