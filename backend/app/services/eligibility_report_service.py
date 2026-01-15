@@ -17,7 +17,7 @@ from app.schemas.eligibility import (
     EligibilityRecommendation, EligibilityReportRequest
 )
 from app.services.vector_storage import vector_storage_service
-from app.services.embedding_service import embedding_service
+from app.services.embeddings import embedding_service
 
 logger = logging.getLogger(__name__)
 

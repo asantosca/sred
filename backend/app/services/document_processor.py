@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Document, DocumentChunk, Matter
+from app.models.models import Document, DocumentChunk, Claim as Matter
 from app.services.text_extraction import text_extraction_service
 from app.services.storage import storage_service
 from app.services.chunking import chunking_service

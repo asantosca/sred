@@ -18,7 +18,7 @@ from app.schemas.t661 import (
     T661_SECTIONS, T661_SECTION_DESCRIPTIONS
 )
 from app.services.vector_storage import vector_storage_service
-from app.services.embedding_service import embedding_service
+from app.services.embeddings import embedding_service
 
 logger = logging.getLogger(__name__)
 

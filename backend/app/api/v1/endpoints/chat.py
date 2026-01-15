@@ -305,13 +305,13 @@ async def link_conversation_to_matter(
 
         # Get matter name for response
         from sqlalchemy import select
-        from app.models.models import Matter
-        matter_query = select(Matter.client_name, Matter.matter_number).where(
-            Matter.id == link_request.matter_id
+        from app.models.models import Claim as MatterModel
+        matter_query = select(MatterModel.company_name, MatterModel.claim_number).where(
+            MatterModel.id == link_request.matter_id
         )
         result = await db.execute(matter_query)
         matter = result.first()
-        matter_name = f"{matter.matter_number} - {matter.client_name}" if matter else None
+        matter_name = f"{matter.claim_number} - {matter.company_name}" if matter else None
 
         return {
             "success": True,

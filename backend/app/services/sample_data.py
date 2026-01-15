@@ -5,7 +5,7 @@ from uuid import UUID
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Matter, MatterAccess, Document, Conversation, Message
+from app.models.models import Claim as Matter, ClaimAccess as MatterAccess, Document, Conversation, Message
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +28,21 @@ class SampleDataService:
         Returns dict with created resource IDs.
         """
         try:
-            # Create welcome matter
+            # Create welcome claim
             welcome_matter = Matter(
                 company_id=company_id,
-                matter_number="WELCOME-001",
-                client_name="BC Legal Tech",
-                matter_type="Onboarding",
-                matter_status="active",
+                claim_number="WELCOME-001",
+                company_name="Sample Client Company",
+                project_type="Onboarding",
+                claim_status="active",
                 description=(
-                    "Welcome to BC Legal Tech! This sample matter demonstrates how "
-                    "matters work. You can upload documents, ask questions, and organize "
-                    "your legal work. Feel free to archive or delete this matter once "
+                    "Welcome to PwC SR&ED Intelligence! This sample claim demonstrates how "
+                    "claims work. You can upload documents, ask questions, and organize "
+                    "your SR&ED work. Feel free to archive or delete this claim once "
                     "you're familiar with the platform."
                 ),
                 opened_date=date.today(),
-                lead_attorney_user_id=user_id,
+                lead_consultant_user_id=user_id,
                 created_by=user_id,
                 updated_by=user_id,
             )

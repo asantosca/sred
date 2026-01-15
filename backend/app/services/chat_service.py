@@ -10,7 +10,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.models import Conversation, Message, User, Matter
+from app.models.models import Conversation, Message, User, Claim as Matter
 from app.schemas.chat import (
     ChatRequest, ChatResponse, MessageResponse, MessageSource,
     ConversationCreate, ConversationUpdate, ConversationResponse,
@@ -1012,11 +1012,11 @@ Summary:"""
         sources = []
         for result in search_results:
             # Get document metadata (already filtered by company_id in vector_storage)
-            from app.models.models import Document, Matter
-            doc_query = select(Document, Matter).join(Matter).where(
+            from app.models.models import Document, Claim as MatterModel
+            doc_query = select(Document, MatterModel).join(MatterModel).where(
                 and_(
                     Document.id == result["document_id"],
-                    Matter.company_id == user.company_id  # Belt-and-suspenders check
+                    MatterModel.company_id == user.company_id  # Belt-and-suspenders check
                 )
             )
             doc_result = await self.db.execute(doc_query)
@@ -1032,7 +1032,7 @@ Summary:"""
                     page_number=result.get("page_number"),
                     similarity_score=result["similarity"],
                     matter_id=matter.id,
-                    matter_name=f"{matter.matter_number} - {matter.client_name}"
+                    matter_name=f"{matter.claim_number} - {matter.company_name}"
                 ))
 
         return search_results, sources
@@ -1062,14 +1062,14 @@ Summary:"""
             return {}
 
         # Fetch documents with summaries
-        from app.models.models import Document, Matter
+        from app.models.models import Document, Claim as MatterModel
 
         query = (
             select(Document)
-            .join(Matter)
+            .join(MatterModel)
             .where(
                 Document.id.in_(document_ids),
-                Matter.company_id == company_id,
+                MatterModel.company_id == company_id,
                 Document.ai_summary.isnot(None)
             )
         )

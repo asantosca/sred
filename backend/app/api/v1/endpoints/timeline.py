@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.core.tenant import require_tenant_context
 from app.core.rate_limit import limiter, get_rate_limit
-from app.models.models import User, Document, DocumentEvent, DocumentChunk, Matter
+from app.models.models import User, Document, DocumentEvent, DocumentChunk, Claim as Matter
 from app.schemas.timeline import (
     DocumentEventCreate, DocumentEventUpdate, DocumentEventResponse,
     DocumentEventWithContext, TimelineListResponse

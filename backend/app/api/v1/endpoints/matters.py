@@ -1,4 +1,4 @@
-# app/api/v1/endpoints/matters.py - Matter management endpoints
+# app/api/v1/endpoints/matters.py - Claim management endpoints (legacy route, uses claims)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +9,14 @@ from uuid import UUID
 import math
 
 from app.db.session import get_db
-from app.schemas.matters import (
-    Matter, MatterCreate, MatterUpdate, MatterWithDetails,
-    MatterListResponse, MatterAccess, MatterAccessCreate, 
-    MatterAccessUpdate, MatterAccessWithDetails, MatterAccessListResponse
+from app.schemas.claims import (
+    Claim as Matter, ClaimCreate as MatterCreate, ClaimUpdate as MatterUpdate,
+    ClaimWithDetails as MatterWithDetails, ClaimListResponse as MatterListResponse,
+    ClaimAccess as MatterAccess, ClaimAccessCreate as MatterAccessCreate,
+    ClaimAccessUpdate as MatterAccessUpdate, ClaimAccessWithDetails as MatterAccessWithDetails,
+    ClaimAccessListResponse as MatterAccessListResponse
 )
-from app.models.models import Matter as MatterModel, MatterAccess as MatterAccessModel, User, Conversation, BillableSession
+from app.models.models import Claim as MatterModel, ClaimAccess as MatterAccessModel, User, Conversation, BillableSession
 from app.api.deps import get_current_user, verify_company_access
 
 router = APIRouter()
@@ -50,17 +52,17 @@ async def list_matters(
         search_term = f"%{search}%"
         query = query.where(
             or_(
-                MatterModel.matter_number.ilike(search_term),
-                MatterModel.client_name.ilike(search_term),
+                MatterModel.claim_number.ilike(search_term),
+                MatterModel.company_name.ilike(search_term),
                 MatterModel.description.ilike(search_term)
             )
         )
     
     if status:
-        query = query.where(MatterModel.matter_status == status)
+        query = query.where(MatterModel.claim_status == status)
 
     if matter_type:
-        query = query.where(MatterModel.matter_type == matter_type)
+        query = query.where(MatterModel.project_type == matter_type)
     
     # Count total records
     count_query = select(func.count()).select_from(query.subquery())
@@ -84,7 +86,7 @@ async def list_matters(
         # Get additional details (we'll optimize this later with joins)
         matter_dict = {
             **matter.__dict__,
-            "lead_attorney_name": None,
+            "lead_consultant_name": None,
             "created_by_name": "Unknown",
             "updated_by_name": "Unknown",
             "document_count": 0,
@@ -108,13 +110,13 @@ async def create_matter(
 ):
     """
     Create a new matter.
-    The creating user is automatically granted lead_attorney access.
+    The creating user is automatically granted lead_consultant access.
     """
     # Check if matter number already exists in company
     existing_query = select(MatterModel).where(
         and_(
             MatterModel.company_id == current_user.company_id,
-            MatterModel.matter_number == matter_data.matter_number
+            MatterModel.claim_number == matter_data.claim_number
         )
     )
     existing_result = await db.execute(existing_query)
@@ -135,11 +137,11 @@ async def create_matter(
     db.add(matter)
     await db.flush()  # Get the matter ID
     
-    # Grant creator lead_attorney access
+    # Grant creator lead_consultant access
     matter_access = MatterAccessModel(
         matter_id=matter.id,
         user_id=current_user.id,
-        access_role="lead_attorney",
+        access_role="lead_consultant",
         can_upload=True,
         can_edit=True,
         can_delete=True,
@@ -189,7 +191,7 @@ async def get_matter(
     # Add additional details including user's permissions
     matter_dict = {
         **matter.__dict__,
-        "lead_attorney_name": None,
+        "lead_consultant_name": None,
         "created_by_name": "Unknown",
         "updated_by_name": "Unknown",
         "document_count": 0,
@@ -362,8 +364,8 @@ async def list_matter_access(
     return MatterAccessListResponse(
         access_list=access_with_details,
         matter_id=matter_id,
-        matter_number=matter.matter_number,
-        client_name=matter.client_name
+        matter_number=matter.claim_number,
+        client_name=matter.company_name
     )
 
 @router.post("/{matter_id}/access", response_model=MatterAccess, status_code=status.HTTP_201_CREATED)
@@ -379,7 +381,7 @@ async def grant_matter_access(
         and_(
             MatterAccessModel.matter_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
-            MatterAccessModel.access_role.in_(["lead_attorney", "partner"])
+            MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
     )
     access_result = await db.execute(access_query)
@@ -444,7 +446,7 @@ async def update_matter_access(
         and_(
             MatterAccessModel.matter_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
-            MatterAccessModel.access_role.in_(["lead_attorney", "partner"])
+            MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
     )
     manager_result = await db.execute(manager_query)
@@ -494,7 +496,7 @@ async def revoke_matter_access(
         and_(
             MatterAccessModel.matter_id == matter_id,
             MatterAccessModel.user_id == current_user.id,
-            MatterAccessModel.access_role.in_(["lead_attorney", "partner"])
+            MatterAccessModel.access_role.in_(["lead_consultant", "partner"])
         )
     )
     manager_result = await db.execute(manager_query)
@@ -521,11 +523,11 @@ async def revoke_matter_access(
         )
     
     # Don't allow removing the last lead attorney
-    if access_record.access_role == "lead_attorney":
+    if access_record.access_role == "lead_consultant":
         lead_count_query = select(func.count()).where(
             and_(
                 MatterAccessModel.matter_id == matter_id,
-                MatterAccessModel.access_role == "lead_attorney"
+                MatterAccessModel.access_role == "lead_consultant"
             )
         )
         lead_count_result = await db.execute(lead_count_query)

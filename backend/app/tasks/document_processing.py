@@ -8,7 +8,7 @@ from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.db.session import async_session_factory
 from app.services.document_processor import DocumentProcessor
-from app.models.models import Document, Matter
+from app.models.models import Document, Claim as Matter
 
 logger = logging.getLogger(__name__)
 

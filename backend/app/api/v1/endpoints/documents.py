@@ -19,7 +19,7 @@ from app.schemas.documents import (
     PleadingUpload, CorrespondenceUpload, DiscoveryUpload, ExhibitUpload,
     DocumentDownloadResponse, FileValidationResult, DocumentUpdate
 )
-from app.models.models import Document as DocumentModel, Matter, MatterAccess, User
+from app.models.models import Document as DocumentModel, Claim as Matter, ClaimAccess as MatterAccess, User
 from app.api.deps import get_current_user
 from app.services.storage import storage_service
 from app.services.document_intelligence import document_intelligence_service
@@ -656,9 +656,9 @@ async def list_documents(
     query = (
         select(
             DocumentModel,
-            Matter.matter_number,
-            Matter.client_name,
-            Matter.matter_status
+            Matter.claim_number,
+            Matter.company_name,
+            Matter.claim_status
         )
         .join(Matter, DocumentModel.matter_id == Matter.id)
         .join(MatterAccess, Matter.id == MatterAccess.matter_id)
@@ -713,11 +713,11 @@ async def list_documents(
     # Build DocumentWithMatter objects from query results
     documents_with_matter = []
     for row in rows:
-        doc, matter_number, client_name, matter_status = row
+        doc, claim_number, company_name, claim_status = row
         doc_dict = Document.model_validate(doc).model_dump()
-        doc_dict['matter_number'] = matter_number
-        doc_dict['client_name'] = client_name
-        doc_dict['matter_status'] = matter_status
+        doc_dict['matter_number'] = claim_number
+        doc_dict['client_name'] = company_name
+        doc_dict['matter_status'] = claim_status
         documents_with_matter.append(DocumentWithMatter(**doc_dict))
 
     # Calculate pagination info
@@ -916,8 +916,8 @@ async def check_for_duplicates(
                     "document_title": doc.document_title,
                     "document_type": doc.document_type,
                     "matter_id": str(doc.matter_id),
-                    "matter_number": matter.matter_number if matter else "Unknown",
-                    "client_name": matter.client_name if matter else "Unknown",
+                    "matter_number": matter.claim_number if matter else "Unknown",
+                    "client_name": matter.company_name if matter else "Unknown",
                     "upload_date": doc.created_at.isoformat(),
                     "filename": doc.filename,
                     "file_size": doc.file_size_bytes
