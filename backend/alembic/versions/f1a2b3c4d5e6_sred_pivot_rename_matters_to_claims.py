@@ -1,7 +1,7 @@
 """sred_pivot_rename_matters_to_claims
 
 Revision ID: f1a2b3c4d5e6
-Revises: 719388e67d8c
+Revises: a1b2c3d4e5f7
 Create Date: 2025-01-14 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision = 'f1a2b3c4d5e6'
-down_revision = '719388e67d8c'
+down_revision = 'a1b2c3d4e5f7'
 branch_labels = None
 depends_on = None
 
