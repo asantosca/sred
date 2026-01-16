@@ -530,6 +530,7 @@ export interface T661SectionDraft {
 
 export interface T661Draft {
   claim_id: string
+  fiscal_year_start: string | null
   fiscal_year_end: string | null
   generated_at: string
   project_info: {

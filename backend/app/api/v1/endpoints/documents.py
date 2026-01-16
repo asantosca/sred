@@ -273,7 +273,7 @@ async def _process_document_upload(
     if not matter_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No upload permission for this matter"
+            detail="No upload permission for this claim"
         )
     
     # 2. Validate matter exists and belongs to user's company
@@ -289,7 +289,7 @@ async def _process_document_upload(
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found"
+            detail="Claim not found"
         )
     
     # 3. Read and validate file
@@ -1270,7 +1270,7 @@ async def delete_document(
     if not can_delete:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No delete permission for documents in this matter"
+            detail="No delete permission for documents in this claim"
         )
     
     # Delete file from storage

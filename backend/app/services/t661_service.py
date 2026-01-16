@@ -3,7 +3,8 @@
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -37,6 +38,11 @@ Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
 
+## Fiscal Year Period
+This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
+IMPORTANT: Focus ONLY on work, uncertainties, and objectives relevant to THIS fiscal year period.
+For multi-year projects, describe the uncertainties as they existed at the start of or during this fiscal year.
+
 ## Document Evidence (with source IDs)
 {document_excerpts}
 
@@ -65,6 +71,12 @@ Draft the section content only (aim for ~350 words), no additional commentary:""
 Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
+
+## Fiscal Year Period
+This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
+CRITICAL: ONLY describe work performed WITHIN this fiscal year period.
+For multi-year projects, focus exclusively on the portion of work done between these dates.
+Do NOT include work performed before {fiscal_year_start} or after {fiscal_year_end}.
 
 ## Document Evidence (with source IDs)
 {document_excerpts}
@@ -96,6 +108,11 @@ Draft the section content only (aim for ~700 words), no additional commentary:""
 Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
+
+## Fiscal Year Period
+This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
+IMPORTANT: Focus ONLY on advancements achieved or attempted during THIS fiscal year period.
+For multi-year projects, describe what was learned or achieved between these dates.
 
 ## Document Evidence (with source IDs)
 {document_excerpts}
@@ -232,11 +249,16 @@ class T661DraftService:
         # Calculate completeness score
         completeness = self._calculate_completeness(sections)
 
+        # Calculate fiscal year dates
+        fiscal_year_start = None
+        if claim.fiscal_year_end:
+            fiscal_year_start = claim.fiscal_year_end - relativedelta(years=1) + timedelta(days=1)
+
         # Build project info from claim
         project_info = T661ProjectInfo(
             project_title=f"{claim.company_name} - {claim.claim_number}",
             field_of_science=claim.project_type,
-            start_date=None,  # Would need to extract from documents
+            start_date=fiscal_year_start,
             end_date=claim.fiscal_year_end,
             project_description=claim.description
         )
@@ -244,6 +266,7 @@ class T661DraftService:
         # Build the draft response
         draft = T661Draft(
             claim_id=claim_id,
+            fiscal_year_start=fiscal_year_start,
             fiscal_year_end=claim.fiscal_year_end,
             generated_at=datetime.utcnow(),
             project_info=project_info,
@@ -392,10 +415,25 @@ class T661DraftService:
         if not prompt_template:
             raise ValueError(f"No prompt template for section {section_key}")
 
+        # Calculate fiscal year dates
+        # Fiscal year end is stored on the claim
+        # Fiscal year start is typically 1 year before the end + 1 day
+        if claim.fiscal_year_end:
+            fiscal_year_end = claim.fiscal_year_end
+            fiscal_year_start = fiscal_year_end - relativedelta(years=1) + timedelta(days=1)
+            fiscal_year_start_str = fiscal_year_start.strftime("%B %d, %Y")
+            fiscal_year_end_str = fiscal_year_end.strftime("%B %d, %Y")
+        else:
+            # Fall back to opened_date if fiscal_year_end not set
+            fiscal_year_start_str = claim.opened_date.strftime("%B %d, %Y") if claim.opened_date else "Not specified"
+            fiscal_year_end_str = "Not specified"
+
         prompt = prompt_template.format(
             company_name=claim.company_name,
             claim_number=claim.claim_number,
             project_type=claim.project_type or "Not specified",
+            fiscal_year_start=fiscal_year_start_str,
+            fiscal_year_end=fiscal_year_end_str,
             document_excerpts=document_excerpts
         )
 

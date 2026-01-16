@@ -165,7 +165,17 @@ export function T661DraftModal({
               <h2 className="text-lg font-semibold text-gray-900">
                 T661 Draft - {companyName}
               </h2>
-              <p className="text-sm text-gray-500">Claim: {claimNumber}</p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span>Claim: {claimNumber}</span>
+                {draft?.fiscal_year_start && draft?.fiscal_year_end && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <span>
+                      Fiscal Year: {new Date(draft.fiscal_year_start).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })} to {new Date(draft.fiscal_year_end).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <button

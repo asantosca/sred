@@ -123,7 +123,7 @@ async def create_matter(
     if existing_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Matter number already exists in your organization"
+            detail="Claim number already exists in your organization"
         )
     
     # Create matter
@@ -161,7 +161,7 @@ async def get_matter(
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific matter by ID with current user's permissions."""
-    # Check if user has access to this matter and get their permissions
+    # Check if user has access to this claim and get their permissions
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.claim_id == matter_id,
@@ -174,7 +174,7 @@ async def get_matter(
     if not user_access:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found or access denied"
+            detail="Claim not found or access denied"
         )
 
     # Get matter with details
@@ -185,7 +185,7 @@ async def get_matter(
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found"
+            detail="Claim not found"
         )
 
     # Add additional details including user's permissions
@@ -211,7 +211,7 @@ async def update_matter(
     db: AsyncSession = Depends(get_db)
 ):
     """Update a matter. Requires edit access."""
-    # Check if user has edit access to this matter
+    # Check if user has edit access to this claim
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.claim_id == matter_id,
@@ -223,7 +223,7 @@ async def update_matter(
     if not access_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No edit access to this matter"
+            detail="No edit access to this claim"
         )
     
     # Get matter
@@ -234,7 +234,7 @@ async def update_matter(
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found"
+            detail="Claim not found"
         )
     
     # Update matter
@@ -258,10 +258,10 @@ async def delete_matter(
     """
     Delete a matter. Requires delete access.
 
-    Cannot delete matters that have linked conversations or billable sessions.
+    Cannot delete claims that have linked conversations or billable sessions.
     User must first delete or unlink those resources.
     """
-    # Check if user has delete access to this matter
+    # Check if user has delete access to this claim
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.claim_id == matter_id,
@@ -273,7 +273,7 @@ async def delete_matter(
     if not access_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No delete access to this matter"
+            detail="No delete access to this claim"
         )
 
     # Get matter
@@ -284,7 +284,7 @@ async def delete_matter(
     if not matter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found"
+            detail="Claim not found"
         )
 
     # Check for linked conversations
@@ -295,7 +295,7 @@ async def delete_matter(
     if conv_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete matter: {conv_count} conversation(s) are linked to this matter. Please delete or unlink them first."
+            detail=f"Cannot delete claim: {conv_count} conversation(s) are linked to this claim. Please delete or unlink them first."
         )
 
     # Check for linked billable sessions
@@ -306,7 +306,7 @@ async def delete_matter(
     if session_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete matter: {session_count} billable session(s) are linked to this matter. Please delete or unlink them first."
+            detail=f"Cannot delete claim: {session_count} billable session(s) are linked to this claim. Please delete or unlink them first."
         )
 
     # Delete matter (cascade will handle documents and matter_access)
@@ -322,7 +322,7 @@ async def list_matter_access(
     db: AsyncSession = Depends(get_db)
 ):
     """List all users with access to a matter."""
-    # Check if user has access to this matter
+    # Check if user has access to this claim
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.claim_id == matter_id,
@@ -333,7 +333,7 @@ async def list_matter_access(
     if not access_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Matter not found or access denied"
+            detail="Claim not found or access denied"
         )
     
     # Get matter details
@@ -341,7 +341,7 @@ async def list_matter_access(
     matter_result = await db.execute(matter_query)
     matter = matter_result.scalar()
     
-    # Get all access records for this matter
+    # Get all access records for this claim
     access_query = (
         select(MatterAccessModel)
         .where(MatterAccessModel.claim_id == matter_id)
@@ -376,7 +376,7 @@ async def grant_matter_access(
     db: AsyncSession = Depends(get_db)
 ):
     """Grant access to a matter for a user."""
-    # Check if current user has access to manage this matter
+    # Check if current user has access to manage this claim
     access_query = select(MatterAccessModel).where(
         and_(
             MatterAccessModel.claim_id == matter_id,
@@ -388,7 +388,7 @@ async def grant_matter_access(
     if not access_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No permission to manage access for this matter"
+            detail="No permission to manage access for this claim"
         )
     
     # Check if user already has access
@@ -402,7 +402,7 @@ async def grant_matter_access(
     if existing_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already has access to this matter"
+            detail="User already has access to this claim"
         )
     
     # Verify target user exists and is in same company
@@ -453,7 +453,7 @@ async def update_matter_access(
     if not manager_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No permission to manage access for this matter"
+            detail="No permission to manage access for this claim"
         )
     
     # Get access record
@@ -503,7 +503,7 @@ async def revoke_matter_access(
     if not manager_result.scalar():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No permission to manage access for this matter"
+            detail="No permission to manage access for this claim"
         )
     
     # Get access record
@@ -534,7 +534,7 @@ async def revoke_matter_access(
         if lead_count_result.scalar() <= 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot remove the last lead attorney from a matter"
+                detail="Cannot remove the last lead consultant from a claim"
             )
     
     # Delete access record

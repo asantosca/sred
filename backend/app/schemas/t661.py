@@ -82,7 +82,8 @@ class T661DraftRequest(BaseModel):
 class T661Draft(BaseModel):
     """Complete T661 form draft"""
     claim_id: UUID
-    fiscal_year_end: Optional[date] = None
+    fiscal_year_start: Optional[date] = Field(None, description="Fiscal year start date for this claim")
+    fiscal_year_end: Optional[date] = Field(None, description="Fiscal year end date for this claim")
     generated_at: datetime
 
     # Project information (Part 2)

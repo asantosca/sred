@@ -54,9 +54,11 @@ _Demonstrate core value proposition to PwC_
 - [x] Usage tracking
 
 ### SR&ED-Specific Features
-- [ ] AI prompts tuned for SR&ED domain
+- [x] AI prompts tuned for SR&ED domain
 - [ ] Eligibility report generation
-- [ ] T661 form drafting (Parts 3, 4, 5, 6)
+- [x] T661 form drafting (Box 242, 244, 246 - aligned with CRA nomenclature)
+- [x] Fiscal year filtering for multi-year projects (AI extracts work within claim period)
+- [x] Claim date validation (fiscal year end in past, opened after FYE, within 18-month CRA deadline)
 - [ ] Project timeline with R&D milestones
 - [ ] Five-question test analysis
 
@@ -131,16 +133,16 @@ _Full rollout to PwC SR&ED practice_
 ### Supported for POC
 | Type | Extension | Use Case |
 |------|-----------|----------|
-| PDF | .pdf | Technical reports, formal documentation |
+| PDF | .pdf | Technical reports, formal documentation (up to 500MB) |
 | Word | .docx | Project plans, meeting notes |
 | Text | .txt | Plain text documents |
+| Images | .png, .jpg, .tiff | Scanned lab notebooks, diagrams (with OCR) |
 
 ### Planned for Beta
 | Type | Extension | Use Case |
 |------|-----------|----------|
 | Excel | .xlsx | Timesheets, financial data |
 | PowerPoint | .pptx | Project presentations |
-| Images | .png, .jpg | Lab photos, diagrams |
 
 ---
 

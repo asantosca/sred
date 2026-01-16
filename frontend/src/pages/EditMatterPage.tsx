@@ -23,6 +23,9 @@ const PROJECT_TYPES = [
   'Other',
 ] as const
 
+// SR&ED filing deadline is 18 months from fiscal year end
+const SRED_FILING_DEADLINE_MONTHS = 18
+
 const editClaimSchema = z.object({
   claim_number: z.string().min(1, 'Claim number is required'),
   company_name: z.string().min(1, 'Company name is required'),
@@ -31,7 +34,45 @@ const editClaimSchema = z.object({
   description: z.string().optional(),
   opened_date: z.string().min(1, 'Opened date is required'),
   closed_date: z.string().optional(),
-})
+  fiscal_year_end: z.string().min(1, 'Fiscal year end is required'),
+}).refine(
+  (data) => {
+    if (!data.fiscal_year_end) return true
+    const fiscalEnd = new Date(data.fiscal_year_end)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Compare dates only
+    return fiscalEnd <= today
+  },
+  {
+    message: 'Fiscal year end cannot be in the future (claims are for completed fiscal years)',
+    path: ['fiscal_year_end'],
+  }
+).refine(
+  (data) => {
+    if (!data.fiscal_year_end || !data.opened_date) return true
+    const fiscalEnd = new Date(data.fiscal_year_end)
+    const opened = new Date(data.opened_date)
+    return opened >= fiscalEnd
+  },
+  {
+    message: 'Opened date must be on or after the fiscal year end (claims are for completed fiscal years)',
+    path: ['opened_date'],
+  }
+).refine(
+  (data) => {
+    if (!data.fiscal_year_end || !data.opened_date) return true
+    const fiscalEnd = new Date(data.fiscal_year_end)
+    const opened = new Date(data.opened_date)
+    // Calculate 18 months from fiscal year end
+    const deadline = new Date(fiscalEnd)
+    deadline.setMonth(deadline.getMonth() + SRED_FILING_DEADLINE_MONTHS)
+    return opened <= deadline
+  },
+  {
+    message: `Opened date must be within ${SRED_FILING_DEADLINE_MONTHS} months of fiscal year end (CRA filing deadline)`,
+    path: ['opened_date'],
+  }
+)
 
 type EditClaimFormData = z.infer<typeof editClaimSchema>
 
@@ -75,6 +116,7 @@ export default function EditMatterPage() {
         description: matterData.description || '',
         opened_date: matterData.opened_date.split('T')[0],
         closed_date: matterData.closed_date?.split('T')[0] || '',
+        fiscal_year_end: matterData.fiscal_year_end?.split('T')[0] || '',
       })
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claim')
@@ -92,6 +134,7 @@ export default function EditMatterPage() {
         ...data,
         closed_date: data.closed_date || null,
         description: data.description || null,
+        fiscal_year_end: data.fiscal_year_end || null,
       }
 
       await mattersApi.update(matterId!, submitData)
@@ -246,12 +289,22 @@ export default function EditMatterPage() {
               )}
             </div>
 
-            {/* Dates */}
+            {/* Fiscal Year End - Critical for SR&ED */}
+            <Input
+              label="Fiscal Year End"
+              type="date"
+              error={errors.fiscal_year_end?.message}
+              helperText="The end of the company's fiscal year for this SR&ED claim (determines eligible work period)"
+              {...register('fiscal_year_end')}
+            />
+
+            {/* Administrative Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="Opened Date"
                 type="date"
                 error={errors.opened_date?.message}
+                helperText="When you started working on this claim"
                 {...register('opened_date')}
               />
 
