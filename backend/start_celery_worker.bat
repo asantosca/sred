@@ -1,5 +1,5 @@
 @echo off
-REM Start Celery worker for BC Legal Tech
+REM Start Celery worker for SR&ED Intelligence
 
 echo Starting Celery worker...
 echo.

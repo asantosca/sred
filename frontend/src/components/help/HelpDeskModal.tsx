@@ -102,10 +102,10 @@ export default function HelpDeskModal({ isOpen, onClose }: HelpDeskModalProps) {
             <div className="flex h-full flex-col items-center justify-center text-center">
               <HelpCircle className="mb-3 h-12 w-12 text-gray-300" />
               <p className="text-sm text-gray-500">
-                Ask me anything about using BC Legal Tech!
+                Ask me anything about using SR&ED Intelligence Platform!
               </p>
               <p className="mt-2 text-xs text-gray-400">
-                Examples: "How do I upload a document?" or "What is a matter?"
+                Examples: "How do I upload a document?" or "What is a claim?"
               </p>
             </div>
           )}

@@ -16,16 +16,16 @@ export default function MatterSelectorCompact({
   onChange,
   disabled = false,
 }: MatterSelectorCompactProps) {
-  // Fetch claims list
+  // Fetch claims list (all statuses for chat context)
   const { data: mattersResponse, isLoading } = useQuery({
-    queryKey: ['matters', 'active'],
+    queryKey: ['matters', 'all'],
     queryFn: async () => {
-      const response = await mattersApi.list({ status: 'active' })
+      const response = await mattersApi.list({})
       return response.data
     },
   })
 
-  const matters = mattersResponse?.matters || []
+  const matters = mattersResponse?.claims || []
 
   if (isLoading) {
     return (
@@ -52,7 +52,7 @@ export default function MatterSelectorCompact({
         <option value="">AI Discovery (general assistance)</option>
         {matters.map((matter: Matter) => (
           <option key={matter.id} value={matter.id}>
-            {matter.matter_number} - {matter.client_name}
+            {matter.claim_number} - {matter.company_name}
           </option>
         ))}
       </select>

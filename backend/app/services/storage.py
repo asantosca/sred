@@ -78,10 +78,10 @@ class StorageService:
         """
         errors = []
         
-        # Check file size (50MB limit)
-        max_size = 50 * 1024 * 1024  # 50MB in bytes
+        # Check file size (500MB limit for large SR&ED documents)
+        max_size = 500 * 1024 * 1024  # 500MB in bytes
         if file_size > max_size:
-            errors.append(f"File size ({file_size:,} bytes) exceeds maximum allowed size (50MB)")
+            errors.append(f"File size ({file_size:,} bytes) exceeds maximum allowed size (500MB)")
         
         # Check file extension
         allowed_extensions = {

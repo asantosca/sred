@@ -5,6 +5,7 @@ AI-powered document intelligence platform for SR&ED (Scientific Research and Exp
 ## Overview
 
 This platform helps PwC SR&ED consultants:
+
 - Upload and analyze client project documentation
 - Chat with AI that understands SR&ED eligibility requirements
 - Generate eligibility assessment reports
@@ -57,12 +58,12 @@ sred/
 
 ## Development URLs
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| API Docs (Swagger) | http://localhost:8000/docs |
-| MailHog (email testing) | http://localhost:8025 |
+| Service                 | URL                        |
+| ----------------------- | -------------------------- |
+| Frontend                | http://localhost:3000      |
+| Backend API             | http://localhost:8000      |
+| API Docs (Swagger)      | http://localhost:8000/docs |
+| MailHog (email testing) | http://localhost:8025      |
 
 ## Key Features
 
@@ -81,3 +82,8 @@ sred/
 - [docs/SRED_DOMAIN.md](./docs/SRED_DOMAIN.md) - SR&ED terminology guide
 - [backend/README.md](./backend/README.md) - Backend architecture
 - [frontend/README.md](./frontend/README.md) - Frontend guide
+
+Boxes 3 and 4 go together
+
+Generate T661 for all 3 projects
+Warn when doc contains something outside of the date interval

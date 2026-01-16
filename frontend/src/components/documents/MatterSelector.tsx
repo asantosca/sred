@@ -15,10 +15,10 @@ interface MatterSelectorProps {
 export default function MatterSelector({ value, onChange, error }: MatterSelectorProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [createFormData, setCreateFormData] = useState<MatterCreate>({
-    matter_number: '',
-    client_name: '',
-    matter_type: '',
-    matter_status: 'active',
+    claim_number: '',
+    company_name: '',
+    project_type: '',
+    claim_status: 'draft',
     description: '',
     opened_date: new Date().toISOString().split('T')[0],
   })
@@ -35,7 +35,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
     },
   })
 
-  const matters = mattersResponse?.matters || []
+  const matters = mattersResponse?.claims || []
 
   // Create claim mutation
   const createMutation = useMutation({
@@ -46,10 +46,10 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
       onChange(newMatter.id)
       setShowCreateForm(false)
       setCreateFormData({
-        matter_number: '',
-        client_name: '',
-        matter_type: '',
-        matter_status: 'active',
+        claim_number: '',
+        company_name: '',
+        project_type: '',
+        claim_status: 'draft',
         description: '',
         opened_date: new Date().toISOString().split('T')[0],
       })
@@ -64,7 +64,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
   const handleCreateSubmit = () => {
     // Validate required fields
-    if (!createFormData.matter_number || !createFormData.client_name || !createFormData.matter_type || !createFormData.opened_date) {
+    if (!createFormData.claim_number || !createFormData.company_name || !createFormData.project_type || !createFormData.opened_date) {
       setCreateError('Please fill in all required fields')
       return
     }
@@ -102,7 +102,7 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
               <option value="">Select a claim...</option>
               {matters.map((matter: Matter) => (
                 <option key={matter.id} value={matter.id}>
-                  {matter.matter_number} - {matter.client_name}
+                  {matter.claim_number} - {matter.company_name}
                 </option>
               ))}
             </select>
@@ -139,11 +139,11 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                 <input
                   type="text"
                   required
-                  value={createFormData.matter_number}
+                  value={createFormData.claim_number}
                   onChange={(e) =>
                     setCreateFormData({
                       ...createFormData,
-                      matter_number: e.target.value,
+                      claim_number: e.target.value,
                     })
                   }
                   placeholder="e.g., 2024-001"
@@ -158,11 +158,11 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                 <input
                   type="text"
                   required
-                  value={createFormData.client_name}
+                  value={createFormData.company_name}
                   onChange={(e) =>
                     setCreateFormData({
                       ...createFormData,
-                      client_name: e.target.value,
+                      company_name: e.target.value,
                     })
                   }
                   placeholder="e.g., Acme Corp"
@@ -177,11 +177,11 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
                 <input
                   type="text"
                   required
-                  value={createFormData.matter_type}
+                  value={createFormData.project_type}
                   onChange={(e) =>
                     setCreateFormData({
                       ...createFormData,
-                      matter_type: e.target.value,
+                      project_type: e.target.value,
                     })
                   }
                   placeholder="e.g., Software Development, Engineering"

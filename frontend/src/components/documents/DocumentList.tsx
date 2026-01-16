@@ -146,11 +146,11 @@ export default function DocumentList({ matterId }: DocumentListProps) {
   const filteredDocuments = documents.filter((doc: DocumentWithMatter) =>
     doc.document_title.toLowerCase().includes(searchLower) ||
     doc.original_filename.toLowerCase().includes(searchLower) ||
-    doc.client_name.toLowerCase().includes(searchLower) ||
+    doc.company_name.toLowerCase().includes(searchLower) ||
     (doc.description && doc.description.toLowerCase().includes(searchLower))
   )
 
-  const matters = mattersResponse?.matters || []
+  const matters = mattersResponse?.claims || []
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -224,10 +224,10 @@ export default function DocumentList({ matterId }: DocumentListProps) {
               }}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             >
-              <option value="">All matters</option>
+              <option value="">All claims</option>
               {matters.map((matter: any) => (
                 <option key={matter.id} value={matter.id}>
-                  {matter.matter_number} - {matter.client_name}
+                  {matter.claim_number} - {matter.company_name}
                 </option>
               ))}
             </select>
@@ -290,7 +290,7 @@ export default function DocumentList({ matterId }: DocumentListProps) {
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-600">
                       <div className="flex items-center">
                         <Building2 className="h-3 w-3 mr-1" />
-                        {document.matter_number} - {document.client_name}
+                        {document.claim_number} - {document.company_name}
                       </div>
                       <div className="flex items-center">
                         <FileType className="h-3 w-3 mr-1" />

@@ -1,4 +1,4 @@
-# app/core/config.py - Simple configuration for BC Legal Tech
+# app/core/config.py - Simple configuration for SR&ED Intelligence
 
 import os
 from typing import List, Optional
@@ -17,7 +17,7 @@ class Settings:
     )
     
     # Basic app settings
-    PROJECT_NAME: str = "BC Legal Tech"
+    PROJECT_NAME: str = "SR&ED Intelligence"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
@@ -62,7 +62,7 @@ class Settings:
     SMTP_TLS: bool = os.getenv("SMTP_TLS", "false").lower() == "true"
     SMTP_SSL: bool = os.getenv("SMTP_SSL", "false").lower() == "true"
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@bclegaltech.com")
-    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "BC Legal Tech")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "SR&ED Intelligence")
 
     # OpenAI settings (for embeddings)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")

@@ -17,7 +17,7 @@ export default function DocumentsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
             <p className="mt-1 text-sm text-gray-600">
-              Upload and manage your legal documents
+              Upload and manage your project documents
             </p>
           </div>
           <button

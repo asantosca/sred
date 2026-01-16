@@ -6,16 +6,21 @@ import os
 from pathlib import Path
 
 
-def setup_logging(log_level: str = "INFO", log_dir: str = "logs"):
+def setup_logging(log_level: str = "INFO", log_dir: str = None):
     """
     Configure logging to output to both console and rotating file.
 
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_dir: Directory to store log files (relative to backend folder)
+        log_dir: Directory to store log files (defaults to backend/logs)
     """
-    # Create logs directory if it doesn't exist
-    log_path = Path(log_dir)
+    # Use absolute path based on this file's location
+    if log_dir is None:
+        backend_dir = Path(__file__).parent.parent.parent  # app/core -> app -> backend
+        log_path = backend_dir / "logs"
+    else:
+        log_path = Path(log_dir)
+
     log_path.mkdir(exist_ok=True)
 
     # Define log format

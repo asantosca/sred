@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class TextExtractionService:
     """Service for extracting text from various document formats."""
 
-    # Maximum file size to process (100 MB)
-    MAX_FILE_SIZE = 100 * 1024 * 1024
+    # Maximum file size to process (500 MB for large SR&ED documents)
+    MAX_FILE_SIZE = 500 * 1024 * 1024
 
     # Supported image extensions for OCR
     IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.tiff', '.tif'}

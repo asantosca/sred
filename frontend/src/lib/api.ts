@@ -232,7 +232,6 @@ import type {
   ConversationListResponse,
   ConversationWithMessages,
   ConversationUpdate,
-  MessageFeedback,
   Conversation,
 } from '@/types/chat'
 
@@ -501,6 +500,101 @@ export const timelineApi = {
   // Delete event
   delete: (eventId: string) =>
     api.delete(`/timeline/${eventId}`),
+}
+
+// T661 API endpoints
+export interface SourceCitation {
+  citation_id: number
+  document_id: string
+  document_title: string
+  chunk_id: string | null
+  page_number: number | null
+  excerpt: string
+  relevance_score: number
+}
+
+export interface T661SectionDraft {
+  section: string
+  section_name: string
+  draft_content: string
+  word_count: number
+  word_limit: number
+  is_over_limit: boolean
+  words_over: number
+  sources: SourceCitation[]
+  sources_cited: string[]
+  evidence_strength: 'strong' | 'moderate' | 'weak' | 'insufficient'
+  confidence_notes: string | null
+  needs_review: boolean
+}
+
+export interface T661Draft {
+  claim_id: string
+  fiscal_year_end: string | null
+  generated_at: string
+  project_info: {
+    project_title: string | null
+    field_of_science: string | null
+    start_date: string | null
+    end_date: string | null
+    project_description: string | null
+  } | null
+  sections: T661SectionDraft[]
+  overall_completeness: number
+  missing_information: string[]
+  model_name: string
+  input_token_count: number
+  output_token_count: number
+  documents_analyzed: number
+}
+
+export interface T661DraftResponse {
+  success: boolean
+  draft: T661Draft | null
+  error: string | null
+}
+
+export interface T661StreamlineRequest {
+  section: string
+  current_content: string
+  target_words?: number
+  preserve_citations?: boolean
+}
+
+export interface T661StreamlineResponse {
+  section: string
+  original_content: string
+  streamlined_content: string
+  original_word_count: number
+  new_word_count: number
+  words_reduced: number
+  target_word_count: number
+  is_within_limit: boolean
+  citations_preserved: boolean
+  citations_in_original: number
+  citations_in_result: number
+}
+
+export const t661Api = {
+  // Generate T661 draft
+  generateDraft: (claimId: string, sections?: string[]) =>
+    api.post<T661DraftResponse>(`/claims/${claimId}/t661-draft`, {
+      sections: sections || ['box242', 'box244', 'box246']
+    }),
+
+  // Streamline a section
+  streamlineSection: (claimId: string, request: T661StreamlineRequest) =>
+    api.post<T661StreamlineResponse>(`/claims/${claimId}/t661-streamline`, request),
+
+  // Get section definitions with word limits
+  getSections: () =>
+    api.get<{
+      sections: Array<{ key: string; name: string; word_limit: number }>
+    }>('/claims/t661-sections'),
+
+  // Get word limits
+  getWordLimits: () =>
+    api.get<{ word_limits: Record<string, number> }>('/claims/t661-word-limits'),
 }
 
 export default api

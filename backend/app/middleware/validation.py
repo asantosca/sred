@@ -40,8 +40,8 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
     # Compile patterns for performance
     COMPILED_PATTERNS = [re.compile(pattern, re.IGNORECASE) for pattern in SUSPICIOUS_PATTERNS]
 
-    # Maximum request body size (50MB - same as upload limit)
-    MAX_BODY_SIZE = 50 * 1024 * 1024
+    # Maximum request body size (500MB - for large SR&ED documents)
+    MAX_BODY_SIZE = 500 * 1024 * 1024
 
     async def dispatch(self, request: Request, call_next):
         """Process request through validation middleware"""

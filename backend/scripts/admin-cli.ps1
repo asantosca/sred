@@ -1,4 +1,4 @@
-# BC Legal Tech - Admin CLI
+# SR&ED Intelligence - Admin CLI
 # Interactive script for testing admin endpoints
 
 param(
@@ -10,7 +10,7 @@ $global:AdminToken = $null
 function Write-Header {
     Clear-Host
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  BC Legal Tech - Admin CLI" -ForegroundColor Cyan
+    Write-Host "  SR&ED Intelligence - Admin CLI" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 }

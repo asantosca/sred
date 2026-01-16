@@ -1,4 +1,4 @@
-# app/services/email.py - Email service for BC Legal Tech
+# app/services/email.py - Email service for SR&ED Intelligence
 
 import smtplib
 from email.mime.text import MIMEText
@@ -158,14 +158,14 @@ class EmailService:
             <div class="container">
                 <h2>Confirm Your Email Address</h2>
                 <p>{greeting}</p>
-                <p>Thank you for registering your company with BC Legal Tech!</p>
+                <p>Thank you for registering your company with SR&ED Intelligence!</p>
                 <p>To complete your registration and activate your account, please confirm your email by clicking the button below:</p>
                 <a href="{confirm_url}" class="button">Confirm your email</a>
                 <p>Or copy and paste this link into your browser:</p>
                 <p><a href="{confirm_url}">{confirm_url}</a></p>
                 <p><strong>This link will expire in {expiry}.</strong></p>
                 <div class="footer">
-                    <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
+                    <p>SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis</p>
                     <p>This is an automated email, please do not reply.</p>
                 </div>
             </div>
@@ -176,23 +176,23 @@ class EmailService:
         text_body = f"""
         {greeting}
 
-        Thank you for registering your company with BC Legal Tech!
+        Thank you for registering your company with SR&ED Intelligence!
 
         To complete your registration and activate your account, please set your password by clicking this link:
         {confirm_url}
 
         This link will expire in 1 hour.
 
-        Once you set your password, you'll be able to log in and start using BC Legal Tech.
+        Once you set your password, you'll be able to log in and start using SR&ED Intelligence.
 
         ---
-        BC Legal Tech - AI-Powered Legal Document Intelligence
+        SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis
         This is an automated email, please do not reply.
         """
 
         return await self.send_email(
             to_email=to_email,
-            subject="Confirm Your Email - BC Legal Tech",
+            subject="Confirm Your Email - SR&ED Intelligence",
             html_body=html_body,
             text_body=text_body,
         )
@@ -255,7 +255,7 @@ class EmailService:
             <div class="container">
                 <h2>Password Reset Request</h2>
                 <p>{greeting}</p>
-                <p>We received a request to reset your password for your BC Legal Tech account.</p>
+                <p>We received a request to reset your password for your SR&ED Intelligence account.</p>
                 <p>Click the button below to reset your password:</p>
                 <a href="{reset_url}" class="button">Reset Password</a>
                 <p>Or copy and paste this link into your browser:</p>
@@ -263,7 +263,7 @@ class EmailService:
                 <p><strong>This link will expire in 1 hour.</strong></p>
                 <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
                 <div class="footer">
-                    <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
+                    <p>SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis</p>
                     <p>This is an automated email, please do not reply.</p>
                 </div>
             </div>
@@ -274,7 +274,7 @@ class EmailService:
         text_body = f"""
         {greeting}
 
-        We received a request to reset your password for your BC Legal Tech account.
+        We received a request to reset your password for your SR&ED Intelligence account.
 
         Click this link to reset your password:
         {reset_url}
@@ -284,13 +284,13 @@ class EmailService:
         If you didn't request a password reset, you can safely ignore this email.
 
         ---
-        BC Legal Tech - AI-Powered Legal Document Intelligence
+        SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis
         This is an automated email, please do not reply.
         """
 
         return await self.send_email(
             to_email=to_email,
-            subject="Reset Your Password - BC Legal Tech",
+            subject="Reset Your Password - SR&ED Intelligence",
             html_body=html_body,
             text_body=text_body,
         )
@@ -308,7 +308,7 @@ class EmailService:
         Args:
             to_email: Invitee's email address
             invited_by: Name of person who sent invitation
-            company_name: Name of the company/law firm
+            company_name: Name of the client company
             invitation_token: Password reset token for setting password
 
         Returns:
@@ -352,15 +352,15 @@ class EmailService:
         </head>
         <body>
             <div class="container">
-                <h2>You've Been Invited to BC Legal Tech</h2>
+                <h2>You've Been Invited to SR&ED Intelligence</h2>
                 <p>Hi,</p>
-                <p><strong>{invited_by}</strong> has invited you to join <strong>{company_name}</strong> on BC Legal Tech.</p>
-                <p>BC Legal Tech is an AI-powered legal document intelligence platform that helps law firms:</p>
+                <p><strong>{invited_by}</strong> has invited you to join <strong>{company_name}</strong> on SR&ED Intelligence.</p>
+                <p>SR&ED Intelligence is an AI-powered platform that helps PwC consultants:</p>
                 <ul>
-                    <li>Upload and organize legal documents</li>
-                    <li>Chat with your documents using AI</li>
-                    <li>Get instant answers with cited sources</li>
-                    <li>Collaborate with your team</li>
+                    <li>Analyze SR&ED claims with AI assistance</li>
+                    <li>Search documents with semantic and keyword search</li>
+                    <li>Generate T661 form drafts and eligibility reports</li>
+                    <li>Track consulting hours and billable time</li>
                 </ul>
                 <p>Click the button below to set your password and activate your account:</p>
                 <a href="{invitation_url}" class="button">Set Your Password</a>
@@ -368,7 +368,7 @@ class EmailService:
                 <p><a href="{invitation_url}">{invitation_url}</a></p>
                 <p><strong>This invitation will expire in 1 hour.</strong></p>
                 <div class="footer">
-                    <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
+                    <p>SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis</p>
                     <p>This is an automated email, please do not reply.</p>
                 </div>
             </div>
@@ -377,13 +377,13 @@ class EmailService:
         """
 
         text_body = f"""
-        You've Been Invited to BC Legal Tech
+        You've Been Invited to SR&ED Intelligence
 
         Hi,
 
-        {invited_by} has invited you to join {company_name} on BC Legal Tech.
+        {invited_by} has invited you to join {company_name} on SR&ED Intelligence.
 
-        BC Legal Tech is an AI-powered legal document intelligence platform.
+        SR&ED Intelligence is an AI-powered SR&ED tax credit analysis platform.
 
         Click this link to set your password and activate your account:
         {invitation_url}
@@ -391,13 +391,13 @@ class EmailService:
         This invitation will expire in 1 hour.
 
         ---
-        BC Legal Tech - AI-Powered Legal Document Intelligence
+        SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis
         This is an automated email, please do not reply.
         """
 
         return await self.send_email(
             to_email=to_email,
-            subject=f"Invitation to Join {company_name} on BC Legal Tech",
+            subject=f"Invitation to Join {company_name} on SR&ED Intelligence",
             html_body=html_body,
             text_body=text_body,
         )
@@ -451,20 +451,20 @@ class EmailService:
         </head>
         <body>
             <div class="container">
-                <h2>Welcome to BC Legal Tech!</h2>
+                <h2>Welcome to SR&ED Intelligence!</h2>
                 <p>Hi {user_name},</p>
-                <p>Welcome to BC Legal Tech! Your account for <strong>{company_name}</strong> has been created successfully.</p>
+                <p>Welcome to SR&ED Intelligence! Your account for <strong>{company_name}</strong> has been created successfully.</p>
                 <h3>Getting Started:</h3>
                 <ol>
-                    <li><strong>Upload Documents:</strong> Start by uploading your legal documents (PDF, Word, Excel)</li>
-                    <li><strong>AI Processing:</strong> Our AI will analyze and index your documents</li>
-                    <li><strong>Chat & Search:</strong> Ask questions and get answers with cited sources</li>
-                    <li><strong>Collaborate:</strong> Share documents and conversations with your team</li>
+                    <li><strong>Create a Claim:</strong> Start by creating an SR&ED claim for your client</li>
+                    <li><strong>Upload Documents:</strong> Add technical reports, timesheets, and project documentation</li>
+                    <li><strong>AI Analysis:</strong> Chat with your documents and generate eligibility reports</li>
+                    <li><strong>Draft T661:</strong> Generate draft responses for CRA T661 form sections</li>
                 </ol>
                 <a href="http://localhost:3000/dashboard" class="button">Go to Dashboard</a>
                 <p>If you have any questions, our support team is here to help.</p>
                 <div class="footer">
-                    <p>BC Legal Tech - AI-Powered Legal Document Intelligence</p>
+                    <p>SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis</p>
                     <p>This is an automated email, please do not reply.</p>
                 </div>
             </div>
@@ -473,28 +473,28 @@ class EmailService:
         """
 
         text_body = f"""
-        Welcome to BC Legal Tech!
+        Welcome to SR&ED Intelligence!
 
         Hi {user_name},
 
-        Welcome to BC Legal Tech! Your account for {company_name} has been created successfully.
+        Welcome to SR&ED Intelligence! Your account for {company_name} has been created successfully.
 
         Getting Started:
-        1. Upload Documents: Start by uploading your legal documents
-        2. AI Processing: Our AI will analyze and index your documents
-        3. Chat & Search: Ask questions and get answers with cited sources
-        4. Collaborate: Share documents and conversations with your team
+        1. Create a Claim: Start by creating an SR&ED claim for your client
+        2. Upload Documents: Add technical reports, timesheets, and project documentation
+        3. AI Analysis: Chat with your documents and generate eligibility reports
+        4. Draft T661: Generate draft responses for CRA T661 form sections
 
         Visit: http://localhost:3000/dashboard
 
         ---
-        BC Legal Tech - AI-Powered Legal Document Intelligence
+        SR&ED Intelligence - AI-Powered SR&ED Tax Credit Analysis
         This is an automated email, please do not reply.
         """
 
         return await self.send_email(
             to_email=to_email,
-            subject=f"Welcome to BC Legal Tech, {user_name}!",
+            subject=f"Welcome to SR&ED Intelligence, {user_name}!",
             html_body=html_body,
             text_body=text_body,
         )

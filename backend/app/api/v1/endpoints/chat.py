@@ -420,15 +420,15 @@ async def send_help_message(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Platform help chat - answers questions about using BC Legal Tech.
+    Platform help chat - answers questions about using SR&ED Intelligence.
 
     This endpoint provides quick answers about platform features and usage.
-    It does NOT search documents or provide legal advice.
+    It does NOT search documents or provide SR&ED advice.
 
     **Use cases**:
     - "How do I upload a document?"
-    - "What is a matter?"
-    - "How do I track billable hours?"
+    - "What is a claim?"
+    - "How do I track consulting hours?"
 
     **Rate limit**: 60 requests per minute
     """
@@ -441,19 +441,21 @@ async def send_help_message(
         response = await anthropic.messages.create(
             model="claude-3-5-haiku-20241022",  # Use faster/cheaper model for help
             max_tokens=500,
-            system="""You are a helpful assistant for BC Legal Tech, a legal document management platform for law firms in British Columbia.
+            system="""You are a helpful assistant for SR&ED Intelligence, an AI-powered platform that helps PwC consultants analyze SR&ED (Scientific Research and Experimental Development) tax credit claims.
 
 Answer questions about using the platform:
-- **Documents**: Upload PDF/DOCX/TXT files, organize by matter, search content
-- **Matters**: Cases/files to organize work, each with documents and access control
-- **Chat**: AI assistant that searches your documents (select a matter first for document search, or use AI Discovery for general questions)
-- **Billable Hours**: Track time spent on conversations, generate descriptions
-- **Timeline**: View events extracted from documents chronologically
+- **Documents**: Upload PDF/DOCX/TXT files, organize by claim, search content with hybrid semantic/keyword search
+- **Claims**: SR&ED claims for client companies, each with fiscal year, projects, documents, and team access
+- **Chat**: AI assistant that searches your documents (select a claim first for document search, or use AI Discovery for general SR&ED questions)
+- **T661 Drafting**: Generate draft responses for CRA T661 form sections with word count tracking
+- **Eligibility Reports**: AI-generated SR&ED eligibility assessments based on CRA's five-question test
+- **Consulting Hours**: Track time spent on conversations, generate descriptions for billing
+- **Timeline**: View R&D events and milestones extracted from documents chronologically
 - **Daily Briefings**: AI-generated summaries of recent activity
 
-Keep answers concise (2-3 sentences). If asked about legal questions (not platform usage), politely redirect them to use the main Chat feature with a matter selected.
+Keep answers concise (2-3 sentences). If asked about specific SR&ED claim details (not platform usage), politely redirect them to use the main Chat feature with a claim selected.
 
-Do NOT provide legal advice. You are only here to help with platform usage.""",
+Do NOT provide specific SR&ED tax advice. You are only here to help with platform usage.""",
             messages=[{"role": "user", "content": help_request.message}]
         )
 

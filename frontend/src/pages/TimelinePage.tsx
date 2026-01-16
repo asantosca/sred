@@ -18,7 +18,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  Edit2,
   Trash2,
   Eye,
 } from 'lucide-react'
@@ -190,7 +189,7 @@ export default function TimelinePage() {
                 <option value="">All claims</option>
                 {matters.map((matter: Matter) => (
                   <option key={matter.id} value={matter.id}>
-                    {matter.matter_number} - {matter.client_name}
+                    {matter.claim_number} - {matter.company_name}
                   </option>
                 ))}
               </select>

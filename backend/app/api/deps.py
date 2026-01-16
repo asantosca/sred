@@ -75,7 +75,7 @@ async def get_platform_admin_user(
 ) -> User:
     """
     FastAPI dependency to get current authenticated platform admin.
-    Platform admins are BC Legal Tech staff who can access all companies' data.
+    Platform admins are SR&ED Intelligence staff who can access all companies' data.
     Configured via PLATFORM_ADMIN_EMAILS environment variable.
     """
     if current_user.email.lower() not in settings.PLATFORM_ADMIN_EMAILS:

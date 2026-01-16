@@ -7,29 +7,31 @@ from uuid import UUID
 
 class MatterBase(BaseModel):
     """Base matter schema with common fields"""
-    matter_number: str = Field(..., min_length=1, max_length=50, description="Unique matter number")
-    client_name: str = Field(..., min_length=1, max_length=255, description="Client name")
-    matter_type: str = Field(..., min_length=1, max_length=100, description="Type of matter/case")
-    matter_status: str = Field(default="active", max_length=50, description="Matter status")
-    description: Optional[str] = Field(None, description="Matter description")
-    opened_date: date = Field(..., description="Date matter was opened")
-    closed_date: Optional[date] = Field(None, description="Date matter was closed")
-    lead_attorney_user_id: Optional[UUID] = Field(None, description="Lead attorney user ID")
+    claim_number: str = Field(..., min_length=1, max_length=50, description="Unique claim number")
+    company_name: str = Field(..., min_length=1, max_length=255, description="Company name")
+    project_type: str = Field(..., min_length=1, max_length=100, description="Type of SR&ED project")
+    claim_status: str = Field(default="active", max_length=50, description="Claim status")
+    description: Optional[str] = Field(None, description="Claim description")
+    opened_date: date = Field(..., description="Date claim was opened")
+    closed_date: Optional[date] = Field(None, description="Date claim was closed")
+    fiscal_year_end: Optional[date] = Field(None, description="Fiscal year end date")
+    lead_consultant_user_id: Optional[UUID] = Field(None, description="Lead consultant user ID")
 
 class MatterCreate(MatterBase):
     """Schema for creating a new matter"""
     pass
 
 class MatterUpdate(BaseModel):
-    """Schema for updating a matter"""
-    matter_number: Optional[str] = Field(None, min_length=1, max_length=50)
-    client_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    matter_type: Optional[str] = Field(None, min_length=1, max_length=100)
-    matter_status: Optional[str] = Field(None, max_length=50)
+    """Schema for updating a claim"""
+    claim_number: Optional[str] = Field(None, min_length=1, max_length=50)
+    company_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    project_type: Optional[str] = Field(None, min_length=1, max_length=100)
+    claim_status: Optional[str] = Field(None, max_length=50)
     description: Optional[str] = None
     opened_date: Optional[date] = None
     closed_date: Optional[date] = None
-    lead_attorney_user_id: Optional[UUID] = None
+    fiscal_year_end: Optional[date] = None
+    lead_consultant_user_id: Optional[UUID] = None
 
 class MatterInDB(MatterBase):
     """Schema for matter as stored in database"""
@@ -47,13 +49,13 @@ class Matter(MatterInDB):
     pass
 
 class MatterWithDetails(Matter):
-    """Matter with additional details like user names and current user's permissions"""
-    lead_attorney_name: Optional[str] = None
+    """Claim with additional details like user names and current user's permissions"""
+    lead_consultant_name: Optional[str] = None
     created_by_name: str
     updated_by_name: str
     document_count: int = 0
     team_member_count: int = 0
-    # Current user's permissions for this matter
+    # Current user's permissions for this claim
     user_can_upload: bool = False
     user_can_edit: bool = False
     user_can_delete: bool = False
@@ -99,16 +101,16 @@ class MatterAccessWithDetails(MatterAccess):
 
 # List responses
 class MatterListResponse(BaseModel):
-    """Response schema for matter list with pagination"""
-    matters: List[MatterWithDetails]
+    """Response schema for claim list with pagination"""
+    claims: List[MatterWithDetails]
     total: int
     page: int
     size: int
     pages: int
 
 class MatterAccessListResponse(BaseModel):
-    """Response schema for matter access list"""
+    """Response schema for claim access list"""
     access_list: List[MatterAccessWithDetails]
-    matter_id: UUID
-    matter_number: str
-    client_name: str
+    claim_id: UUID
+    claim_number: str
+    company_name: str

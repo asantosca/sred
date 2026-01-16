@@ -53,3 +53,6 @@ htmlcov/
 .claude/sessions/
 .claude/cache/
 .claude/settings.local.json
+
+# Test data (client documents)
+testdata/

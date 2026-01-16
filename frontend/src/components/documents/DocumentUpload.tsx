@@ -57,17 +57,21 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
       onSuccess?.()
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || 'Failed to upload document'
+      const detail = error.response?.data?.detail
+      // Handle both string and object error responses
+      const errorMessage = typeof detail === 'object' && detail?.message
+        ? detail.message
+        : (typeof detail === 'string' ? detail : 'Failed to upload document')
       setUploadError(errorMessage)
       toast.error(errorMessage)
     },
   })
 
   const handleFileSelect = (file: File) => {
-    // Validate file size (50MB max)
-    const maxSize = 50 * 1024 * 1024
+    // Validate file size (500MB max for large SR&ED documents)
+    const maxSize = 500 * 1024 * 1024
     if (file.size > maxSize) {
-      setUploadError('File size exceeds 50MB limit')
+      setUploadError('File size exceeds 500MB limit')
       return
     }
 
@@ -180,7 +184,7 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
                 or drag and drop
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                PDF, DOC, DOCX, TXT, or images (max 50MB)
+                PDF, DOC, DOCX, TXT, or images (max 500MB)
               </p>
             </label>
           ) : (

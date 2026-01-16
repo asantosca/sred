@@ -20,7 +20,7 @@ import secrets
 logger = logging.getLogger(__name__)
 
 class AuthService:
-    """Authentication service for BC Legal Tech"""
+    """Authentication service for SR&ED Intelligence"""
     
     def __init__(self, db: AsyncSession):
         self.db = db

@@ -7,8 +7,8 @@ import Button from '@/components/ui/Button'
 
 interface Matter {
   id: string
-  matter_number: string
-  client_name: string
+  claim_number: string
+  company_name: string
 }
 
 interface ConversationListProps {
@@ -135,7 +135,7 @@ export default function ConversationList({
               <option value="">All Matters</option>
               {matters.map((matter) => (
                 <option key={matter.id} value={matter.id}>
-                  {matter.matter_number} - {matter.client_name}
+                  {matter.claim_number} - {matter.company_name}
                 </option>
               ))}
             </select>
@@ -149,7 +149,7 @@ export default function ConversationList({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by topic, case, or keyword..."
+              placeholder="Search by topic, project, or keyword..."
               className="w-full rounded-md border border-gray-300 py-2 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               autoFocus
             />

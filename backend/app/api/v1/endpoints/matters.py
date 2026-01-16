@@ -139,7 +139,7 @@ async def create_matter(
     
     # Grant creator lead_consultant access
     matter_access = MatterAccessModel(
-        matter_id=matter.id,
+        claim_id=matter.id,
         user_id=current_user.id,
         access_role="lead_consultant",
         can_upload=True,
@@ -421,7 +421,7 @@ async def grant_matter_access(
     
     # Create access record
     matter_access = MatterAccessModel(
-        matter_id=matter_id,
+        claim_id=matter_id,
         granted_by=current_user.id,
         **access_data.model_dump()
     )

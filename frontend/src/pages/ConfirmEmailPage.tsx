@@ -66,9 +66,9 @@ export default function ConfirmEmailPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">BC Legal Tech</h1>
+          <h1 className="text-3xl font-bold text-gray-900">SR&ED Intelligence</h1>
           <p className="mt-2 text-sm text-gray-600">
-            AI-Powered Legal Document Intelligence
+            AI-Powered SR&ED Tax Credit Analysis
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default function ConfirmEmailPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-gray-500">
-          &copy; 2024 BC Legal Tech. All rights reserved.
+          &copy; {new Date().getFullYear()} SR&ED Intelligence. All rights reserved.
         </p>
       </div>
     </div>

@@ -12,7 +12,7 @@ class DocumentUploadBase(BaseModel):
     document_title: str = Field(..., min_length=1, max_length=500, description="Document title")
     document_date: date = Field(..., description="Document date")
     document_status: str = Field(..., description="Document status: draft, final, executed, filed")
-    document_type: str = Field(..., description="Document type: contract, pleading, correspondence, etc.")
+    document_type: str = Field(..., description="Document type: Technical Report, Lab Notebook, Project Plan, Timesheet, Email, Financial Record, Invoice, Meeting Notes, Source Code, Other")
     document_subtype: Optional[str] = Field(None, max_length=100, description="Document subtype")
     
     # Security fields
@@ -106,10 +106,10 @@ class ExhibitUpload(StandardDocumentUpload):
 # Document Response Schemas
 class DocumentBase(BaseModel):
     """Base document schema"""
-    model_config = ConfigDict(from_attributes=True)
-    
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: UUID
-    matter_id: UUID
+    matter_id: UUID = Field(validation_alias="claim_id")
     filename: str
     original_filename: str
     file_extension: str

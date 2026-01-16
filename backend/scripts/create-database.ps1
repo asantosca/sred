@@ -1,6 +1,6 @@
-# create-database.ps1 - Create the BC Legal Tech database
+# create-database.ps1 - Create the SR&ED Intelligence database
 
-Write-Host "Creating BC Legal Tech database..." -ForegroundColor Cyan
+Write-Host "Creating SR&ED Intelligence database..." -ForegroundColor Cyan
 
 # Check if Docker services are running
 Write-Host "`n1. Checking Docker services..." -ForegroundColor Yellow

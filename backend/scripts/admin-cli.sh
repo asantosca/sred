@@ -1,5 +1,5 @@
 #!/bin/bash
-# BC Legal Tech - Admin CLI
+# SR&ED Intelligence - Admin CLI
 # Interactive script for testing admin endpoints
 
 BASE_URL="${BASE_URL:-http://localhost:8000}"
@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 print_header() {
     clear
     echo -e "${CYAN}========================================"
-    echo -e "  BC Legal Tech - Admin CLI"
+    echo -e "  SR&ED Intelligence - Admin CLI"
     echo -e "========================================${NC}"
     echo ""
 }

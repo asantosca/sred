@@ -181,7 +181,7 @@ async def _enrich_search_results(
                 "type": doc.document_type,
                 "date": doc.document_date,
                 "matter_id": matter.id,
-                "matter_name": f"{matter.matter_number} - {matter.client_name}"
+                "matter_name": f"{matter.claim_number} - {matter.company_name}"
             }
 
         chunk_metadata[chunk.id] = {

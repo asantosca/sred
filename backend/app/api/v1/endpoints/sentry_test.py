@@ -44,7 +44,7 @@ async def test_message():
         }
 
     # Send a test message to Sentry
-    sentry_sdk.capture_message("Test message from BC Legal Tech backend", level="info")
+    sentry_sdk.capture_message("Test message from SR&ED Intelligence backend", level="info")
 
     return {
         "success": True,

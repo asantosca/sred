@@ -21,7 +21,7 @@ class SampleDataService:
         Create welcome sample data for a newly activated user.
 
         Creates:
-        - A "Welcome to BC Legal Tech" matter
+        - A "Welcome to SR&ED Intelligence" matter
         - Matter access for the user
         - A welcome conversation with helpful tips
 
@@ -66,7 +66,7 @@ class SampleDataService:
                 user_id=user_id,
                 company_id=company_id,
                 matter_id=welcome_matter.id,
-                title="Getting Started with BC Legal Tech",
+                title="Getting Started with SR&ED Intelligence",
                 is_pinned=True,
                 is_archived=False,
             )
@@ -77,33 +77,34 @@ class SampleDataService:
             user_message = Message(
                 conversation_id=welcome_conversation.id,
                 role="user",
-                content="How do I get started with BC Legal Tech?",
+                content="How do I get started with SR&ED Intelligence?",
             )
             self.db.add(user_message)
 
             assistant_message = Message(
                 conversation_id=welcome_conversation.id,
                 role="assistant",
-                content="""Welcome to BC Legal Tech! Here's how to get started:
+                content="""Welcome to SR&ED Intelligence! Here's how to get started:
 
-**1. Upload Documents**
-Go to the Documents page and upload your legal documents (PDFs, Word docs, etc.). Our AI will automatically extract and index the content for semantic search.
+**1. Create Claims**
+Go to the Claims page and create SR&ED claims for your clients. Each claim represents a fiscal year's SR&ED tax credit submission.
 
-**2. Organize with Matters**
-Create matters to organize documents by case or client. Each matter can have its own set of documents and conversations.
+**2. Upload Documents**
+Add technical reports, timesheets, project plans, and other supporting documentation. Our AI will automatically extract and index the content for semantic search.
 
 **3. Ask Questions**
 Use the Chat feature to ask questions about your documents. The AI will search through your uploaded documents and provide answers with source citations.
 
-**4. Scope Conversations to Matters**
-When starting a new chat, you can select a specific matter to focus the AI's responses on documents within that matter.
+**4. Generate Reports**
+- **Eligibility Reports**: Assess SR&ED eligibility based on CRA's five-question test
+- **T661 Drafts**: Generate draft responses for CRA T661 form sections with word count tracking
 
 **Tips:**
 - Click on source citations to see the exact document passages
-- Use the thumbs up/down to provide feedback on AI responses
+- Use the Streamline button to reduce T661 responses to word limits
 - Pin important conversations for quick access
 
-Feel free to explore! You can delete this welcome conversation and matter once you're comfortable with the platform.""",
+Feel free to explore! You can delete this welcome conversation and claim once you're comfortable with the platform.""",
             )
             self.db.add(assistant_message)
 

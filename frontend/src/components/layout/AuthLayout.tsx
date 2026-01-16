@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               href={MARKETING_URL}
               className="text-2xl font-bold text-primary-700 hover:text-primary-800 transition-colors"
             >
-              BC Legal Tech
+              SR&ED Intelligence
             </a>
             <a
               href={MARKETING_URL}
@@ -41,7 +41,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} BC Legal Tech. All rights reserved.
+              &copy; {new Date().getFullYear()} SR&ED Intelligence. All rights reserved.
             </p>
             <div className="flex gap-6 text-xs">
               <a

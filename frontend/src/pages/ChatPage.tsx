@@ -328,7 +328,7 @@ export default function ChatPage() {
             onSearch={handleSearch}
             searchResults={searchData?.conversations}
             isSearching={isSearching}
-            matters={mattersData?.matters || []}
+            matters={mattersData?.claims || []}
             selectedMatterFilter={conversationMatterFilter}
             onMatterFilterChange={setConversationMatterFilter}
           />

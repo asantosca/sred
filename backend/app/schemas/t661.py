@@ -6,13 +6,51 @@ from datetime import date, datetime
 from uuid import UUID
 
 
+# CRA word limits by box (official T661 form structure)
+T661_WORD_LIMITS = {
+    "box242": 350,  # Scientific or Technological Uncertainties (includes objectives)
+    "box244": 700,  # Work Performed to Overcome Uncertainties
+    "box246": 350,  # Advancements Achieved
+}
+
+# Evidence strength levels
+EVIDENCE_STRENGTH_LEVELS = ["strong", "moderate", "weak", "insufficient"]
+
+
+class SourceCitation(BaseModel):
+    """Citation linking content to a specific source document"""
+    citation_id: int = Field(..., description="Citation number [1], [2], etc.")
+    document_id: UUID = Field(..., description="Source document ID")
+    document_title: str = Field(..., description="Document title for display")
+    chunk_id: Optional[UUID] = Field(None, description="Specific chunk ID if applicable")
+    page_number: Optional[int] = Field(None, description="Page number if available")
+    excerpt: str = Field(..., description="Relevant text excerpt from the source")
+    relevance_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Relevance score 0-1")
+
+
 class T661SectionDraft(BaseModel):
-    """Draft content for a single T661 section"""
-    section: str = Field(..., description="Section identifier: part2, part3, part4, part5, part6")
+    """Draft content for a single T661 box with citations and word tracking"""
+    section: str = Field(..., description="Box identifier: box242, box244, box246")
     section_name: str = Field(..., description="Human-readable section name")
-    draft_content: str = Field(..., description="Draft response content")
+    draft_content: str = Field(..., description="Draft response content with [X] citation markers")
+
+    # Word count tracking
     word_count: int = Field(default=0, description="Word count of the draft")
-    sources_cited: List[str] = Field(default_factory=list, description="Document sources cited")
+    word_limit: int = Field(default=350, description="CRA word limit for this section")
+    is_over_limit: bool = Field(default=False, description="True if over CRA word limit")
+    words_over: int = Field(default=0, description="Number of words over limit (0 if under)")
+
+    # Source citations
+    sources: List[SourceCitation] = Field(default_factory=list, description="Detailed source citations")
+    sources_cited: List[str] = Field(default_factory=list, description="Document titles cited (legacy)")
+
+    # Evidence assessment
+    evidence_strength: str = Field(
+        default="insufficient",
+        description="Evidence strength: strong, moderate, weak, insufficient"
+    )
+
+    # Review status
     confidence_notes: Optional[str] = Field(None, description="Notes about confidence or areas needing review")
     needs_review: bool = Field(default=True, description="Flag if section needs consultant review")
 
@@ -29,8 +67,8 @@ class T661ProjectInfo(BaseModel):
 class T661DraftRequest(BaseModel):
     """Request to generate T661 draft"""
     sections: List[str] = Field(
-        default=["part3", "part4", "part5", "part6"],
-        description="Which sections to generate drafts for"
+        default=["box242", "box244", "box246"],
+        description="Which boxes to generate drafts for (box242, box244, box246)"
     )
     project_info: Optional[T661ProjectInfo] = Field(
         None, description="Optional project info to include"
@@ -86,18 +124,64 @@ class T661SectionUpdateRequest(BaseModel):
     notes: Optional[str] = Field(None, description="Consultant notes")
 
 
-# Constants for T661 sections
+# Constants for T661 boxes (official CRA nomenclature)
 T661_SECTIONS = {
-    "part2": "Project Information",
-    "part3": "Scientific or Technological Objectives",
-    "part4": "Technological Uncertainties",
-    "part5": "Work Done to Address Uncertainties",
-    "part6": "Conclusions"
+    "box242": "Line 242 – Scientific or Technological Uncertainties",
+    "box244": "Line 244 – Work Performed",
+    "box246": "Line 246 – Advancements Achieved"
 }
 
 T661_SECTION_DESCRIPTIONS = {
-    "part3": "State the specific scientific or technological objectives of the work",
-    "part4": "Describe the technological uncertainties that existed at the start of work",
-    "part5": "Describe the systematic investigation undertaken to resolve uncertainties",
-    "part6": "State what was learned or achieved as a result of the work"
+    "box242": "What scientific or technological uncertainties did you attempt to overcome? Include the objective of the project and describe the uncertainty.",
+    "box244": "What work did you perform in the tax year to overcome the technological obstacles/uncertainties described in Line 242?",
+    "box246": "What scientific or technological advancements did you achieve or attempt to achieve as a result of the work described in Line 244?"
 }
+
+
+# Streamline feature schemas
+class T661StreamlineRequest(BaseModel):
+    """Request to streamline (condense) a T661 box"""
+    section: str = Field(..., description="Box identifier: box242, box244, box246")
+    current_content: str = Field(..., description="Current content to streamline")
+    target_words: Optional[int] = Field(
+        None,
+        description="Target word count (defaults to CRA limit for section)"
+    )
+    preserve_citations: bool = Field(
+        default=True,
+        description="Ensure all [X] citations are preserved"
+    )
+
+
+class T661StreamlineResponse(BaseModel):
+    """Response from streamline operation"""
+    section: str = Field(..., description="Section that was streamlined")
+    original_content: str = Field(..., description="Original content before streamlining")
+    streamlined_content: str = Field(..., description="Condensed content")
+    original_word_count: int = Field(..., description="Word count before streamlining")
+    new_word_count: int = Field(..., description="Word count after streamlining")
+    words_reduced: int = Field(..., description="Number of words removed")
+    target_word_count: int = Field(..., description="Target word count used")
+    is_within_limit: bool = Field(..., description="True if now within CRA limit")
+    citations_preserved: bool = Field(
+        default=True,
+        description="True if all original citations were preserved"
+    )
+    citations_in_original: int = Field(default=0, description="Number of citations in original")
+    citations_in_result: int = Field(default=0, description="Number of citations in result")
+
+
+class T661DraftListItem(BaseModel):
+    """Summary item for listing saved T661 drafts"""
+    id: UUID
+    claim_id: UUID
+    generated_at: datetime
+    sections_included: List[str] = Field(default_factory=list)
+    overall_completeness: float = Field(default=0.0)
+    documents_analyzed: int = Field(default=0)
+
+
+class T661DraftListResponse(BaseModel):
+    """Response for listing T661 drafts"""
+    drafts: List[T661DraftListItem] = Field(default_factory=list)
+    total: int = Field(default=0)

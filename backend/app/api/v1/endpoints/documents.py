@@ -307,41 +307,9 @@ async def _process_document_upload(
         usage_tracker = UsageTracker(db)
 
         # Check document count limit
-        if not await usage_tracker.check_document_limit(current_user.company_id):
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail={
-                    "error": "Document limit reached",
-                    "message": "Your plan's document limit has been reached. Please contact your administrator to upgrade.",
-                    "limit_type": "documents"
-                }
-            )
-
-        # Check document size limit
-        if not await usage_tracker.check_document_size_limit(current_user.company_id, file_size):
-            stats = await usage_tracker.get_plan_limits(current_user.company_id)
-            max_mb = stats.get('max_document_size_mb', 10) if stats else 10
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail={
-                    "error": "Document too large",
-                    "message": f"Document size ({file_size / (1024*1024):.1f} MB) exceeds plan limit ({max_mb} MB).",
-                    "limit_type": "document_size",
-                    "file_size_mb": round(file_size / (1024*1024), 2),
-                    "max_size_mb": max_mb
-                }
-            )
-
-        # Check storage limit
-        if not await usage_tracker.check_storage_limit(current_user.company_id, file_size):
-            raise HTTPException(
-                status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
-                detail={
-                    "error": "Storage limit reached",
-                    "message": "Your plan's storage limit has been reached. Delete old documents or contact your administrator.",
-                    "limit_type": "storage"
-                }
-            )
+        # Note: Plan-based limits (document count, document size, storage) removed
+        # This is an internal PwC tool - no need for SaaS-style tier limits
+        # Hard limits (500MB max file size) are enforced in storage_service.validate_file()
 
         # Validate file
         validation_result = storage_service.validate_file(
@@ -513,7 +481,7 @@ async def _process_document_upload(
         document = DocumentModel(
             id=document_id,
             company_id=current_user.company_id,  # Denormalized for RLS performance
-            matter_id=upload_data.matter_id,
+            claim_id=upload_data.matter_id,
             filename=file.filename,
             original_filename=file.filename,
             file_extension=validation_result['file_extension'],
@@ -581,7 +549,7 @@ async def _process_document_upload(
             file_size_bytes=document.file_size_bytes,
             document_title=document.document_title,
             document_type=document.document_type,
-            matter_id=document.matter_id,
+            matter_id=document.claim_id,
             storage_path=document.storage_path,
             file_hash=document.file_hash,
             upload_status="success",
@@ -906,18 +874,18 @@ async def check_for_duplicates(
         if duplicates:
             duplicate_info = []
             for doc in duplicates:
-                # Get matter info for each duplicate
-                matter_query = select(Matter).where(Matter.id == doc.matter_id)
-                matter_result = await db.execute(matter_query)
-                matter = matter_result.scalar()
-                
+                # Get claim info for each duplicate
+                claim_query = select(Matter).where(Matter.id == doc.claim_id)
+                claim_result = await db.execute(claim_query)
+                claim = claim_result.scalar()
+
                 duplicate_info.append({
                     "document_id": str(doc.id),
                     "document_title": doc.document_title,
                     "document_type": doc.document_type,
-                    "matter_id": str(doc.matter_id),
-                    "matter_number": matter.claim_number if matter else "Unknown",
-                    "client_name": matter.company_name if matter else "Unknown",
+                    "matter_id": str(doc.claim_id),
+                    "matter_number": claim.claim_number if claim else "Unknown",
+                    "client_name": claim.company_name if claim else "Unknown",
                     "upload_date": doc.created_at.isoformat(),
                     "filename": doc.filename,
                     "file_size": doc.file_size_bytes

@@ -4,7 +4,7 @@ This document explains how to set up and use the background task queue for autom
 
 ## Overview
 
-Documents uploaded to BC Legal Tech are now automatically processed through the full RAG pipeline:
+Documents uploaded to SR&ED Intelligence are now automatically processed through the full RAG pipeline:
 1. **Text Extraction** - Extract text from PDF, DOCX, TXT files
 2. **Chunking** - Split text into semantic chunks (respecting legal document structure)
 3. **Embedding Generation** - Generate vector embeddings using OpenAI

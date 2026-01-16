@@ -2,39 +2,39 @@
 
 export interface Matter {
   id: string
-  matter_number: string
-  client_name: string
-  matter_type: string
-  matter_status: 'active' | 'closed' | 'archived'
+  claim_number: string
+  company_name: string
+  project_type: string
+  claim_status: string
   description: string | null
   opened_date: string
   closed_date: string | null
-  lead_attorney_user_id: string | null
+  lead_consultant_user_id: string | null
   company_id: string
   created_at: string
   updated_at: string | null
 }
 
 export interface MatterCreate {
-  matter_number: string
-  client_name: string
-  matter_type: string
-  matter_status?: 'active' | 'closed' | 'archived'
+  claim_number: string
+  company_name: string
+  project_type: string
+  claim_status?: string
   description?: string
   opened_date: string
   closed_date?: string
-  lead_attorney_user_id?: string
+  lead_consultant_user_id?: string
 }
 
 export interface MatterUpdate {
-  matter_number?: string
-  client_name?: string
-  matter_type?: string
-  matter_status?: 'active' | 'closed' | 'archived'
+  claim_number?: string
+  company_name?: string
+  project_type?: string
+  claim_status?: string
   description?: string
   opened_date?: string
   closed_date?: string
-  lead_attorney_user_id?: string
+  lead_consultant_user_id?: string
 }
 
 export interface DocumentBase {
@@ -118,9 +118,9 @@ export interface Document extends DocumentBase {
 }
 
 export interface DocumentWithMatter extends Document {
-  matter_number: string
-  client_name: string
-  matter_status: string
+  claim_number: string
+  company_name: string
+  claim_status: string
 }
 
 export interface DocumentListResponse {
@@ -202,16 +202,17 @@ export interface FileValidationResult {
   file_size: number
 }
 
-// Document type options
+// SR&ED Document type options
 export const DOCUMENT_TYPES = [
-  'Contract',
-  'Pleading',
-  'Correspondence',
-  'Discovery',
-  'Exhibit',
-  'Internal Memo',
-  'Court Order',
-  'Settlement Agreement',
+  'Technical Report',
+  'Lab Notebook',
+  'Project Plan',
+  'Timesheet',
+  'Email',
+  'Financial Record',
+  'Invoice',
+  'Meeting Notes',
+  'Source Code',
   'Other'
 ] as const
 

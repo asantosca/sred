@@ -8,7 +8,7 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi } from '@/lib/api'
-import { MATTER_STATUSES } from '@/types/matters'
+import { CLAIM_STATUSES } from '@/types/matters'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
@@ -24,10 +24,10 @@ const SRED_PROJECT_TYPES = [
 ]
 
 const createClaimSchema = z.object({
-  matter_number: z.string().min(1, 'Claim number is required'),
-  client_name: z.string().min(1, 'Company name is required'),
-  matter_type: z.string().min(1, 'Project type is required'),
-  matter_status: z.string().min(1, 'Status is required'),
+  claim_number: z.string().min(1, 'Claim number is required'),
+  company_name: z.string().min(1, 'Company name is required'),
+  project_type: z.string().min(1, 'Project type is required'),
+  claim_status: z.string().min(1, 'Status is required'),
   description: z.string().optional(),
   opened_date: z.string().min(1, 'Opened date is required'),
   closed_date: z.string().optional(),
@@ -47,7 +47,7 @@ export default function CreateMatterPage() {
   } = useForm<CreateClaimFormData>({
     resolver: zodResolver(createClaimSchema),
     defaultValues: {
-      matter_status: 'active',
+      claim_status: 'draft',
       opened_date: new Date().toISOString().split('T')[0], // Today's date
     },
   })
@@ -112,9 +112,9 @@ export default function CreateMatterPage() {
               label="Claim Number"
               type="text"
               placeholder="e.g., 2024-001"
-              error={errors.matter_number?.message}
+              error={errors.claim_number?.message}
               helperText="Unique identifier for this claim"
-              {...register('matter_number')}
+              {...register('claim_number')}
             />
 
             {/* Company Name */}
@@ -122,8 +122,8 @@ export default function CreateMatterPage() {
               label="Company Name"
               type="text"
               placeholder="e.g., Acme Corp"
-              error={errors.client_name?.message}
-              {...register('client_name')}
+              error={errors.company_name?.message}
+              {...register('company_name')}
             />
 
             {/* Project Type */}
@@ -132,7 +132,7 @@ export default function CreateMatterPage() {
                 Project Type
               </label>
               <select
-                {...register('matter_type')}
+                {...register('project_type')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="">Select a type...</option>
@@ -142,8 +142,8 @@ export default function CreateMatterPage() {
                   </option>
                 ))}
               </select>
-              {errors.matter_type && (
-                <p className="mt-1 text-sm text-red-600">{errors.matter_type.message}</p>
+              {errors.project_type && (
+                <p className="mt-1 text-sm text-red-600">{errors.project_type.message}</p>
               )}
             </div>
 
@@ -153,17 +153,17 @@ export default function CreateMatterPage() {
                 Status
               </label>
               <select
-                {...register('matter_status')}
+                {...register('claim_status')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               >
-                {MATTER_STATUSES.map((status) => (
+                {CLAIM_STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
                   </option>
                 ))}
               </select>
-              {errors.matter_status && (
-                <p className="mt-1 text-sm text-red-600">{errors.matter_status.message}</p>
+              {errors.claim_status && (
+                <p className="mt-1 text-sm text-red-600">{errors.claim_status.message}</p>
               )}
             </div>
 

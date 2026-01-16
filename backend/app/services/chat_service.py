@@ -832,7 +832,7 @@ Summary:"""
             doc, matter = doc_matter
             return {
                 "matter_id": str(matter.id),
-                "matter_name": f"{matter.matter_number} - {matter.client_name}",
+                "matter_name": f"{matter.claim_number} - {matter.company_name}",
                 "similarity": top_result["similarity"],
                 "matched_document": doc.document_title or doc.filename
             }
@@ -864,9 +864,9 @@ Summary:"""
         # Update conversation
         conversation.claim_id = matter_id
 
-        # Update title to include matter name if not already
+        # Update title to include company name if not already
         if not conversation.title.startswith("["):
-            conversation.title = f"[{matter.client_name}] {conversation.title}"
+            conversation.title = f"[{matter.company_name}] {conversation.title}"
 
         conversation.updated_at = datetime.utcnow()
         await self.db.commit()
@@ -908,12 +908,12 @@ Summary:"""
             matter_result = await self.db.execute(matter_query)
             matter = matter_result.scalar()
             if matter:
-                title = f"[{matter.client_name}] {message_title}"
+                title = f"[{matter.company_name}] {message_title}"
 
         conversation = Conversation(
             company_id=user.company_id,
             user_id=user.id,
-            matter_id=matter_id,
+            claim_id=matter_id,
             title=title
         )
 

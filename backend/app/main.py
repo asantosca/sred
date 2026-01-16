@@ -1,4 +1,4 @@
-# app/main.py - BC Legal Tech FastAPI Application
+# app/main.py - SR&ED Intelligence FastAPI Application
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,8 +41,8 @@ if settings.SENTRY_DSN:
 
 # Create FastAPI application
 app = FastAPI(
-    title="BC Legal Tech API",
-    description="AI-powered legal document intelligence platform for law firms in British Columbia.",
+    title="SR&ED Intelligence API",
+    description="AI-powered SR&ED tax credit analysis platform for PwC consultants.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -88,7 +88,7 @@ app.include_router(api_router, prefix="/api/v1")
 async def root():
     """Health check endpoint"""
     return {
-        "message": "BC Legal Tech API",
+        "message": "SR&ED Intelligence API",
         "version": "1.0.0",
         "status": "healthy"
     }
@@ -105,9 +105,9 @@ async def health_check():
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting BC Legal Tech API...")
+    logger.info("Starting SR&ED Intelligence API...")
 
 # Shutdown event  
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Shutting down BC Legal Tech API...")
+    logger.info("Shutting down SR&ED Intelligence API...")

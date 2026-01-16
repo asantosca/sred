@@ -5,9 +5,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { mattersApi, documentsApi, billableApi } from '@/lib/api'
 import { Matter } from '@/types/matters'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign, Pencil } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign, Pencil, ClipboardList } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
+import T661DraftModal from '@/components/t661/T661DraftModal'
 
 export default function ClaimDetailPage() {
   const { matterId } = useParams<{ matterId: string }>()
@@ -22,6 +23,7 @@ export default function ClaimDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [unbilledCount, setUnbilledCount] = useState<number>(0)
+  const [showT661Modal, setShowT661Modal] = useState(false)
 
   useEffect(() => {
     if (matterId) {
@@ -153,17 +155,17 @@ export default function ClaimDetailPage() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{claim.client_name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{claim.company_name}</h1>
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                    claim.matter_status
+                    claim.claim_status
                   )}`}
                 >
-                  {claim.matter_status}
+                  {claim.claim_status}
                 </span>
               </div>
-              <p className="text-gray-600">{claim.matter_type}</p>
-              <p className="text-sm text-gray-500 mt-1">Claim #{claim.matter_number}</p>
+              <p className="text-gray-600">{claim.project_type}</p>
+              <p className="text-sm text-gray-500 mt-1">Claim #{claim.claim_number}</p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -211,7 +213,7 @@ export default function ClaimDetailPage() {
               </div>
 
               <p className="text-gray-600 mb-4">
-                Are you sure you want to delete <strong>{claim.client_name}</strong> (Claim #{claim.matter_number})?
+                Are you sure you want to delete <strong>{claim.company_name}</strong> (Claim #{claim.claim_number})?
               </p>
 
               <p className="text-sm text-gray-500 mb-4">
@@ -273,17 +275,17 @@ export default function ClaimDetailPage() {
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Company Name</dt>
-                <dd className="mt-1 text-sm text-gray-900">{claim.client_name}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{claim.company_name}</dd>
               </div>
 
               <div>
                 <dt className="text-sm font-medium text-gray-500">Claim Number</dt>
-                <dd className="mt-1 text-sm text-gray-900">{claim.matter_number}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{claim.claim_number}</dd>
               </div>
 
               <div>
                 <dt className="text-sm font-medium text-gray-500">Project Type</dt>
-                <dd className="mt-1 text-sm text-gray-900">{claim.matter_type}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{claim.project_type}</dd>
               </div>
 
               <div>
@@ -291,10 +293,10 @@ export default function ClaimDetailPage() {
                 <dd className="mt-1">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      claim.matter_status
+                      claim.claim_status
                     )}`}
                   >
-                    {claim.matter_status}
+                    {claim.claim_status}
                   </span>
                 </dd>
               </div>
@@ -362,6 +364,13 @@ export default function ClaimDetailPage() {
                 >
                   <MessageSquare className="h-4 w-4" />
                   Chat about this Claim
+                </button>
+                <button
+                  onClick={() => setShowT661Modal(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md font-medium"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Generate T661 Draft
                 </button>
                 <button
                   onClick={() => setShowUpload(true)}
@@ -462,6 +471,15 @@ export default function ClaimDetailPage() {
           )}
         </div>
       </div>
+
+      {/* T661 Draft Modal */}
+      <T661DraftModal
+        isOpen={showT661Modal}
+        onClose={() => setShowT661Modal(false)}
+        claimId={matterId!}
+        companyName={claim.company_name}
+        claimNumber={claim.claim_number}
+      />
     </DashboardLayout>
   )
 }

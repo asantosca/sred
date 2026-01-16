@@ -1,4 +1,4 @@
-# setup-python-env.ps1 - Python virtual environment setup for BC Legal Tech
+# setup-python-env.ps1 - Python virtual environment setup for SR&ED Intelligence
 
 python -m venv venv
 if ($LASTEXITCODE -ne 0) {
@@ -57,7 +57,7 @@ Write-Host "   SUCCESS: requirements.txt created" -ForegroundColor Green
 # 8. Create .env file template
 Write-Host "`n8. Creating environment configuration..." -ForegroundColor Yellow
 $envContent = @"
-# BC Legal Tech - Environment Configuration
+# SR&ED Intelligence - Environment Configuration
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bc_legal_db
 REDIS_URL=redis://localhost:6379
 AWS_ACCESS_KEY_ID=test
