@@ -37,7 +37,7 @@ T661_SECTION_PROMPTS = {
 Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
-
+{project_focus}
 ## Fiscal Year Period
 This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
 IMPORTANT: Focus ONLY on work, uncertainties, and objectives relevant to THIS fiscal year period.
@@ -71,7 +71,7 @@ Draft the section content only (aim for ~350 words), no additional commentary:""
 Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
-
+{project_focus}
 ## Fiscal Year Period
 This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
 CRITICAL: ONLY describe work performed WITHIN this fiscal year period.
@@ -108,7 +108,7 @@ Draft the section content only (aim for ~700 words), no additional commentary:""
 Company: {company_name}
 Claim Number: {claim_number}
 Project Type: {project_type}
-
+{project_focus}
 ## Fiscal Year Period
 This claim covers the fiscal year from {fiscal_year_start} to {fiscal_year_end}.
 IMPORTANT: Focus ONLY on advancements achieved or attempted during THIS fiscal year period.
@@ -428,10 +428,25 @@ class T661DraftService:
             fiscal_year_start_str = claim.opened_date.strftime("%B %d, %Y") if claim.opened_date else "Not specified"
             fiscal_year_end_str = "Not specified"
 
+        # Build project focus section from optional project context fields
+        project_focus_parts = []
+        if claim.project_title:
+            project_focus_parts.append(f"Project Title: {claim.project_title}")
+        if claim.project_objective:
+            project_focus_parts.append(f"Project Objective: {claim.project_objective}")
+        if claim.technology_focus:
+            project_focus_parts.append(f"Technology Focus: {claim.technology_focus}")
+
+        if project_focus_parts:
+            project_focus = "\n".join(project_focus_parts) + "\n\nIMPORTANT: Focus ONLY on content related to this specific project. Ignore unrelated work mentioned in the documents.\n"
+        else:
+            project_focus = ""
+
         prompt = prompt_template.format(
             company_name=claim.company_name,
             claim_number=claim.claim_number,
             project_type=claim.project_type or "Not specified",
+            project_focus=project_focus,
             fiscal_year_start=fiscal_year_start_str,
             fiscal_year_end=fiscal_year_end_str,
             document_excerpts=document_excerpts

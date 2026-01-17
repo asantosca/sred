@@ -66,6 +66,14 @@ export interface ChatResponse {
   is_new_conversation: boolean
 }
 
+export interface ClaimSuggestion {
+  claim_id: string
+  claim_name: string
+  similarity: number
+  matched_document: string
+}
+
+// Legacy alias for backwards compatibility with backend
 export interface MatterSuggestion {
   matter_id: string
   matter_name: string
@@ -74,12 +82,13 @@ export interface MatterSuggestion {
 }
 
 export interface ChatStreamChunk {
-  type: 'content' | 'source' | 'done' | 'error' | 'matter_suggestion'
+  type: 'content' | 'source' | 'done' | 'error' | 'claim_suggestion' | 'matter_suggestion'
   content?: string
   source?: MessageSource
   message_id?: string
   conversation_id?: string
   error?: string
+  claim_suggestion?: ClaimSuggestion
   matter_suggestion?: MatterSuggestion
   suggestions?: string[]  // Question improvement tips
   confidence?: 'HIGH' | 'MEDIUM' | 'LOW'  // AI confidence level

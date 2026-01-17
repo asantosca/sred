@@ -46,6 +46,11 @@ class ClaimBase(BaseModel):
     federal_credit_estimate: Optional[Decimal] = Field(None, description="Estimated federal ITC")
     provincial_credit_estimate: Optional[Decimal] = Field(None, description="Estimated provincial credit")
 
+    # Project-specific fields (for AI context in T661 generation)
+    project_title: Optional[str] = Field(None, max_length=255, description="Short name for the specific R&D project")
+    project_objective: Optional[str] = Field(None, description="1-2 sentences describing the technical goal")
+    technology_focus: Optional[str] = Field(None, max_length=500, description="Specific technology area and keywords")
+
 
 class ClaimCreate(ClaimBase):
     """Schema for creating a new claim"""
@@ -70,6 +75,11 @@ class ClaimUpdate(BaseModel):
     total_eligible_expenditures: Optional[Decimal] = None
     federal_credit_estimate: Optional[Decimal] = None
     provincial_credit_estimate: Optional[Decimal] = None
+
+    # Project-specific fields (for AI context in T661 generation)
+    project_title: Optional[str] = Field(None, max_length=255)
+    project_objective: Optional[str] = None
+    technology_focus: Optional[str] = Field(None, max_length=500)
 
 
 class ClaimInDB(ClaimBase):

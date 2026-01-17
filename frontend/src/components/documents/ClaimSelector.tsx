@@ -2,19 +2,19 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { mattersApi } from '@/lib/api'
-import { Matter, MatterCreate } from '@/types/documents'
+import { claimsApi } from '@/lib/api'
+import { Claim, ClaimCreate } from '@/types/claims'
 import { Plus, Check, AlertCircle } from 'lucide-react'
 
-interface MatterSelectorProps {
+interface ClaimSelectorProps {
   value: string | null
-  onChange: (matterId: string) => void
+  onChange: (claimId: string) => void
   error?: string
 }
 
-export default function MatterSelector({ value, onChange, error }: MatterSelectorProps) {
+export default function ClaimSelector({ value, onChange, error }: ClaimSelectorProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [createFormData, setCreateFormData] = useState<MatterCreate>({
+  const [createFormData, setCreateFormData] = useState<ClaimCreate>({
     claim_number: '',
     company_name: '',
     project_type: '',
@@ -26,24 +26,25 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
 
   const queryClient = useQueryClient()
 
-  // Fetch claims list
-  const { data: mattersResponse, isLoading } = useQuery({
-    queryKey: ['matters', 'active'],
+  // Fetch claims list (all non-closed claims)
+  const { data: claimsResponse, isLoading } = useQuery({
+    queryKey: ['claims', 'list'],
     queryFn: async () => {
-      const response = await mattersApi.list({ status: 'active' })
+      // Fetch all claims - the list endpoint returns user's accessible claims
+      const response = await claimsApi.list({})
       return response.data
     },
   })
 
-  const matters = mattersResponse?.claims || []
+  const claims = claimsResponse?.claims || []
 
   // Create claim mutation
   const createMutation = useMutation({
-    mutationFn: (data: MatterCreate) => mattersApi.create(data),
+    mutationFn: (data: ClaimCreate) => claimsApi.create(data),
     onSuccess: (response) => {
-      const newMatter = response.data
-      queryClient.invalidateQueries({ queryKey: ['matters'] })
-      onChange(newMatter.id)
+      const newClaim = response.data
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      onChange(newClaim.id)
       setShowCreateForm(false)
       setCreateFormData({
         claim_number: '',
@@ -100,9 +101,9 @@ export default function MatterSelector({ value, onChange, error }: MatterSelecto
               }`}
             >
               <option value="">Select a claim...</option>
-              {matters.map((matter: Matter) => (
-                <option key={matter.id} value={matter.id}>
-                  {matter.claim_number} - {matter.company_name}
+              {claims.map((claim: Claim) => (
+                <option key={claim.id} value={claim.id}>
+                  {claim.claim_number} - {claim.company_name}
                 </option>
               ))}
             </select>

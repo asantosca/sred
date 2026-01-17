@@ -18,10 +18,10 @@ import DashboardPage from '@/pages/DashboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import DocumentsPage from '@/pages/DocumentsPage'
 import ChatPage from '@/pages/ChatPage'
-import MattersPage from '@/pages/MattersPage'
-import CreateMatterPage from '@/pages/CreateMatterPage'
-import MatterDetailPage from '@/pages/MatterDetailPage'
-import EditMatterPage from '@/pages/EditMatterPage'
+import ClaimsPage from '@/pages/ClaimsPage'
+import CreateClaimPage from '@/pages/CreateClaimPage'
+import ClaimDetailPage from '@/pages/ClaimDetailPage'
+import EditClaimPage from '@/pages/EditClaimPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import BillablePage from '@/pages/BillablePage'
@@ -102,36 +102,36 @@ function App() {
             }
           />
 
-          {/* Matters routes */}
+          {/* Claims routes */}
           <Route
-            path="/matters"
+            path="/claims"
             element={
               <ProtectedRoute>
-                <MattersPage />
+                <ClaimsPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/matters/new"
+            path="/claims/new"
             element={
               <ProtectedRoute>
-                <CreateMatterPage />
+                <CreateClaimPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/matters/:matterId"
+            path="/claims/:claimId"
             element={
               <ProtectedRoute>
-                <MatterDetailPage />
+                <ClaimDetailPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/matters/:matterId/edit"
+            path="/claims/:claimId/edit"
             element={
               <ProtectedRoute>
-                <EditMatterPage />
+                <EditClaimPage />
               </ProtectedRoute>
             }
           />

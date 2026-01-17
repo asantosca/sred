@@ -8,12 +8,12 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import ConversationList from '@/components/chat/ConversationList'
 import ChatInterface from '@/components/chat/ChatInterface'
 import MessageInput, { MessageInputHandle } from '@/components/chat/MessageInput'
-import MatterSelectorCompact from '@/components/chat/MatterSelectorCompact'
+import ClaimSelectorCompact from '@/components/chat/ClaimSelectorCompact'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
-import { chatApi, billableApi, mattersApi } from '@/lib/api'
-import type { ChatStreamChunk, MatterSuggestion } from '@/types/chat'
-import MatterSuggestionBanner from '@/components/chat/MatterSuggestionBanner'
+import { chatApi, billableApi, claimsApi } from '@/lib/api'
+import type { ChatStreamChunk, ClaimSuggestion } from '@/types/chat'
+import ClaimSuggestionBanner from '@/components/chat/ClaimSuggestionBanner'
 import { Clock, Briefcase } from 'lucide-react'
 
 export default function ChatPage() {
@@ -22,45 +22,45 @@ export default function ChatPage() {
   const queryClient = useQueryClient()
   const messageInputRef = useRef<MessageInputHandle>(null)
 
-  // Get matter ID from URL query param (e.g., /chat?matter=uuid)
-  const matterFromUrl = searchParams.get('matter')
-  // If history=true, we're viewing conversation history for a matter
-  const showHistoryForMatter = searchParams.get('history') === 'true' && matterFromUrl
+  // Get claim ID from URL query param (e.g., /chat?matter=uuid)
+  const claimFromUrl = searchParams.get('matter')
+  // If history=true, we're viewing conversation history for a claim
+  const showHistoryForClaim = searchParams.get('history') === 'true' && claimFromUrl
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null)
-  const [selectedMatterId, setSelectedMatterId] = useState<string | null>(matterFromUrl)
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(claimFromUrl)
   const [streamingContent, setStreamingContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null)
   const [localMessages, setLocalMessages] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [matterSuggestion, setMatterSuggestion] = useState<MatterSuggestion | null>(null)
-  const [isLinkingMatter, setIsLinkingMatter] = useState(false)
-  const [conversationMatterFilter, setConversationMatterFilter] = useState<string | null>(null)
+  const [claimSuggestion, setClaimSuggestion] = useState<ClaimSuggestion | null>(null)
+  const [isLinkingClaim, setIsLinkingClaim] = useState(false)
+  const [conversationClaimFilter, setConversationClaimFilter] = useState<string | null>(null)
   const [questionSuggestions, setQuestionSuggestions] = useState<string[] | null>(null)
 
-  // Fetch matters for filter dropdown
-  const { data: mattersData } = useQuery({
-    queryKey: ['matters', 'all'],
+  // Fetch claims for filter dropdown
+  const { data: claimsData } = useQuery({
+    queryKey: ['claims', 'all'],
     queryFn: async () => {
-      const response = await mattersApi.list({ size: 100 })
+      const response = await claimsApi.list({ size: 100 })
       return response.data
     },
   })
 
-  // Determine which matter filter to use
-  const effectiveMatterFilter = showHistoryForMatter ? matterFromUrl : conversationMatterFilter
+  // Determine which claim filter to use
+  const effectiveClaimFilter = showHistoryForClaim ? claimFromUrl : conversationClaimFilter
 
-  // Fetch conversations (optionally filtered by matter)
+  // Fetch conversations (optionally filtered by claim)
   const { data: conversationsData, isLoading: loadingConversations } = useQuery({
-    queryKey: ['conversations', effectiveMatterFilter],
+    queryKey: ['conversations', effectiveClaimFilter],
     queryFn: async () => {
       const response = await chatApi.listConversations({
         page_size: 50,
-        matter_id: effectiveMatterFilter || undefined,
+        matter_id: effectiveClaimFilter || undefined,
       })
       return response.data
     },
@@ -170,7 +170,7 @@ export default function ChatPage() {
       const response = await chatApi.sendMessageStream({
         conversation_id: selectedConversationId || undefined,
         message,
-        matter_id: selectedMatterId || undefined,
+        matter_id: selectedClaimId || undefined,
         include_sources: true,
         max_context_chunks: 5,
         similarity_threshold: 0.5,
@@ -243,9 +243,9 @@ export default function ChatPage() {
             if (parsed.conversation_id && !selectedConversationId) {
               setSelectedConversationId(parsed.conversation_id)
             }
-          } else if (parsed.type === 'matter_suggestion' && parsed.matter_suggestion) {
-            // AI detected this query may relate to a matter
-            setMatterSuggestion(parsed.matter_suggestion)
+          } else if (parsed.type === 'claim_suggestion' && parsed.claim_suggestion) {
+            // AI detected this query may relate to a claim
+            setClaimSuggestion(parsed.claim_suggestion)
           } else if (parsed.type === 'error' && parsed.error) {
             setError(parsed.error)
             setIsStreaming(false)
@@ -264,12 +264,12 @@ export default function ChatPage() {
 
   const handleNewConversation = () => {
     setSelectedConversationId(null)
-    setSelectedMatterId(null)
+    setSelectedClaimId(null)
     setLocalMessages([])
     setPendingUserMessage(null)
-    setMatterSuggestion(null)
+    setClaimSuggestion(null)
     setQuestionSuggestions(null)
-    // Clear the matter query param from URL
+    // Clear the claim query param from URL
     if (searchParams.has('matter')) {
       searchParams.delete('matter')
       setSearchParams(searchParams, { replace: true })
@@ -278,31 +278,31 @@ export default function ChatPage() {
     setTimeout(() => messageInputRef.current?.focus(), 100)
   }
 
-  // Handle accepting matter suggestion
-  const handleAcceptMatterSuggestion = async () => {
-    if (!matterSuggestion || !selectedConversationId) return
+  // Handle accepting claim suggestion
+  const handleAcceptClaimSuggestion = async () => {
+    if (!claimSuggestion || !selectedConversationId) return
 
-    setIsLinkingMatter(true)
+    setIsLinkingClaim(true)
     try {
-      const response = await chatApi.linkToMatter(
+      const response = await chatApi.linkToClaim(
         selectedConversationId,
-        matterSuggestion.matter_id
+        claimSuggestion.claim_id
       )
 
       // Update local state
-      setSelectedMatterId(matterSuggestion.matter_id)
-      setMatterSuggestion(null)
+      setSelectedClaimId(claimSuggestion.claim_id)
+      setClaimSuggestion(null)
 
-      // Refresh conversation data to get updated title and matter_name
+      // Refresh conversation data to get updated title and claim_name
       queryClient.invalidateQueries({ queryKey: ['conversation', selectedConversationId] })
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
 
       toast.success(`Linked to ${response.data.matter_name}`)
     } catch (err) {
       console.error('Failed to link conversation:', err)
-      toast.error('Failed to link conversation to matter')
+      toast.error('Failed to link conversation to claim')
     } finally {
-      setIsLinkingMatter(false)
+      setIsLinkingClaim(false)
     }
   }
 
@@ -328,9 +328,9 @@ export default function ChatPage() {
             onSearch={handleSearch}
             searchResults={searchData?.conversations}
             isSearching={isSearching}
-            matters={mattersData?.claims || []}
-            selectedMatterFilter={conversationMatterFilter}
-            onMatterFilterChange={setConversationMatterFilter}
+            claims={claimsData?.claims || []}
+            selectedClaimFilter={conversationClaimFilter}
+            onClaimFilterChange={setConversationClaimFilter}
           />
         </div>
 
@@ -388,21 +388,21 @@ export default function ChatPage() {
             onDismissSuggestions={() => setQuestionSuggestions(null)}
           />
 
-          {/* Matter suggestion banner - shown when AI detects related matter */}
-          {matterSuggestion && selectedConversationId && !conversationData?.matter_id && (
-            <MatterSuggestionBanner
-              suggestion={matterSuggestion}
-              onAccept={handleAcceptMatterSuggestion}
-              onDismiss={() => setMatterSuggestion(null)}
-              loading={isLinkingMatter}
+          {/* Claim suggestion banner - shown when AI detects related claim */}
+          {claimSuggestion && selectedConversationId && !conversationData?.matter_id && (
+            <ClaimSuggestionBanner
+              suggestion={claimSuggestion}
+              onAccept={handleAcceptClaimSuggestion}
+              onDismiss={() => setClaimSuggestion(null)}
+              loading={isLinkingClaim}
             />
           )}
 
-          {/* Matter selector - only shown for new conversations */}
+          {/* Claim selector - only shown for new conversations */}
           {!selectedConversationId && (
-            <MatterSelectorCompact
-              value={selectedMatterId}
-              onChange={setSelectedMatterId}
+            <ClaimSelectorCompact
+              value={selectedClaimId}
+              onChange={setSelectedClaimId}
               disabled={isStreaming}
             />
           )}
@@ -414,7 +414,7 @@ export default function ChatPage() {
             placeholder={
               selectedConversationId
                 ? 'Ask a follow-up question...'
-                : selectedMatterId
+                : selectedClaimId
                   ? 'Ask about documents in this project...'
                   : 'Ask a general SR&ED question...'
             }

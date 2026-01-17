@@ -1,18 +1,13 @@
 // Claim type definitions (maps to backend API)
 
-export interface Matter {
+export interface Claim {
   id: string
   company_id: string
-  // New SR&ED field names
+  // SR&ED field names
   claim_number: string
   company_name: string
   project_type: string
   claim_status: string
-  // Legacy aliases for backwards compatibility
-  matter_number?: string
-  client_name?: string
-  matter_type?: string
-  matter_status?: string
   // Common fields
   description: string | null
   opened_date: string // ISO date string
@@ -40,7 +35,7 @@ export interface Matter {
   user_can_delete?: boolean
 }
 
-export interface MatterCreate {
+export interface ClaimCreate {
   claim_number: string
   company_name: string
   project_type: string
@@ -58,7 +53,7 @@ export interface MatterCreate {
   technology_focus?: string | null
 }
 
-export interface MatterUpdate {
+export interface ClaimUpdate {
   claim_number?: string
   company_name?: string
   project_type?: string
@@ -79,8 +74,8 @@ export interface MatterUpdate {
   technology_focus?: string | null
 }
 
-export interface MatterListResponse {
-  claims: Matter[]
+export interface ClaimListResponse {
+  claims: Claim[]
   total: number
   page: number
   size: number
@@ -100,10 +95,6 @@ export const PROJECT_TYPES = [
 
 export type ProjectType = typeof PROJECT_TYPES[number]
 
-// Legacy alias for compatibility with backend API
-export const MATTER_TYPES = PROJECT_TYPES
-export type MatterType = ProjectType
-
 // SR&ED Claim Status options
 // These track the lifecycle of an SR&ED claim from draft to final resolution
 export const CLAIM_STATUSES = [
@@ -116,7 +107,3 @@ export const CLAIM_STATUSES = [
 ] as const
 
 export type ClaimStatus = typeof CLAIM_STATUSES[number]
-
-// Legacy alias for compatibility with backend API
-export const MATTER_STATUSES = CLAIM_STATUSES
-export type MatterStatus = ClaimStatus

@@ -146,32 +146,35 @@ export const userApi = {
   },
 }
 
-// Matters API endpoints
-export const mattersApi = {
-  // List all matters
+// Claims API endpoints
+export const claimsApi = {
+  // List all claims
   list: (params?: { status?: string; page?: number; size?: number }) =>
     api.get('/matters/', { params }),
 
-  // Get matter by ID
-  get: (matterId: string) =>
-    api.get(`/matters/${matterId}`),
+  // Get claim by ID
+  get: (claimId: string) =>
+    api.get(`/matters/${claimId}`),
 
-  // Create new matter
+  // Create new claim
   create: (data: any) =>
     api.post('/matters/', data),
 
-  // Update matter
-  update: (matterId: string, data: any) =>
-    api.put(`/matters/${matterId}`, data),
+  // Update claim
+  update: (claimId: string, data: any) =>
+    api.put(`/matters/${claimId}`, data),
 
-  // Delete matter
-  delete: (matterId: string) =>
-    api.delete(`/matters/${matterId}`),
+  // Delete claim
+  delete: (claimId: string) =>
+    api.delete(`/matters/${claimId}`),
 }
+
+// Alias for backwards compatibility
+export const mattersApi = claimsApi
 
 // Documents API endpoints
 export const documentsApi = {
-  // List documents (all or filtered by matter)
+  // List documents (all or filtered by claim)
   list: (params?: { matter_id?: string; page?: number; size?: number; document_type?: string }) =>
     api.get('/documents/', { params }),
 
@@ -348,11 +351,11 @@ export const chatApi = {
       console.debug('Signal tracking failed, continuing silently')
     }),
 
-  // Link conversation to a matter (after AI suggestion)
-  linkToMatter: (conversationId: string, matterId: string) =>
+  // Link conversation to a claim (after AI suggestion)
+  linkToClaim: (conversationId: string, claimId: string) =>
     api.post<{ success: boolean; conversation_id: string; matter_id: string; matter_name: string }>(
       `/chat/conversations/${conversationId}/link-matter`,
-      { matter_id: matterId }
+      { matter_id: claimId }
     ),
 
   // Send help desk message (platform assistance, no RAG)
@@ -442,7 +445,7 @@ export const billableApi = {
       { session_ids: sessionIds }
     ),
 
-  // Get unbilled conversations (matter-scoped conversations without billable sessions)
+  // Get unbilled conversations (claim-scoped conversations without billable sessions)
   getUnbilled: (params?: { matter_id?: string }) =>
     api.get<{
       total_unbilled: number
@@ -450,13 +453,13 @@ export const billableApi = {
         id: string
         title: string
         matter_id: string
-        matter_name: string
+        claim_name: string
         updated_at: string
         created_at: string
       }>
-      by_matter: Array<{
+      by_claim: Array<{
         matter_id: string
-        matter_name: string
+        claim_name: string
         unbilled_count: number
       }>
     }>('/billable/unbilled/conversations', { params }),
@@ -477,9 +480,9 @@ export const timelineApi = {
   list: (params?: TimelineQuery) =>
     api.get<TimelineListResponse>('/timeline', { params }),
 
-  // Get events for a specific matter
-  listByMatter: (matterId: string, params?: Omit<TimelineQuery, 'matter_id'>) =>
-    api.get<TimelineListResponse>(`/timeline/matter/${matterId}`, { params }),
+  // Get events for a specific claim
+  listByClaim: (claimId: string, params?: Omit<TimelineQuery, 'matter_id'>) =>
+    api.get<TimelineListResponse>(`/timeline/matter/${claimId}`, { params }),
 
   // Get events for a specific document
   listByDocument: (documentId: string, params?: { include_superseded?: boolean; page?: number; page_size?: number }) =>

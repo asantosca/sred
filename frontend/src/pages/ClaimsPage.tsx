@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { mattersApi } from '@/lib/api'
-import { Matter } from '@/types/matters'
+import { claimsApi } from '@/lib/api'
+import { Claim } from '@/types/claims'
 import { Briefcase, Plus, Search, Filter } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 export default function ClaimsPage() {
   const navigate = useNavigate()
-  const [claims, setClaims] = useState<Matter[]>([])
+  const [claims, setClaims] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -25,7 +25,7 @@ export default function ClaimsPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await mattersApi.list()
+      const response = await claimsApi.list()
       setClaims(response.data.claims || [])
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claims')
@@ -83,7 +83,7 @@ export default function ClaimsPage() {
           </div>
           <Button
             variant="primary"
-            onClick={() => navigate('/matters/new')}
+            onClick={() => navigate('/claims/new')}
             icon={<Plus className="h-4 w-4" />}
           >
             New Claim
@@ -153,7 +153,7 @@ export default function ClaimsPage() {
                 {!searchTerm && statusFilter === 'all' && (
                   <Button
                     variant="primary"
-                    onClick={() => navigate('/matters/new')}
+                    onClick={() => navigate('/claims/new')}
                     className="mt-4"
                     icon={<Plus className="h-4 w-4" />}
                   >
@@ -166,7 +166,7 @@ export default function ClaimsPage() {
                 {filteredClaims.map((claim) => (
                   <div
                     key={claim.id}
-                    onClick={() => navigate(`/matters/${claim.id}`)}
+                    onClick={() => navigate(`/claims/${claim.id}`)}
                     className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                   >
                     {/* Claim Status Badge */}

@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { mattersApi, documentsApi, billableApi } from '@/lib/api'
-import { Matter } from '@/types/matters'
+import { claimsApi, documentsApi, billableApi } from '@/lib/api'
+import { Claim } from '@/types/claims'
 import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign, Pencil, ClipboardList } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 import T661DraftModal from '@/components/t661/T661DraftModal'
 
 export default function ClaimDetailPage() {
-  const { matterId } = useParams<{ matterId: string }>()
+  const { claimId } = useParams<{ claimId: string }>()
   const navigate = useNavigate()
 
-  const [claim, setClaim] = useState<Matter | null>(null)
+  const [claim, setClaim] = useState<Claim | null>(null)
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,18 +26,18 @@ export default function ClaimDetailPage() {
   const [showT661Modal, setShowT661Modal] = useState(false)
 
   useEffect(() => {
-    if (matterId) {
+    if (claimId) {
       fetchClaimDetails()
       fetchClaimDocuments()
       fetchUnbilledCount()
     }
-  }, [matterId])
+  }, [claimId])
 
   const fetchClaimDetails = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await mattersApi.get(matterId!)
+      const response = await claimsApi.get(claimId!)
       setClaim(response.data)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claim details')
@@ -48,7 +48,7 @@ export default function ClaimDetailPage() {
 
   const fetchClaimDocuments = async () => {
     try {
-      const response = await documentsApi.list({ matter_id: matterId })
+      const response = await documentsApi.list({ matter_id: claimId })
       setDocuments(response.data.documents || [])
     } catch (err) {
       console.error('Failed to load documents:', err)
@@ -57,7 +57,7 @@ export default function ClaimDetailPage() {
 
   const fetchUnbilledCount = async () => {
     try {
-      const response = await billableApi.getUnbilled({ matter_id: matterId })
+      const response = await billableApi.getUnbilled({ matter_id: claimId })
       setUnbilledCount(response.data.total_unbilled)
     } catch (err) {
       console.error('Failed to fetch unbilled count:', err)
@@ -70,13 +70,13 @@ export default function ClaimDetailPage() {
   }
 
   const handleDeleteClaim = async () => {
-    if (!matterId) return
+    if (!claimId) return
 
     try {
       setDeleting(true)
       setDeleteError(null)
-      await mattersApi.delete(matterId)
-      navigate('/matters', { replace: true })
+      await claimsApi.delete(claimId)
+      navigate('/claims', { replace: true })
     } catch (err: any) {
       const errorDetail = err.response?.data?.detail || 'Failed to delete claim'
       setDeleteError(errorDetail)
@@ -128,7 +128,7 @@ export default function ClaimDetailPage() {
           </div>
           <Button
             variant="secondary"
-            onClick={() => navigate('/matters')}
+            onClick={() => navigate('/claims')}
             className="mt-4"
             icon={<ArrowLeft className="h-4 w-4" />}
           >
@@ -145,7 +145,7 @@ export default function ClaimDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/matters')}
+            onClick={() => navigate('/claims')}
             className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -180,7 +180,7 @@ export default function ClaimDetailPage() {
               {claim.user_can_edit && (
                 <Button
                   variant="secondary"
-                  onClick={() => navigate(`/matters/${matterId}/edit`)}
+                  onClick={() => navigate(`/claims/${claimId}/edit`)}
                   icon={<Pencil className="h-4 w-4" />}
                 >
                   Edit
@@ -260,7 +260,7 @@ export default function ClaimDetailPage() {
               </h2>
             </div>
             <DocumentUpload
-              matterId={matterId}
+              claimId={claimId}
               onSuccess={handleUploadSuccess}
             />
           </div>
@@ -341,7 +341,7 @@ export default function ClaimDetailPage() {
 
             {unbilledCount > 0 && (
               <div
-                onClick={() => navigate(`/chat?matter=${matterId}&history=true`)}
+                onClick={() => navigate(`/chat?matter=${claimId}&history=true`)}
                 className="bg-amber-50 rounded-lg border border-amber-200 p-6 cursor-pointer hover:bg-amber-100 transition-colors"
               >
                 <div className="flex items-center mb-2">
@@ -359,7 +359,7 @@ export default function ClaimDetailPage() {
               <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate(`/chat?matter=${matterId}`)}
+                  onClick={() => navigate(`/chat?matter=${claimId}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-md font-medium"
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -380,28 +380,28 @@ export default function ClaimDetailPage() {
                   Upload Document
                 </button>
                 <button
-                  onClick={() => navigate(`/documents?matter=${matterId}`)}
+                  onClick={() => navigate(`/documents?matter=${claimId}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <FileText className="h-4 w-4" />
                   View All Documents
                 </button>
                 <button
-                  onClick={() => navigate(`/timeline?matter_id=${matterId}`)}
+                  onClick={() => navigate(`/timeline?matter_id=${claimId}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <Calendar className="h-4 w-4" />
                   View Timeline
                 </button>
                 <button
-                  onClick={() => navigate(`/chat?matter=${matterId}&history=true`)}
+                  onClick={() => navigate(`/chat?matter=${claimId}&history=true`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <History className="h-4 w-4" />
                   Chat History
                 </button>
                 <button
-                  onClick={() => navigate(`/billable?matter=${matterId}`)}
+                  onClick={() => navigate(`/billable?matter=${claimId}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <Clock className="h-4 w-4" />
@@ -463,7 +463,7 @@ export default function ClaimDetailPage() {
             <div className="p-4 border-t border-gray-200 text-center">
               <Button
                 variant="secondary"
-                onClick={() => navigate(`/documents?matter=${matterId}`)}
+                onClick={() => navigate(`/documents?matter=${claimId}`)}
               >
                 View All {documents.length} Documents
               </Button>
@@ -476,7 +476,7 @@ export default function ClaimDetailPage() {
       <T661DraftModal
         isOpen={showT661Modal}
         onClose={() => setShowT661Modal(false)}
-        claimId={matterId!}
+        claimId={claimId!}
         companyName={claim.company_name}
         claimNumber={claim.claim_number}
       />

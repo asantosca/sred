@@ -7,8 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { mattersApi } from '@/lib/api'
-import { CLAIM_STATUSES } from '@/types/matters'
+import { claimsApi } from '@/lib/api'
+import { CLAIM_STATUSES } from '@/types/claims'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
@@ -35,6 +35,10 @@ const createClaimSchema = z.object({
   opened_date: z.string().min(1, 'Opened date is required'),
   closed_date: z.string().optional(),
   fiscal_year_end: z.string().min(1, 'Fiscal year end is required'),
+  // Project context fields (for AI guidance in T661 generation)
+  project_title: z.string().optional(),
+  project_objective: z.string().optional(),
+  technology_focus: z.string().optional(),
 }).refine(
   (data) => {
     if (!data.fiscal_year_end) return true
@@ -76,7 +80,7 @@ const createClaimSchema = z.object({
 
 type CreateClaimFormData = z.infer<typeof createClaimSchema>
 
-export default function CreateMatterPage() {
+export default function CreateClaimPage() {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -98,19 +102,22 @@ export default function CreateMatterPage() {
       setIsSubmitting(true)
       setError(null)
 
-      // Remove closed_date if empty
+      // Remove empty optional fields
       const submitData = {
         ...data,
         closed_date: data.closed_date || null,
         description: data.description || null,
         fiscal_year_end: data.fiscal_year_end || null,
+        project_title: data.project_title || null,
+        project_objective: data.project_objective || null,
+        technology_focus: data.technology_focus || null,
       }
 
-      const response = await mattersApi.create(submitData)
+      const response = await claimsApi.create(submitData)
 
       toast.success('Claim created successfully')
       // Navigate to the newly created claim
-      navigate(`/matters/${response.data.id}`)
+      navigate(`/claims/${response.data.id}`)
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to create claim'
       setError(errorMessage)
@@ -126,7 +133,7 @@ export default function CreateMatterPage() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/matters')}
+            onClick={() => navigate('/claims')}
             className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -226,6 +233,46 @@ export default function CreateMatterPage() {
               )}
             </div>
 
+            {/* Project Context Section - for AI Guidance */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-1">Project Context</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                These fields help the AI focus on the specific R&D project when generating T661 drafts from your documents.
+              </p>
+
+              <div className="space-y-4">
+                <Input
+                  label="Project Title"
+                  type="text"
+                  placeholder="e.g., ML-Based Fraud Detection Algorithm"
+                  helperText="Short name for the specific R&D project"
+                  {...register('project_title')}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project Objective
+                    <span className="text-gray-500 font-normal ml-1">(Optional)</span>
+                  </label>
+                  <textarea
+                    {...register('project_objective')}
+                    rows={2}
+                    placeholder="e.g., Develop a neural network that reduces false positives in transaction fraud detection by 40%"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">1-2 sentences describing the technical goal</p>
+                </div>
+
+                <Input
+                  label="Technology Focus"
+                  type="text"
+                  placeholder="e.g., Machine learning, anomaly detection, real-time processing"
+                  helperText="Specific technology area and keywords to help AI filter relevant content"
+                  {...register('technology_focus')}
+                />
+              </div>
+            </div>
+
             {/* Fiscal Year End - Critical for SR&ED */}
             <Input
               label="Fiscal Year End"
@@ -259,7 +306,7 @@ export default function CreateMatterPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => navigate('/matters')}
+              onClick={() => navigate('/claims')}
             >
               Cancel
             </Button>

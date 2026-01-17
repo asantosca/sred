@@ -7,8 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { mattersApi } from '@/lib/api'
-import { Matter, CLAIM_STATUSES } from '@/types/matters'
+import { claimsApi } from '@/lib/api'
+import { Claim, CLAIM_STATUSES } from '@/types/claims'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
@@ -35,6 +35,10 @@ const editClaimSchema = z.object({
   opened_date: z.string().min(1, 'Opened date is required'),
   closed_date: z.string().optional(),
   fiscal_year_end: z.string().min(1, 'Fiscal year end is required'),
+  // Project context fields (for AI guidance in T661 generation)
+  project_title: z.string().optional(),
+  project_objective: z.string().optional(),
+  technology_focus: z.string().optional(),
 }).refine(
   (data) => {
     if (!data.fiscal_year_end) return true
@@ -76,13 +80,13 @@ const editClaimSchema = z.object({
 
 type EditClaimFormData = z.infer<typeof editClaimSchema>
 
-export default function EditMatterPage() {
-  const { matterId } = useParams<{ matterId: string }>()
+export default function EditClaimPage() {
+  const { claimId } = useParams<{ claimId: string }>()
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [matter, setMatter] = useState<Matter | null>(null)
+  const [claim, setClaim] = useState<Claim | null>(null)
 
   const {
     register,
@@ -94,29 +98,32 @@ export default function EditMatterPage() {
   })
 
   useEffect(() => {
-    if (matterId) {
-      fetchMatter()
+    if (claimId) {
+      fetchClaim()
     }
-  }, [matterId])
+  }, [claimId])
 
-  const fetchMatter = async () => {
+  const fetchClaim = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await mattersApi.get(matterId!)
-      const matterData = response.data
-      setMatter(matterData)
+      const response = await claimsApi.get(claimId!)
+      const claimData = response.data
+      setClaim(claimData)
 
       // Pre-populate form with existing data
       reset({
-        claim_number: matterData.claim_number,
-        company_name: matterData.company_name,
-        project_type: matterData.project_type,
-        claim_status: matterData.claim_status,
-        description: matterData.description || '',
-        opened_date: matterData.opened_date.split('T')[0],
-        closed_date: matterData.closed_date?.split('T')[0] || '',
-        fiscal_year_end: matterData.fiscal_year_end?.split('T')[0] || '',
+        claim_number: claimData.claim_number,
+        company_name: claimData.company_name,
+        project_type: claimData.project_type,
+        claim_status: claimData.claim_status,
+        description: claimData.description || '',
+        opened_date: claimData.opened_date.split('T')[0],
+        closed_date: claimData.closed_date?.split('T')[0] || '',
+        fiscal_year_end: claimData.fiscal_year_end?.split('T')[0] || '',
+        project_title: claimData.project_title || '',
+        project_objective: claimData.project_objective || '',
+        technology_focus: claimData.technology_focus || '',
       })
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claim')
@@ -135,12 +142,15 @@ export default function EditMatterPage() {
         closed_date: data.closed_date || null,
         description: data.description || null,
         fiscal_year_end: data.fiscal_year_end || null,
+        project_title: data.project_title || null,
+        project_objective: data.project_objective || null,
+        technology_focus: data.technology_focus || null,
       }
 
-      await mattersApi.update(matterId!, submitData)
+      await claimsApi.update(claimId!, submitData)
 
       toast.success('Claim updated successfully')
-      navigate(`/matters/${matterId}`)
+      navigate(`/claims/${claimId}`)
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to update claim'
       setError(errorMessage)
@@ -163,7 +173,7 @@ export default function EditMatterPage() {
     )
   }
 
-  if (error && !matter) {
+  if (error && !claim) {
     return (
       <DashboardLayout>
         <div className="max-w-3xl mx-auto p-6">
@@ -172,7 +182,7 @@ export default function EditMatterPage() {
             <p className="text-sm mt-1">{error}</p>
             <Button
               variant="secondary"
-              onClick={() => navigate('/matters')}
+              onClick={() => navigate('/claims')}
               className="mt-4"
             >
               Back to Claims
@@ -189,7 +199,7 @@ export default function EditMatterPage() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => navigate(`/matters/${matterId}`)}
+            onClick={() => navigate(`/claims/${claimId}`)}
             className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -197,7 +207,7 @@ export default function EditMatterPage() {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Edit Claim</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Update the details for {matter?.company_name}
+            Update the details for {claim?.company_name}
           </p>
         </div>
 
@@ -289,6 +299,46 @@ export default function EditMatterPage() {
               )}
             </div>
 
+            {/* Project Context Section - for AI Guidance */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-1">Project Context</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                These fields help the AI focus on the specific R&D project when generating T661 drafts from your documents.
+              </p>
+
+              <div className="space-y-4">
+                <Input
+                  label="Project Title"
+                  type="text"
+                  placeholder="e.g., ML-Based Fraud Detection Algorithm"
+                  helperText="Short name for the specific R&D project"
+                  {...register('project_title')}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project Objective
+                    <span className="text-gray-500 font-normal ml-1">(Optional)</span>
+                  </label>
+                  <textarea
+                    {...register('project_objective')}
+                    rows={2}
+                    placeholder="e.g., Develop a neural network that reduces false positives in transaction fraud detection by 40%"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">1-2 sentences describing the technical goal</p>
+                </div>
+
+                <Input
+                  label="Technology Focus"
+                  type="text"
+                  placeholder="e.g., Machine learning, anomaly detection, real-time processing"
+                  helperText="Specific technology area and keywords to help AI filter relevant content"
+                  {...register('technology_focus')}
+                />
+              </div>
+            </div>
+
             {/* Fiscal Year End - Critical for SR&ED */}
             <Input
               label="Fiscal Year End"
@@ -322,7 +372,7 @@ export default function EditMatterPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => navigate(`/matters/${matterId}`)}
+              onClick={() => navigate(`/claims/${claimId}`)}
             >
               Cancel
             </Button>

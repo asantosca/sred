@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { documentsApi, mattersApi } from '@/lib/api'
+import { documentsApi, claimsApi } from '@/lib/api'
 import { DocumentWithMatter } from '@/types/documents'
 import {
   FileText,
@@ -23,7 +23,7 @@ import { DOCUMENT_TYPES, DOCUMENT_STATUSES, CONFIDENTIALITY_LEVELS } from '@/typ
 import toast from 'react-hot-toast'
 
 interface DocumentListProps {
-  matterId?: string
+  claimId?: string
 }
 
 interface EditFormData {
@@ -35,9 +35,9 @@ interface EditFormData {
   confidentiality_level: string
 }
 
-export default function DocumentList({ matterId }: DocumentListProps) {
+export default function DocumentList({ claimId }: DocumentListProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedMatter, setSelectedMatter] = useState(matterId || '')
+  const [selectedClaim, setSelectedClaim] = useState(claimId || '')
   const [selectedType, setSelectedType] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 20
@@ -57,10 +57,10 @@ export default function DocumentList({ matterId }: DocumentListProps) {
 
   // Fetch documents
   const { data: documentsResponse, isLoading } = useQuery({
-    queryKey: ['documents', { matter_id: selectedMatter || undefined, page, document_type: selectedType || undefined }],
+    queryKey: ['documents', { matter_id: selectedClaim || undefined, page, document_type: selectedType || undefined }],
     queryFn: async () => {
       const params: any = { page, size: pageSize }
-      if (selectedMatter) params.matter_id = selectedMatter
+      if (selectedClaim) params.matter_id = selectedClaim
       if (selectedType) params.document_type = selectedType
 
       const response = await documentsApi.list(params)
@@ -68,11 +68,11 @@ export default function DocumentList({ matterId }: DocumentListProps) {
     },
   })
 
-  // Fetch matters for filter
-  const { data: mattersResponse } = useQuery({
-    queryKey: ['matters', 'active'],
+  // Fetch claims for filter
+  const { data: claimsResponse } = useQuery({
+    queryKey: ['claims', 'all'],
     queryFn: async () => {
-      const response = await mattersApi.list({ status: 'active' })
+      const response = await claimsApi.list({})
       return response.data
     },
   })
@@ -150,7 +150,7 @@ export default function DocumentList({ matterId }: DocumentListProps) {
     (doc.description && doc.description.toLowerCase().includes(searchLower))
   )
 
-  const matters = mattersResponse?.claims || []
+  const claims = claimsResponse?.claims || []
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -214,20 +214,20 @@ export default function DocumentList({ matterId }: DocumentListProps) {
             />
           </div>
 
-          {/* Matter filter */}
+          {/* Claim filter */}
           <div>
             <select
-              value={selectedMatter}
+              value={selectedClaim}
               onChange={(e) => {
-                setSelectedMatter(e.target.value)
+                setSelectedClaim(e.target.value)
                 setPage(1)
               }}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             >
               <option value="">All claims</option>
-              {matters.map((matter: any) => (
-                <option key={matter.id} value={matter.id}>
-                  {matter.claim_number} - {matter.company_name}
+              {claims.map((claim: any) => (
+                <option key={claim.id} value={claim.id}>
+                  {claim.claim_number} - {claim.company_name}
                 </option>
               ))}
             </select>
@@ -261,7 +261,7 @@ export default function DocumentList({ matterId }: DocumentListProps) {
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No documents</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm || selectedMatter || selectedType
+            {searchTerm || selectedClaim || selectedType
               ? 'No documents match your filters'
               : 'Get started by uploading a document'}
           </p>

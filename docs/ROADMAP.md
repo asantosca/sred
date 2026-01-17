@@ -59,8 +59,14 @@ _Demonstrate core value proposition to PwC_
 - [x] T661 form drafting (Box 242, 244, 246 - aligned with CRA nomenclature)
 - [x] Fiscal year filtering for multi-year projects (AI extracts work within claim period)
 - [x] Claim date validation (fiscal year end in past, opened after FYE, within 18-month CRA deadline)
+- [x] Project context fields for AI guidance (project title, objective, technology focus)
 - [ ] Project timeline with R&D milestones
 - [ ] Five-question test analysis
+
+### UI/UX Improvements
+- [x] Consistent terminology (Claims, not Matters) throughout frontend
+- [x] Document upload from claim detail page auto-selects claim
+- [x] Celery worker queue configuration for document processing
 
 ### POC Deliverables
 - [ ] Demo environment for PwC evaluation

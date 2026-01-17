@@ -134,6 +134,11 @@ class Claim(Base):
     federal_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
     provincial_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
 
+    # Project-specific fields (for AI context in T661 generation)
+    project_title = Column(String(255), nullable=True)  # e.g., "ML-Based Fraud Detection Algorithm"
+    project_objective = Column(Text, nullable=True)  # 1-2 sentences describing the technical goal
+    technology_focus = Column(String(500), nullable=True)  # Specific tech area, keywords
+
     # Lead consultant
     lead_consultant_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 

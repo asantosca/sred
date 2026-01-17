@@ -1,31 +1,31 @@
 // Compact claim selector for chat - shows as a dropdown above the message input
 
 import { useQuery } from '@tanstack/react-query'
-import { mattersApi } from '@/lib/api'
+import { claimsApi } from '@/lib/api'
 import { Briefcase, X } from 'lucide-react'
-import type { Matter } from '@/types/documents'
+import type { Claim } from '@/types/claims'
 
-interface MatterSelectorCompactProps {
+interface ClaimSelectorCompactProps {
   value: string | null
-  onChange: (matterId: string | null) => void
+  onChange: (claimId: string | null) => void
   disabled?: boolean
 }
 
-export default function MatterSelectorCompact({
+export default function ClaimSelectorCompact({
   value,
   onChange,
   disabled = false,
-}: MatterSelectorCompactProps) {
+}: ClaimSelectorCompactProps) {
   // Fetch claims list (all statuses for chat context)
-  const { data: mattersResponse, isLoading } = useQuery({
-    queryKey: ['matters', 'all'],
+  const { data: claimsResponse, isLoading } = useQuery({
+    queryKey: ['claims', 'all'],
     queryFn: async () => {
-      const response = await mattersApi.list({})
+      const response = await claimsApi.list({})
       return response.data
     },
   })
 
-  const matters = mattersResponse?.claims || []
+  const claims = claimsResponse?.claims || []
 
   if (isLoading) {
     return (
@@ -36,7 +36,7 @@ export default function MatterSelectorCompact({
     )
   }
 
-  if (matters.length === 0) {
+  if (claims.length === 0) {
     return null
   }
 
@@ -50,9 +50,9 @@ export default function MatterSelectorCompact({
         className="flex-1 rounded border-gray-300 bg-white py-1 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
       >
         <option value="">AI Discovery (general assistance)</option>
-        {matters.map((matter: Matter) => (
-          <option key={matter.id} value={matter.id}>
-            {matter.claim_number} - {matter.company_name}
+        {claims.map((claim: Claim) => (
+          <option key={claim.id} value={claim.id}>
+            {claim.claim_number} - {claim.company_name}
           </option>
         ))}
       </select>

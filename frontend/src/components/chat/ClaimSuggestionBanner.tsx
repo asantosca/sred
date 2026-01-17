@@ -1,22 +1,22 @@
-// MatterSuggestionBanner - Displays when AI detects a query may relate to a claim
+// ClaimSuggestionBanner - Displays when AI detects a query may relate to a claim
 
 import { Briefcase, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import type { MatterSuggestion } from '@/types/chat'
+import type { ClaimSuggestion } from '@/types/chat'
 
-interface MatterSuggestionBannerProps {
-  suggestion: MatterSuggestion
+interface ClaimSuggestionBannerProps {
+  suggestion: ClaimSuggestion
   onAccept: () => void
   onDismiss: () => void
   loading?: boolean
 }
 
-export default function MatterSuggestionBanner({
+export default function ClaimSuggestionBanner({
   suggestion,
   onAccept,
   onDismiss,
   loading = false,
-}: MatterSuggestionBannerProps) {
+}: ClaimSuggestionBannerProps) {
   const confidencePercent = Math.round(suggestion.similarity * 100)
 
   return (
@@ -28,7 +28,7 @@ export default function MatterSuggestionBanner({
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-blue-900">
-              This may relate to claim: {suggestion.matter_name}
+              This may relate to claim: {suggestion.claim_name}
             </p>
             <p className="mt-0.5 text-xs text-blue-700">
               Matched "{suggestion.matched_document}" ({confidencePercent}% confidence)

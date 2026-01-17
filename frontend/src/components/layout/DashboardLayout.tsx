@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Claims', href: '/matters', icon: Briefcase },
+    { name: 'Claims', href: '/claims', icon: Briefcase },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Project Timeline', href: '/timeline', icon: Calendar },
     { name: 'Chat', href: '/chat', icon: MessageSquare },

@@ -9,20 +9,20 @@ import {
   DOCUMENT_TYPES,
   CONFIDENTIALITY_LEVELS,
 } from '@/types/documents'
-import MatterSelector from './MatterSelector'
+import ClaimSelector from './ClaimSelector'
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 interface DocumentUploadProps {
-  matterId?: string
+  claimId?: string
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export default function DocumentUpload({ matterId, onSuccess, onCancel }: DocumentUploadProps) {
+export default function DocumentUpload({ claimId, onSuccess, onCancel }: DocumentUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [formData, setFormData] = useState<QuickDocumentUpload>({
-    matter_id: matterId || '',
+    matter_id: claimId || '',
     document_type: '',
     document_title: '',
     document_date: new Date().toISOString().split('T')[0],
@@ -46,7 +46,7 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
       toast.success('Document uploaded successfully')
       setSelectedFile(null)
       setFormData({
-        matter_id: '',
+        matter_id: claimId || '',  // Preserve claimId if provided as prop
         document_type: '',
         document_title: '',
         document_date: new Date().toISOString().split('T')[0],
@@ -129,7 +129,7 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.matter_id) newErrors.matter_id = 'Matter is required'
+    if (!formData.matter_id) newErrors.matter_id = 'Claim is required'
     if (!formData.document_type) newErrors.document_type = 'Document type is required'
     if (!formData.document_title) newErrors.document_title = 'Document title is required'
     if (!formData.document_date) newErrors.document_date = 'Document date is required'
@@ -216,14 +216,16 @@ export default function DocumentUpload({ matterId, onSuccess, onCancel }: Docume
         )}
       </div>
 
-      {/* Matter selector */}
-      <MatterSelector
-        value={formData.matter_id}
-        onChange={(matterId) =>
-          setFormData({ ...formData, matter_id: matterId })
-        }
-        error={errors.matter_id}
-      />
+      {/* Claim selector - only show if claimId not provided */}
+      {!claimId && (
+        <ClaimSelector
+          value={formData.matter_id}
+          onChange={(id) =>
+            setFormData({ ...formData, matter_id: id })
+          }
+          error={errors.matter_id}
+        />
+      )}
 
       {/* Document metadata fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

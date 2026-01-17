@@ -5,9 +5,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { timelineApi, mattersApi } from '@/lib/api'
+import { timelineApi, claimsApi } from '@/lib/api'
 import type { DocumentEventWithContext, ConfidenceLevel } from '@/types/timeline'
-import type { Matter } from '@/types/documents'
+import type { Claim } from '@/types/claims'
 import {
   Calendar,
   FileText,
@@ -28,41 +28,41 @@ export default function TimelinePage() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
 
-  // Initialize matter filter from URL params
-  const initialMatterId = searchParams.get('matter_id') || ''
+  // Initialize claim filter from URL params
+  const initialClaimId = searchParams.get('matter_id') || ''
 
   // Filters
-  const [matterId, setMatterId] = useState<string>(initialMatterId)
+  const [claimId, setClaimId] = useState<string>(initialClaimId)
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
   const [confidence, setConfidence] = useState<ConfidenceLevel | ''>('')
   const [page, setPage] = useState(1)
   const pageSize = 50
 
-  // Update matter filter if URL param changes
+  // Update claim filter if URL param changes
   useEffect(() => {
-    const urlMatterId = searchParams.get('matter_id') || ''
-    if (urlMatterId !== matterId) {
-      setMatterId(urlMatterId)
+    const urlClaimId = searchParams.get('matter_id') || ''
+    if (urlClaimId !== claimId) {
+      setClaimId(urlClaimId)
       setPage(1)
     }
   }, [searchParams])
 
-  // Fetch matters for filter dropdown
-  const { data: mattersData } = useQuery({
-    queryKey: ['matters', 'active'],
+  // Fetch claims for filter dropdown
+  const { data: claimsData } = useQuery({
+    queryKey: ['claims', 'all'],
     queryFn: async () => {
-      const response = await mattersApi.list({ status: 'active' })
+      const response = await claimsApi.list({})
       return response.data
     },
   })
 
   // Fetch timeline events
   const { data, isLoading, error } = useQuery({
-    queryKey: ['timeline', matterId, dateFrom, dateTo, confidence, page],
+    queryKey: ['timeline', claimId, dateFrom, dateTo, confidence, page],
     queryFn: async () => {
       const response = await timelineApi.list({
-        matter_id: matterId || undefined,
+        matter_id: claimId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         confidence: confidence || undefined,
@@ -88,7 +88,7 @@ export default function TimelinePage() {
   const events = data?.events || []
   const total = data?.total || 0
   const hasMore = data?.has_more || false
-  const matters = mattersData?.matters || []
+  const claims = claimsData?.claims || []
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -179,17 +179,17 @@ export default function TimelinePage() {
                 Claim
               </label>
               <select
-                value={matterId}
+                value={claimId}
                 onChange={(e) => {
-                  setMatterId(e.target.value)
+                  setClaimId(e.target.value)
                   setPage(1)
                 }}
                 className="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">All claims</option>
-                {matters.map((matter: Matter) => (
-                  <option key={matter.id} value={matter.id}>
-                    {matter.claim_number} - {matter.company_name}
+                {claims.map((claim: Claim) => (
+                  <option key={claim.id} value={claim.id}>
+                    {claim.claim_number} - {claim.company_name}
                   </option>
                 ))}
               </select>
@@ -271,7 +271,7 @@ export default function TimelinePage() {
             <h3 className="mt-4 text-lg font-medium text-gray-900">No events found</h3>
             <p className="mt-2 text-sm text-gray-500">
               Events will appear here once documents are processed.
-              {matterId && ' Try clearing the claim filter to see all events.'}
+              {claimId && ' Try clearing the claim filter to see all events.'}
             </p>
           </div>
         ) : (
@@ -314,7 +314,7 @@ export default function TimelinePage() {
                               {event.document_title || event.document_filename}
                             </button>
 
-                            {/* Matter */}
+                            {/* Claim */}
                             {event.matter_name && (
                               <span className="inline-flex items-center gap-1">
                                 <Briefcase className="h-3 w-3" />
