@@ -28,10 +28,10 @@ def upgrade() -> None:
         sa.Column('model_name', sa.String(100), nullable=True),
         sa.Column('token_count', sa.Integer(), nullable=True),
         sa.Column('context_summary', postgresql.JSON(), nullable=True),
-        sa.ForeignKeyConstraint(['company_id'], ['bc_legal_ds.companies.id'], ),
-        sa.ForeignKeyConstraint(['user_id'], ['bc_legal_ds.users.id'], ),
+        sa.ForeignKeyConstraint(['company_id'], ['sred_ds.companies.id'], ),
+        sa.ForeignKeyConstraint(['user_id'], ['sred_ds.users.id'], ),
         sa.PrimaryKeyConstraint('id'),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Index for quick lookup by user and date
@@ -40,10 +40,10 @@ def upgrade() -> None:
         'daily_briefings',
         ['user_id', 'briefing_date'],
         unique=True,
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
 
 def downgrade() -> None:
-    op.drop_index('ix_daily_briefings_user_date', table_name='daily_briefings', schema='bc_legal_ds')
-    op.drop_table('daily_briefings', schema='bc_legal_ds')
+    op.drop_index('ix_daily_briefings_user_date', table_name='daily_briefings', schema='sred_ds')
+    op.drop_table('daily_briefings', schema='sred_ds')

@@ -1,5 +1,5 @@
 @echo off
-REM quick-start.bat - Quick commands for BC Legal Tech development on Windows
+REM quick-start.bat - Quick commands for SR&ED development on Windows
 
 echo 'PWC SRED - Quick Start Commands'
 echo =====================================
@@ -39,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File "setup-environment.ps1"
 goto end
 
 :validate
-echo Validating BC Legal Tech services...
+echo Validating SR&ED services...
 powershell -ExecutionPolicy Bypass -File "validate-setup.ps1"
 goto end
 

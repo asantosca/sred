@@ -32,9 +32,9 @@ async_session_factory = async_sessionmaker(
     expire_on_commit=False
 )
 
-# Create base class for models with bc_legal_ds schema
+# Create base class for models with sred_ds schema
 Base = declarative_base()
-Base.metadata.schema = 'bc_legal_ds'
+Base.metadata.schema = 'sred_ds'
 
 from fastapi import Request
 from sqlalchemy import text

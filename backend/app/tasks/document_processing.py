@@ -18,6 +18,8 @@ STATUS_PROCESSING = "processing"
 STATUS_CHUNKED = "chunked"
 STATUS_EMBEDDED = "embedded"
 STATUS_EVENTS_EXTRACTED = "events_extracted"
+STATUS_SUMMARIZING = "summarizing"
+STATUS_COMPLETE = "complete"
 STATUS_FAILED = "failed"
 
 
@@ -164,6 +166,9 @@ async def _process_document_async(document_id: str, company_id: str) -> dict:
         logger.info(f"Generating AI summary for document {document_id}")
         summary_generated = False
         try:
+            # Update status to summarizing
+            await _update_document_status_in_session(session, doc_uuid, STATUS_SUMMARIZING)
+
             summary_generated = await _generate_document_summary(
                 session, doc_uuid, company_uuid
             )
@@ -175,6 +180,8 @@ async def _process_document_async(document_id: str, company_id: str) -> dict:
             # Summary generation failure is non-fatal - document is still searchable
             logger.warning(f"Summary generation failed for document {document_id}: {str(e)}")
 
+        # Update status to complete
+        await _update_document_status_in_session(session, doc_uuid, STATUS_COMPLETE)
         logger.info(f"Document {document_id} fully processed and ready for search")
 
         return {

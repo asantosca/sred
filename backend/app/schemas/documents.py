@@ -145,6 +145,10 @@ class Document(DocumentBase):
     description: Optional[str] = None
     date_received: Optional[date] = None
     filed_date: Optional[date] = None
+
+    # AI-generated summary
+    ai_summary: Optional[str] = None
+    ai_summary_generated_at: Optional[datetime] = None
     
     # Version control
     is_current_version: bool

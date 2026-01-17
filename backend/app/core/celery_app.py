@@ -5,7 +5,7 @@ from app.core.config import settings
 
 # Create Celery app
 celery_app = Celery(
-    "bc_legal_tech",
+    "sred_tech",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
     include=[

@@ -26,12 +26,12 @@ def upgrade() -> None:
         sa.Column('max_document_size_mb', sa.Integer(), nullable=False),
         sa.Column('max_users', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP')),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Insert default plan tier limits
     op.execute("""
-        INSERT INTO bc_legal_ds.plan_limits (plan_tier, max_documents, max_storage_gb, max_document_size_mb, max_users)
+        INSERT INTO sred_ds.plan_limits (plan_tier, max_documents, max_storage_gb, max_document_size_mb, max_users)
         VALUES
             ('free', 100, 5, 10, 3),
             ('basic', 1000, 50, 50, 10),
@@ -41,4 +41,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('plan_limits', schema='bc_legal_ds')
+    op.drop_table('plan_limits', schema='sred_ds')

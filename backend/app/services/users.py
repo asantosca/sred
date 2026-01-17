@@ -39,10 +39,10 @@ class UserService:
 
         query = text("""
             SELECT
-                (SELECT COUNT(*) FROM bc_legal_ds.users WHERE company_id = :company_id) as user_count,
+                (SELECT COUNT(*) FROM sred_ds.users WHERE company_id = :company_id) as user_count,
                 pl.max_users
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 

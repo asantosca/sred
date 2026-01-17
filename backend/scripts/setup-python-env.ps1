@@ -58,12 +58,12 @@ Write-Host "   SUCCESS: requirements.txt created" -ForegroundColor Green
 Write-Host "`n8. Creating environment configuration..." -ForegroundColor Yellow
 $envContent = @"
 # SR&ED Intelligence - Environment Configuration
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bc_legal_db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sred_db
 REDIS_URL=redis://localhost:6379
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_ENDPOINT_URL=http://localhost:4566
-S3_BUCKET_NAME=bc-legal-documents
+S3_BUCKET_NAME=sred-documents
 JWT_SECRET_KEY=your-secret-key-change-in-production
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30

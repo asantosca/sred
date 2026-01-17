@@ -13,7 +13,7 @@ class Settings:
     # Database settings
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_db"
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/sred_db"
     )
     
     # Basic app settings
@@ -39,9 +39,9 @@ class Settings:
     ]
     # Production domains (always included when ENVIRONMENT != development)
     CORS_PRODUCTION_ORIGINS: List[str] = [
-        "https://app.bclegaltech.ca",
-        "https://bclegaltech.ca",
-        "https://www.bclegaltech.ca",
+        "https://app.pendingdomain.ca",
+        "https://pendingdomain.ca",
+        "https://www.pendingdomain.ca",
     ]
 
     # Frontend URL (for email links, redirects, etc.)
@@ -52,7 +52,7 @@ class Settings:
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "test")
     AWS_ENDPOINT_URL: Optional[str] = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")  # LocalStack
     AWS_REGION: str = os.getenv("AWS_REGION", "ca-central-1")
-    S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "bc-legal-documents")
+    S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "sred-documents")
 
     # Email settings
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
@@ -61,7 +61,7 @@ class Settings:
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_TLS: bool = os.getenv("SMTP_TLS", "false").lower() == "true"
     SMTP_SSL: bool = os.getenv("SMTP_SSL", "false").lower() == "true"
-    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@bclegaltech.com")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@pendingdomain.com")
     EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "SR&ED Intelligence")
 
     # OpenAI settings (for embeddings)

@@ -25,14 +25,14 @@ def upgrade() -> None:
     op.add_column(
         'documents',
         sa.Column('company_id', sa.UUID(), nullable=True),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Backfill company_id from matters table
     op.execute("""
-        UPDATE bc_legal_ds.documents d
+        UPDATE sred_ds.documents d
         SET company_id = m.company_id
-        FROM bc_legal_ds.matters m
+        FROM sred_ds.matters m
         WHERE d.matter_id = m.id
     """)
 
@@ -41,7 +41,7 @@ def upgrade() -> None:
         'documents',
         'company_id',
         nullable=False,
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Add foreign key constraint
@@ -51,8 +51,8 @@ def upgrade() -> None:
         'companies',
         ['company_id'],
         ['id'],
-        source_schema='bc_legal_ds',
-        referent_schema='bc_legal_ds'
+        source_schema='sred_ds',
+        referent_schema='sred_ds'
     )
 
     # Add index for RLS performance
@@ -60,16 +60,16 @@ def upgrade() -> None:
         'idx_documents_company_id',
         'documents',
         ['company_id'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
 
 def downgrade() -> None:
     # Remove index
-    op.drop_index('idx_documents_company_id', table_name='documents', schema='bc_legal_ds')
+    op.drop_index('idx_documents_company_id', table_name='documents', schema='sred_ds')
 
     # Remove foreign key
-    op.drop_constraint('fk_documents_company_id', 'documents', schema='bc_legal_ds', type_='foreignkey')
+    op.drop_constraint('fk_documents_company_id', 'documents', schema='sred_ds', type_='foreignkey')
 
     # Remove column
-    op.drop_column('documents', 'company_id', schema='bc_legal_ds')
+    op.drop_column('documents', 'company_id', schema='sred_ds')

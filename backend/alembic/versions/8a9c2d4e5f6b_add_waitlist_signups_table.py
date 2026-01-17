@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
         sa.Column('converted_to_user', sa.Boolean(), server_default=sa.text('false'), nullable=False),
         sa.Column('user_id', UUID(as_uuid=True), nullable=True),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Create index on email for faster lookups
@@ -42,7 +42,7 @@ def upgrade() -> None:
         'ix_waitlist_signups_email',
         'waitlist_signups',
         ['email'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Create index on created_at for sorting
@@ -50,7 +50,7 @@ def upgrade() -> None:
         'ix_waitlist_signups_created_at',
         'waitlist_signups',
         ['created_at'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Add foreign key to users table (for conversion tracking)
@@ -58,16 +58,16 @@ def upgrade() -> None:
         'fk_waitlist_signups_user_id',
         'waitlist_signups', 'users',
         ['user_id'], ['id'],
-        source_schema='bc_legal_ds',
-        referent_schema='bc_legal_ds',
+        source_schema='sred_ds',
+        referent_schema='sred_ds',
         ondelete='SET NULL'
     )
 
 
 def downgrade() -> None:
     # Drop indexes
-    op.drop_index('ix_waitlist_signups_created_at', table_name='waitlist_signups', schema='bc_legal_ds')
-    op.drop_index('ix_waitlist_signups_email', table_name='waitlist_signups', schema='bc_legal_ds')
+    op.drop_index('ix_waitlist_signups_created_at', table_name='waitlist_signups', schema='sred_ds')
+    op.drop_index('ix_waitlist_signups_email', table_name='waitlist_signups', schema='sred_ds')
 
     # Drop table
-    op.drop_table('waitlist_signups', schema='bc_legal_ds')
+    op.drop_table('waitlist_signups', schema='sred_ds')

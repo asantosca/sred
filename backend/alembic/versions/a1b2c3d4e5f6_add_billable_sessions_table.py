@@ -47,12 +47,12 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
 
         # Foreign keys with schema-qualified references
-        sa.ForeignKeyConstraint(['company_id'], ['bc_legal_ds.companies.id']),
-        sa.ForeignKeyConstraint(['user_id'], ['bc_legal_ds.users.id']),
-        sa.ForeignKeyConstraint(['conversation_id'], ['bc_legal_ds.conversations.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['matter_id'], ['bc_legal_ds.matters.id']),
+        sa.ForeignKeyConstraint(['company_id'], ['sred_ds.companies.id']),
+        sa.ForeignKeyConstraint(['user_id'], ['sred_ds.users.id']),
+        sa.ForeignKeyConstraint(['conversation_id'], ['sred_ds.conversations.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['matter_id'], ['sred_ds.matters.id']),
 
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Create indexes for common queries
@@ -60,31 +60,31 @@ def upgrade() -> None:
         'ix_billable_sessions_user_id',
         'billable_sessions',
         ['user_id'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.create_index(
         'ix_billable_sessions_conversation_id',
         'billable_sessions',
         ['conversation_id'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.create_index(
         'ix_billable_sessions_matter_id',
         'billable_sessions',
         ['matter_id'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.create_index(
         'ix_billable_sessions_started_at',
         'billable_sessions',
         ['started_at'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
 
 def downgrade() -> None:
-    op.drop_index('ix_billable_sessions_started_at', table_name='billable_sessions', schema='bc_legal_ds')
-    op.drop_index('ix_billable_sessions_matter_id', table_name='billable_sessions', schema='bc_legal_ds')
-    op.drop_index('ix_billable_sessions_conversation_id', table_name='billable_sessions', schema='bc_legal_ds')
-    op.drop_index('ix_billable_sessions_user_id', table_name='billable_sessions', schema='bc_legal_ds')
-    op.drop_table('billable_sessions', schema='bc_legal_ds')
+    op.drop_index('ix_billable_sessions_started_at', table_name='billable_sessions', schema='sred_ds')
+    op.drop_index('ix_billable_sessions_matter_id', table_name='billable_sessions', schema='sred_ds')
+    op.drop_index('ix_billable_sessions_conversation_id', table_name='billable_sessions', schema='sred_ds')
+    op.drop_index('ix_billable_sessions_user_id', table_name='billable_sessions', schema='sred_ds')
+    op.drop_table('billable_sessions', schema='sred_ds')

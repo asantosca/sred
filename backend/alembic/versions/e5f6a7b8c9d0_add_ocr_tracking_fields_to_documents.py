@@ -18,14 +18,14 @@ depends_on = None
 
 def upgrade() -> None:
     # Add OCR tracking fields to documents table
-    op.add_column('documents', sa.Column('ocr_applied', sa.Boolean(), nullable=False, server_default='false'), schema='bc_legal_ds')
-    op.add_column('documents', sa.Column('ocr_engine', sa.String(50), nullable=True), schema='bc_legal_ds')
-    op.add_column('documents', sa.Column('ocr_pages_processed', sa.Integer(), nullable=True), schema='bc_legal_ds')
-    op.add_column('documents', sa.Column('ocr_confidence_avg', sa.Float(), nullable=True), schema='bc_legal_ds')
+    op.add_column('documents', sa.Column('ocr_applied', sa.Boolean(), nullable=False, server_default='false'), schema='sred_ds')
+    op.add_column('documents', sa.Column('ocr_engine', sa.String(50), nullable=True), schema='sred_ds')
+    op.add_column('documents', sa.Column('ocr_pages_processed', sa.Integer(), nullable=True), schema='sred_ds')
+    op.add_column('documents', sa.Column('ocr_confidence_avg', sa.Float(), nullable=True), schema='sred_ds')
 
 
 def downgrade() -> None:
-    op.drop_column('documents', 'ocr_confidence_avg', schema='bc_legal_ds')
-    op.drop_column('documents', 'ocr_pages_processed', schema='bc_legal_ds')
-    op.drop_column('documents', 'ocr_engine', schema='bc_legal_ds')
-    op.drop_column('documents', 'ocr_applied', schema='bc_legal_ds')
+    op.drop_column('documents', 'ocr_confidence_avg', schema='sred_ds')
+    op.drop_column('documents', 'ocr_pages_processed', schema='sred_ds')
+    op.drop_column('documents', 'ocr_engine', schema='sred_ds')
+    op.drop_column('documents', 'ocr_applied', schema='sred_ds')

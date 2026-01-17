@@ -28,19 +28,19 @@ async def create_database():
         conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/postgres')
         
         # Check if database exists
-        result = await conn.fetchval('SELECT 1 FROM pg_database WHERE datname = `$1', 'bc_legal_db')
+        result = await conn.fetchval('SELECT 1 FROM pg_database WHERE datname = `$1', 'sred_db')
         
         if result:
-            print('INFO: Database bc_legal_db already exists')
+            print('INFO: Database sred_db already exists')
         else:
             # Create the database
-            await conn.execute('CREATE DATABASE bc_legal_db')
-            print('SUCCESS: Database bc_legal_db created')
+            await conn.execute('CREATE DATABASE sred_db')
+            print('SUCCESS: Database sred_db created')
         
         await conn.close()
         
         # Now connect to the new database and enable extensions
-        conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/bc_legal_db')
+        conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/sred_db')
         
         # Enable UUID extension
         await conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
@@ -70,17 +70,17 @@ catch {
 }
 
 # Test connection to new database
-Write-Host "`n3. Testing connection to bc_legal_db..." -ForegroundColor Yellow
+Write-Host "`n3. Testing connection to sred_db..." -ForegroundColor Yellow
 try {
     python -c "
 import asyncio
 import asyncpg
 async def test_connection():
     try:
-        conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/bc_legal_db')
+        conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/sred_db')
         result = await conn.fetchval('SELECT version()')
         await conn.close()
-        print('SUCCESS: Connected to bc_legal_db')
+        print('SUCCESS: Connected to sred_db')
         print(f'PostgreSQL version: {result[:50]}...')
     except Exception as e:
         print(f'ERROR: {e}')

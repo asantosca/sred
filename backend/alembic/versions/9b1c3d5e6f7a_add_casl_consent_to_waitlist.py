@@ -21,16 +21,16 @@ def upgrade() -> None:
     op.add_column(
         'waitlist_signups',
         sa.Column('consent_marketing', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.add_column(
         'waitlist_signups',
         sa.Column('consent_date', sa.DateTime(timezone=True), nullable=True),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
 
 def downgrade() -> None:
     # Remove CASL consent tracking fields
-    op.drop_column('waitlist_signups', 'consent_date', schema='bc_legal_ds')
-    op.drop_column('waitlist_signups', 'consent_marketing', schema='bc_legal_ds')
+    op.drop_column('waitlist_signups', 'consent_date', schema='sred_ds')
+    op.drop_column('waitlist_signups', 'consent_marketing', schema='sred_ds')

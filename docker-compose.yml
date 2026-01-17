@@ -4,7 +4,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg15
     environment:
-      POSTGRES_DB: bc_legal_db
+      POSTGRES_DB: sred_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -13,18 +13,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./setup-database.sql:/docker-entrypoint-initdb.d/01-setup.sql
     networks:
-      - bc-legal-network
+      - sred-network
 
   valkey:
     image: valkey/valkey:8-alpine
     ports:
       - "6379:6379"
     networks:
-      - bc-legal-network
+      - sred-network
 
   localstack-minimal:
     image: localstack/localstack:3.8.1  # Use stable version
-    container_name: bc-legal-localstack
+    container_name: sred-localstack
     environment:
       SERVICES: s3
       DEBUG: 0  # Reduce logging
@@ -35,33 +35,33 @@ services:
     ports:
       - "4566:4566"
     networks:
-      - bc-legal-network
+      - sred-network
     restart: unless-stopped
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: bc-legal-mailhog
+    container_name: sred-mailhog
     ports:
       - "1025:1025"  # SMTP server
       - "8025:8025"  # Web UI
     networks:
-      - bc-legal-network
+      - sred-network
     restart: unless-stopped
 
   celery-worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: bc-legal-celery
+    container_name: sred-celery
     command: celery -A app.core.celery_app worker --loglevel=info -Q celery,document_processing
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/bc_legal_db
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sred_db
       REDIS_URL: redis://valkey:6379/0
       AWS_ENDPOINT_URL: http://localstack-minimal:4566
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: ca-central-1
-      S3_BUCKET_NAME: bc-legal-documents
+      S3_BUCKET_NAME: sred-documents
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -71,7 +71,7 @@ services:
       - valkey
       - localstack-minimal
     networks:
-      - bc-legal-network
+      - sred-network
     restart: unless-stopped
     volumes:
       - ./backend:/app
@@ -81,6 +81,6 @@ volumes:
   localstack_data:
 
 networks:
-  bc-legal-network:
+  sred-network:
     driver: bridge
     

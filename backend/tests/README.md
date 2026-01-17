@@ -3,18 +3,20 @@
 ## Setup
 
 1. Install test dependencies:
+
 ```bash
 cd backend
 pip install -r requirements-dev.txt
 ```
 
 2. Create test database:
+
 ```bash
 # Using psql
-createdb -h localhost -U postgres bc_legal_test
+createdb -h localhost -U postgres sred_test
 
 # Or using docker
-docker exec -it bc-legal-postgres psql -U postgres -c "CREATE DATABASE bc_legal_test;"
+docker exec -it sred-postgres psql -U postgres -c "CREATE DATABASE sred_test;"
 ```
 
 ## Running Tests
@@ -28,6 +30,7 @@ docker exec -it bc-legal-postgres psql -U postgres -c "CREATE DATABASE bc_legal_
 5. See results inline with green ✅ or red ❌
 
 **Benefits:**
+
 - Visual test results
 - Run individual tests with one click
 - Debug tests with breakpoints
@@ -36,21 +39,25 @@ docker exec -it bc-legal-postgres psql -U postgres -c "CREATE DATABASE bc_legal_
 ### Using Command Line
 
 Run all tests:
+
 ```bash
 pytest
 ```
 
 Run specific test file:
+
 ```bash
 pytest tests/test_auth_password_reset.py
 ```
 
 Run specific test:
+
 ```bash
 pytest tests/test_auth_password_reset.py::TestPasswordReset::test_request_password_reset_success
 ```
 
 Run tests with markers:
+
 ```bash
 pytest -m auth          # Run only auth tests
 pytest -m password_reset # Run only password reset tests
@@ -58,12 +65,14 @@ pytest -m "not slow"    # Skip slow tests
 ```
 
 Run with coverage:
+
 ```bash
 pytest --cov=app --cov-report=html
 # Open htmlcov/index.html to see coverage report
 ```
 
 Verbose output:
+
 ```bash
 pytest -v -s
 ```
@@ -101,6 +110,7 @@ class TestMyFeature:
 ## Markers
 
 Available pytest markers:
+
 - `@pytest.mark.unit` - Unit tests
 - `@pytest.mark.integration` - Integration tests
 - `@pytest.mark.auth` - Authentication tests
@@ -117,6 +127,7 @@ Available pytest markers:
 ## CI/CD Integration
 
 Tests can be run in CI/CD pipelines:
+
 ```yaml
 # Example for GitHub Actions
 - name: Run tests
@@ -136,15 +147,18 @@ Tests can be run in CI/CD pipelines:
 ## Troubleshooting
 
 **Tests not discovered?**
+
 - Make sure pytest is installed: `pip install pytest`
 - Check Python interpreter in VS Code (bottom-left)
 - Reload VS Code window: Ctrl+Shift+P → "Reload Window"
 
 **Database connection errors?**
+
 - Make sure PostgreSQL is running: `docker ps`
-- Create test database: `createdb bc_legal_test`
+- Create test database: `createdb sred_test`
 - Check connection string in `conftest.py`
 
 **Import errors?**
+
 - Make sure you're in the `backend` directory
 - Check PYTHONPATH includes backend directory

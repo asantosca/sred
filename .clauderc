@@ -1,7 +1,7 @@
-# Claude Code Configuration for BC Legal Tech
+# Claude Code Configuration for SR&ED
 
 # Project context
-project_name = "BC Legal Tech"
+project_name = "SR&ED"
 project_type = "fullstack"
 tech_stack = ["FastAPI", "React", "TypeScript", "PostgreSQL", "Redis", "S3"]
 

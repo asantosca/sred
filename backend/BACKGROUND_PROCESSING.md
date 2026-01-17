@@ -5,6 +5,7 @@ This document explains how to set up and use the background task queue for autom
 ## Overview
 
 Documents uploaded to SR&ED Intelligence are now automatically processed through the full RAG pipeline:
+
 1. **Text Extraction** - Extract text from PDF, DOCX, TXT files
 2. **Chunking** - Split text into semantic chunks (respecting legal document structure)
 3. **Embedding Generation** - Generate vector embeddings using OpenAI
@@ -19,17 +20,20 @@ This processing happens **automatically in the background** after upload, powere
 ### 1. Valkey Installation
 
 **Recommended: Docker (Cross-Platform)**
+
 ```bash
 docker run --name valkey -p 6379:6379 -d valkey/valkey:8-alpine
 ```
 
 **Mac (using Homebrew):**
+
 ```bash
 brew install valkey
 brew services start valkey
 ```
 
 **Linux:**
+
 ```bash
 # Valkey is Redis-compatible, so Redis clients work
 # For production, use docker-compose.yml (already configured)
@@ -37,18 +41,21 @@ docker-compose up -d valkey
 ```
 
 **Windows:**
+
 - Use Docker Desktop with the command above
 - Or use Windows Subsystem for Linux (WSL) with Docker
 
 ### 2. Verify Valkey is Running
 
 Test connection (Valkey uses Redis protocol):
+
 ```bash
 docker exec -it valkey valkey-cli ping
 # Should return: PONG
 ```
 
 Or check if port 6379 is listening:
+
 ```bash
 # Windows
 netstat -an | findstr "6379"
@@ -66,7 +73,7 @@ netstat -an | grep 6379
 1. Open a **new terminal window** (keep your FastAPI server running in another terminal)
 2. Navigate to the backend directory:
    ```cmd
-   cd C:\Users\alexs\projects\bc-legal-tech\backend
+   cd C:\Users\alexs\projects\sred-tech\backend
    ```
 3. Run the Celery worker script:
    ```cmd
@@ -78,6 +85,7 @@ This will start a Celery worker that listens for document processing tasks.
 ### Method 2: Manual Command (Cross-Platform)
 
 **Windows:**
+
 ```cmd
 cd backend
 venv\Scripts\activate
@@ -85,6 +93,7 @@ celery -A app.core.celery_app worker --loglevel=info --pool=solo --queues=docume
 ```
 
 **Mac/Linux:**
+
 ```bash
 cd backend
 source venv/bin/activate
@@ -110,11 +119,13 @@ celery -A app.core.celery_app worker --loglevel=info --queues=document_processin
 ### Task Monitoring
 
 Check document processing status:
+
 ```bash
 GET /api/v1/documents/{document_id}/processing-status
 ```
 
 Response:
+
 ```json
 {
   "document_id": "uuid",
@@ -142,6 +153,7 @@ Response:
 ## Retry Behavior
 
 Tasks automatically retry on failure:
+
 - **Max retries**: 3
 - **Retry delay**: 60 seconds (exponential backoff: 60s, 120s, 240s)
 - **Task timeout**: 30 minutes (soft limit: 25 minutes)
@@ -186,12 +198,14 @@ If a task fails 3 times, it's marked as `failed` and can be retried manually by 
 ### Deployment
 
 **Option 1: Managed Services**
+
 - Use AWS ElastiCache for Valkey (20-33% cheaper than Redis)
 - ElastiCache Serverless for variable workloads (~$6-50/month)
 - Deploy Celery workers as separate containers/instances
 - Scale workers horizontally based on queue depth
 
 **Option 2: Docker Compose**
+
 ```yaml
 services:
   valkey:
@@ -214,13 +228,16 @@ services:
 ### Monitoring
 
 1. **Celery Flower** - Web-based monitoring tool
+
    ```bash
    pip install flower
    celery -A app.core.celery_app flower
    ```
+
    Access at: http://localhost:5555
 
 2. **Task Metrics** - Track:
+
    - Queue depth
    - Task success/failure rates
    - Average processing time
@@ -246,10 +263,12 @@ services:
 ### Worker Won't Start
 
 **Error**: `ModuleNotFoundError: No module named 'app'`
+
 - **Fix**: Ensure you're in the `backend/` directory when starting worker
 - **Fix**: Check that `PYTHONPATH` is set correctly
 
 **Error**: `ConnectionError: Error connecting to Valkey`
+
 - **Fix**: Verify Valkey is running (`docker ps` or `docker exec -it valkey valkey-cli ping`)
 - **Fix**: Check `REDIS_URL` in `.env` file (should be `redis://localhost:6379`)
 - **Fix**: Check firewall isn't blocking port 6379
@@ -257,16 +276,19 @@ services:
 ### Tasks Not Processing
 
 1. **Check worker is running**:
+
    ```bash
    celery -A app.core.celery_app inspect active
    ```
 
 2. **Check queue depth**:
+
    ```bash
    celery -A app.core.celery_app inspect reserved
    ```
 
 3. **Check task was registered**:
+
    ```bash
    celery -A app.core.celery_app inspect registered
    ```

@@ -1,5 +1,5 @@
 -- ============================================================================
--- BC Legal Tech - DEVELOPMENT ONLY Database Setup
+-- SR&ED - DEVELOPMENT ONLY Database Setup
 -- ============================================================================
 --
 -- WARNING: DO NOT USE IN PRODUCTION!
@@ -17,13 +17,13 @@
 -- ============================================================================
 
 -- CLEANUP: Drop existing schema to ensure clean slate
-DROP SCHEMA IF EXISTS bc_legal_ds CASCADE;
+DROP SCHEMA IF EXISTS sred_ds CASCADE;
 
 -- Create schema for the application
-CREATE SCHEMA IF NOT EXISTS bc_legal_ds;
+CREATE SCHEMA IF NOT EXISTS sred_ds;
 
 -- Set search path so all subsequent commands affect this schema
-SET search_path TO bc_legal_ds, public;
+SET search_path TO sred_ds, public;
 
 -- Enable required extensions (in public schema)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
@@ -48,9 +48,9 @@ $do$
 BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = 'bc_legal_app') THEN
+      WHERE  rolname = 'sred_app') THEN
 
-      CREATE ROLE bc_legal_app WITH LOGIN PASSWORD 'your_secure_password_here';
+      CREATE ROLE sred_app WITH LOGIN PASSWORD 'your_secure_password_here';
    END IF;
 END
 $do$;
@@ -234,7 +234,7 @@ BEGIN
         "conversations": {"create": true, "read": true, "update": true, "delete": false},
         "company": {"read": false, "update": false}
     }'),
-    (NEW.id, 'Paralegals', 'Limited access for paralegals', '{
+    (NEW.id, 'Contractors', 'Limited access for Contractors', '{
         "users": {"create": false, "read": false, "update": false, "delete": false},
         "documents": {"create": false, "read": true, "update": false, "delete": false},
         "conversations": {"create": true, "read": true, "update": true, "delete": false},
@@ -257,10 +257,10 @@ CREATE TRIGGER create_default_groups_trigger
     EXECUTE FUNCTION create_default_groups();
 
 -- Grant permissions (schema usage is key here)
-GRANT USAGE ON SCHEMA bc_legal_ds TO bc_legal_app;
-GRANT USAGE ON SCHEMA public TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bc_legal_ds TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bc_legal_ds TO bc_legal_app;
+GRANT USAGE ON SCHEMA sred_ds TO sred_app;
+GRANT USAGE ON SCHEMA public TO sred_app;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA sred_ds TO sred_app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA sred_ds TO sred_app;
 
 -- Grant permissions for RLS
-GRANT authenticated_users TO bc_legal_app;
+GRANT authenticated_users TO sred_app;

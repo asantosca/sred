@@ -13,7 +13,7 @@ from app.db.session import get_db, Base
 from app.core.config import settings
 
 # Test database URL (use a separate test database)
-TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_test"
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/sred_test"
 
 
 @pytest.fixture(scope="session")

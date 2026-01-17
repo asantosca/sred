@@ -18,6 +18,10 @@ import {
   AlertCircle,
   Pencil,
   X,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Sparkles,
 } from 'lucide-react'
 import { DOCUMENT_TYPES, DOCUMENT_STATUSES, CONFIDENTIALITY_LEVELS } from '@/types/documents'
 import toast from 'react-hot-toast'
@@ -52,6 +56,22 @@ export default function DocumentList({ claimId }: DocumentListProps) {
     description: '',
     confidentiality_level: '',
   })
+
+  // Summary expansion and detail modal state
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
+  const [detailDocument, setDetailDocument] = useState<DocumentWithMatter | null>(null)
+
+  const toggleSummary = (docId: string) => {
+    setExpandedSummaries(prev => {
+      const next = new Set(prev)
+      if (next.has(docId)) {
+        next.delete(docId)
+      } else {
+        next.add(docId)
+      }
+      return next
+    })
+  }
 
   const queryClient = useQueryClient()
 
@@ -154,10 +174,15 @@ export default function DocumentList({ claimId }: DocumentListProps) {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'complete':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'embedded':
       case 'events_extracted':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <Clock className="h-4 w-4 text-purple-500 animate-spin" />
+      case 'summarizing':
+        return <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
       case 'processing':
+      case 'chunked':
         return <Clock className="h-4 w-4 text-blue-500 animate-spin" />
       case 'failed':
         return <AlertCircle className="h-4 w-4 text-red-500" />
@@ -168,9 +193,14 @@ export default function DocumentList({ claimId }: DocumentListProps) {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'embedded':
-      case 'events_extracted':
+      case 'complete':
         return 'Ready'
+      case 'summarizing':
+        return 'Generating summary...'
+      case 'events_extracted':
+        return 'Extracting events...'
+      case 'embedded':
+        return 'Finalizing...'
       case 'processing':
         return 'Processing...'
       case 'failed':
@@ -304,12 +334,62 @@ export default function DocumentList({ claimId }: DocumentListProps) {
                         {getStatusIcon(document.processing_status)}
                         <span className="ml-1">{getStatusText(document.processing_status)}</span>
                       </div>
+                      {document.ai_summary && (
+                        <div className="flex items-center text-purple-600">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          <span>AI Summary</span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* AI Summary Preview */}
+                    {document.ai_summary && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => toggleSummary(document.id)}
+                          className="flex items-center text-xs text-purple-600 hover:text-purple-800 font-medium"
+                        >
+                          {expandedSummaries.has(document.id) ? (
+                            <>
+                              <ChevronUp className="h-3 w-3 mr-1" />
+                              Hide Summary
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                              Show Summary
+                            </>
+                          )}
+                        </button>
+                        {expandedSummaries.has(document.id) && (
+                          <div className="mt-2 p-3 bg-purple-50 rounded-md border border-purple-100">
+                            <p className="text-xs text-gray-700 whitespace-pre-wrap line-clamp-6">
+                              {document.ai_summary}
+                            </p>
+                            {document.ai_summary.length > 500 && (
+                              <button
+                                onClick={() => setDetailDocument(document)}
+                                className="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium"
+                              >
+                                Read full summary...
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    onClick={() => setDetailDocument(document)}
+                    className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                    title="View Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
                   <button
                     onClick={() => handleEdit(document)}
                     className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
@@ -510,6 +590,132 @@ export default function DocumentList({ claimId }: DocumentListProps) {
                 className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
               >
                 {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Detail Modal */}
+      {detailDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <FileText className="h-6 w-6 text-primary-500 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Document Details</h3>
+              </div>
+              <button
+                onClick={() => setDetailDocument(null)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Document Info */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xl font-medium text-gray-900">{detailDocument.document_title}</h4>
+                <p className="text-sm text-gray-500 mt-1">
+                  {detailDocument.original_filename} ({(detailDocument.file_size_bytes / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Claim:</span>
+                  <span className="ml-2 text-gray-900">{detailDocument.claim_number}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Company:</span>
+                  <span className="ml-2 text-gray-900">{detailDocument.company_name}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Type:</span>
+                  <span className="ml-2 text-gray-900">{detailDocument.document_type}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Date:</span>
+                  <span className="ml-2 text-gray-900">{new Date(detailDocument.document_date).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Status:</span>
+                  <span className="ml-2 text-gray-900">{detailDocument.document_status}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Processing:</span>
+                  <span className="ml-2">{getStatusText(detailDocument.processing_status)}</span>
+                </div>
+              </div>
+
+              {detailDocument.description && (
+                <div>
+                  <h5 className="text-sm font-medium text-gray-700 mb-1">Description</h5>
+                  <p className="text-sm text-gray-600">{detailDocument.description}</p>
+                </div>
+              )}
+
+              {/* AI Summary Section */}
+              {detailDocument.ai_summary ? (
+                <div className="border-t pt-4">
+                  <div className="flex items-center mb-3">
+                    <Sparkles className="h-5 w-5 text-purple-500 mr-2" />
+                    <h5 className="text-sm font-medium text-gray-900">AI-Generated Summary</h5>
+                    {detailDocument.ai_summary_generated_at && (
+                      <span className="ml-auto text-xs text-gray-400">
+                        Generated {new Date(detailDocument.ai_summary_generated_at).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                      {detailDocument.ai_summary}
+                    </div>
+                  </div>
+                </div>
+              ) : detailDocument.processing_status === 'summarizing' ? (
+                <div className="border-t pt-4">
+                  <div className="flex items-center text-purple-600">
+                    <Sparkles className="h-5 w-5 mr-2 animate-pulse" />
+                    <span className="text-sm font-medium">Generating AI summary...</span>
+                  </div>
+                </div>
+              ) : detailDocument.processing_status === 'complete' ? (
+                <div className="border-t pt-4">
+                  <div className="flex items-center text-gray-500">
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    <span className="text-sm">No AI summary available for this document</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t pt-4">
+                  <div className="flex items-center text-gray-500">
+                    <Clock className="h-5 w-5 mr-2 animate-spin" />
+                    <span className="text-sm">AI summary will be generated after processing completes</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => handleDownload(detailDocument.id)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 inline-flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  setDetailDocument(null)
+                  handleEdit(detailDocument)
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 inline-flex items-center"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
               </button>
             </div>
           </div>

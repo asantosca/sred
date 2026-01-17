@@ -6,7 +6,7 @@ This guide will help you set up Sentry for error tracking in both the backend an
 
 1. Go to https://sentry.io/signup/
 2. Sign up for a free account (5,000 errors/month)
-3. Create a new organization (e.g., "BC Legal Tech")
+3. Create a new organization (e.g., "SR&ED")
 
 ## Step 2: Create Projects
 
@@ -17,7 +17,7 @@ You'll need **two separate projects** - one for backend, one for frontend.
 1. Click "Create Project"
 2. Select platform: **Python**
 3. Set alert frequency: **Alert me on every new issue**
-4. Name your project: **bc-legal-backend**
+4. Name your project: **sred-backend**
 5. Click "Create Project"
 6. Copy the **DSN** (looks like: `https://xxxxx@xxxxx.ingest.sentry.io/xxxxx`)
 
@@ -26,7 +26,7 @@ You'll need **two separate projects** - one for backend, one for frontend.
 1. Click "Create Project" again
 2. Select platform: **React**
 3. Set alert frequency: **Alert me on every new issue**
-4. Name your project: **bc-legal-frontend**
+4. Name your project: **sred-frontend**
 5. Click "Create Project"
 6. Copy the **DSN** (different from backend DSN)
 
@@ -84,10 +84,12 @@ VITE_SENTRY_ENVIRONMENT=production
 3. Check Sentry dashboard - error should appear in the React project
 
 **IMPORTANT:** Sentry only sends errors in production builds for frontend!
+
 - Development mode: Errors logged to console only
 - Production mode: Errors sent to Sentry
 
 To test in production mode:
+
 ```bash
 cd frontend
 npm run build
@@ -97,6 +99,7 @@ npm run preview
 ## Step 6: Understanding What Gets Tracked
 
 ### Backend Tracking
+
 - ✅ All unhandled exceptions
 - ✅ FastAPI route errors
 - ✅ Database errors
@@ -105,6 +108,7 @@ npm run preview
 - ❌ Health check endpoints (filtered out)
 
 ### Frontend Tracking
+
 - ✅ JavaScript errors
 - ✅ React component errors (via ErrorBoundary)
 - ✅ Network request failures (fetch/axios)
@@ -117,27 +121,32 @@ npm run preview
 We've configured Sentry to protect sensitive legal data:
 
 **Frontend:**
+
 - `maskAllText: true` - All text is masked in session replays
 - `blockAllMedia: true` - No images/videos captured
 - No PII (personally identifiable information) sent
 
 **Backend:**
+
 - `send_default_pii: false` - No PII sent automatically
 - You can manually add user context for debugging (without PII)
 
 ## Step 8: Cost Management
 
 ### Free Tier Limits
+
 - **5,000 errors/month** per project
 - **10,000 errors/month** total if you have 2 projects
 - **Unlimited team members**
 
 ### What Counts as an Error?
+
 - Each unique error = 1 event
 - Same error repeated 100 times = 100 events (use grouping to reduce)
 - Performance transactions also count (we sample 10% to save quota)
 
 ### Tips to Stay Under Quota
+
 1. ✅ **Filter health checks** - Already configured
 2. ✅ **Sample transactions** - Set to 10% (can lower to 5%)
 3. ✅ **Group similar errors** - Sentry does this automatically
@@ -158,12 +167,14 @@ We've configured Sentry to protect sensitive legal data:
 Before deploying to production:
 
 **Backend:**
+
 - [ ] Add `SENTRY_DSN` to production environment variables
 - [ ] Set `SENTRY_ENVIRONMENT=production`
 - [ ] Test error tracking in staging first
 - [ ] Set up alerts for critical errors
 
 **Frontend:**
+
 - [ ] Add `VITE_SENTRY_DSN` to production build variables
 - [ ] Set `VITE_SENTRY_ENVIRONMENT=production`
 - [ ] Build and test: `npm run build && npm run preview`
@@ -174,12 +185,14 @@ Before deploying to production:
 ### Errors Not Appearing in Sentry?
 
 **Backend:**
+
 1. Check `SENTRY_DSN` is set: `echo $SENTRY_DSN`
 2. Check Sentry initialization log: Should see "Sentry initialized for environment: development"
 3. Verify DSN is correct (copy from Sentry dashboard)
 4. Check internet connection (Sentry is cloud-hosted)
 
 **Frontend:**
+
 1. Check browser console for Sentry errors
 2. Verify you're in production build: `npm run build && npm run preview`
 3. Check Network tab - should see requests to `sentry.io`
@@ -196,6 +209,7 @@ Before deploying to production:
 ### Privacy Concerns?
 
 Review what data is being sent:
+
 1. Go to Sentry → Issues → Click an error
 2. Check "Additional Data" section
 3. Verify no sensitive data (document content, passwords)

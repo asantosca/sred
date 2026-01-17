@@ -16,7 +16,7 @@ down_revision = 'd4e5f6a7b8c9'
 branch_labels = None
 depends_on = None
 
-SCHEMA = 'bc_legal_ds'
+SCHEMA = 'sred_ds'
 
 
 def upgrade() -> None:

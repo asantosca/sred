@@ -9,6 +9,7 @@ docker-compose up -d
 ```
 
 This starts:
+
 - PostgreSQL (port 5432)
 - Valkey (port 6379)
 - LocalStack/S3 (port 4566)
@@ -24,12 +25,14 @@ alembic upgrade head
 ### 3. Start Backend Server
 
 **Option A: Direct Python**
+
 ```bash
 cd backend
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
 **Option B: With Virtual Environment (Recommended)**
+
 ```bash
 cd backend
 # Activate venv (if not already activated)
@@ -50,6 +53,7 @@ Open browser: http://localhost:8000/docs
 You should see the Swagger API documentation.
 
 Or test with curl:
+
 ```bash
 curl http://localhost:8000/health
 ```
@@ -90,7 +94,7 @@ Create `backend/.env` file:
 
 ```bash
 # Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/bc_legal_dev
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/sred_dev
 
 # JWT
 JWT_SECRET_KEY=your-secret-key-change-in-production
@@ -100,15 +104,15 @@ JWT_REFRESH_TOKEN_EXPIRE_DAYS=30
 # Email (MailHog for development)
 SMTP_HOST=localhost
 SMTP_PORT=1025
-EMAIL_FROM=noreply@bclegaltech.com
-EMAIL_FROM_NAME=BC Legal Tech
+EMAIL_FROM=noreply@pendingdomain.com
+EMAIL_FROM_NAME=SR&ED
 
 # AWS/S3 (LocalStack)
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_ENDPOINT_URL=http://localhost:4566
 AWS_REGION=ca-central-1
-S3_BUCKET_NAME=bc-legal-documents
+S3_BUCKET_NAME=sred-documents
 
 # App
 ENVIRONMENT=development
@@ -132,6 +136,7 @@ docker ps
 ```
 
 You should see:
+
 ```
 CONTAINER ID   IMAGE                      STATUS   PORTS
 xxxxx          pgvector/pgvector:pg15     Up       0.0.0.0:5432->5432/tcp
@@ -148,6 +153,7 @@ alembic upgrade head
 ```
 
 Expected output:
+
 ```
 INFO  [alembic.runtime.migration] Running upgrade  -> 001_refresh_tokens
 INFO  [alembic.runtime.migration] Running upgrade 001_refresh_tokens -> 002_password_reset
@@ -161,6 +167,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Expected output:
+
 ```
 INFO:     Will watch for changes in these directories: ['C:\\...\\backend']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
@@ -175,6 +182,7 @@ INFO:     Application startup complete.
 **Browser**: http://localhost:8000/docs
 
 **Curl**:
+
 ```bash
 curl http://localhost:8000/health
 ```
@@ -225,8 +233,8 @@ python test_email.py
 docker ps
 
 # Specific service logs
-docker logs bc-legal-postgres
-docker logs bc-legal-mailhog
+docker logs sred-postgres
+docker logs sred-mailhog
 ```
 
 ### Database Operations
@@ -284,29 +292,30 @@ docker-compose logs -f
 
 ## Accessing Services
 
-| Service | URL/Port | Purpose |
-|---------|----------|---------|
-| Backend API | http://localhost:8000 | Main API |
-| Swagger Docs | http://localhost:8000/docs | Interactive API docs |
-| ReDoc | http://localhost:8000/redoc | Alternative API docs |
-| MailHog UI | http://localhost:8025 | View sent emails |
-| PostgreSQL | localhost:5432 | Database |
-| Valkey | localhost:6379 | Cache/task queue |
-| LocalStack/S3 | localhost:4566 | S3 storage |
+| Service       | URL/Port                    | Purpose              |
+| ------------- | --------------------------- | -------------------- |
+| Backend API   | http://localhost:8000       | Main API             |
+| Swagger Docs  | http://localhost:8000/docs  | Interactive API docs |
+| ReDoc         | http://localhost:8000/redoc | Alternative API docs |
+| MailHog UI    | http://localhost:8025       | View sent emails     |
+| PostgreSQL    | localhost:5432              | Database             |
+| Valkey        | localhost:6379              | Cache/task queue     |
+| LocalStack/S3 | localhost:4566              | S3 storage           |
 
 ### Database Connection
 
 ```
 Host: localhost
 Port: 5432
-Database: bc_legal_dev
+Database: sred_dev
 Username: postgres
 Password: postgres
 ```
 
 **Connection String**:
+
 ```
-postgresql://postgres:postgres@localhost:5432/bc_legal_dev
+postgresql://postgres:postgres@localhost:5432/sred_dev
 ```
 
 ---
@@ -318,6 +327,7 @@ postgresql://postgres:postgres@localhost:5432/bc_legal_dev
 **Error**: `Address already in use`
 
 **Solution**:
+
 ```bash
 # Windows - Find and kill process on port 8000
 netstat -ano | findstr :8000
@@ -330,22 +340,25 @@ lsof -ti:8000 | xargs kill -9
 ### Cannot Connect to Database
 
 **Check if PostgreSQL is running**:
+
 ```bash
 docker ps | grep postgres
 ```
 
 **Restart PostgreSQL**:
+
 ```bash
 docker-compose restart postgres
 ```
 
 **Check connection**:
+
 ```bash
 # Windows
-docker exec -it <container_id> psql -U postgres -d bc_legal_dev
+docker exec -it <container_id> psql -U postgres -d sred_dev
 
 # Or use any PostgreSQL client
-psql -h localhost -U postgres -d bc_legal_dev
+psql -h localhost -U postgres -d sred_dev
 ```
 
 ### Migration Errors
@@ -353,6 +366,7 @@ psql -h localhost -U postgres -d bc_legal_dev
 **Error**: `Target database is not up to date`
 
 **Solution**:
+
 ```bash
 cd backend
 alembic upgrade head
@@ -361,6 +375,7 @@ alembic upgrade head
 **Error**: `Can't locate revision identified by 'xxx'`
 
 **Solution** (nuclear option - only for development):
+
 ```bash
 # Drop database and recreate
 docker-compose down -v
@@ -375,6 +390,7 @@ alembic upgrade head
 **Error**: `ModuleNotFoundError: No module named 'app'` or `ModuleNotFoundError: No module named 'asyncpg'`
 
 **Solution**: Make sure you're in the `backend` directory and dependencies are installed:
+
 ```bash
 cd backend
 
@@ -393,16 +409,19 @@ python -m uvicorn app.main:app --reload --port 8000
 ### MailHog Not Receiving Emails
 
 **Check if MailHog is running**:
+
 ```bash
 docker ps | grep mailhog
 ```
 
 **Restart MailHog**:
+
 ```bash
 docker-compose restart mailhog
 ```
 
 **Test SMTP connection**:
+
 ```bash
 telnet localhost 1025
 ```
@@ -410,11 +429,13 @@ telnet localhost 1025
 ### "Unhealthy" Database
 
 **Check logs**:
+
 ```bash
-docker logs bc-legal-postgres
+docker logs sred-postgres
 ```
 
 **Recreate container**:
+
 ```bash
 docker-compose down
 docker-compose up -d
@@ -600,11 +621,13 @@ If all tests pass, you're ready to develop! 🚀
 4. ✅ Can access Swagger at http://localhost:8000/docs
 
 Now you can:
+
 - Use Postman collection to test endpoints
 - Run automated tests
 - Start developing new features
 - Test with frontend (when ready)
 
 **See also**:
+
 - [Testing Guide](./TESTING-GUIDE.md) - Complete testing walkthrough
-- [Postman Collection](../postman/BC-Legal-Tech.postman_collection.json) - Import into Postman
+- [Postman Collection](../postman/sred-Tech.postman_collection.json) - Import into Postman

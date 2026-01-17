@@ -24,27 +24,27 @@ def upgrade() -> None:
     op.add_column(
         'document_chunks',
         sa.Column('search_vector', sa.dialects.postgresql.TSVECTOR, nullable=True),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Create GIN index for fast full-text search
     op.execute("""
         CREATE INDEX ix_document_chunks_search_vector
-        ON bc_legal_ds.document_chunks
+        ON sred_ds.document_chunks
         USING GIN (search_vector)
     """)
 
     # Backfill existing chunks with tsvector data
     # Using 'english' configuration for legal documents
     op.execute("""
-        UPDATE bc_legal_ds.document_chunks
+        UPDATE sred_ds.document_chunks
         SET search_vector = to_tsvector('english', content)
         WHERE search_vector IS NULL
     """)
 
     # Create trigger function to auto-update search_vector on insert/update
     op.execute("""
-        CREATE OR REPLACE FUNCTION bc_legal_ds.update_chunk_search_vector()
+        CREATE OR REPLACE FUNCTION sred_ds.update_chunk_search_vector()
         RETURNS TRIGGER AS $$
         BEGIN
             NEW.search_vector := to_tsvector('english', NEW.content);
@@ -56,9 +56,9 @@ def upgrade() -> None:
     # Create trigger to automatically update search_vector
     op.execute("""
         CREATE TRIGGER trigger_update_chunk_search_vector
-        BEFORE INSERT OR UPDATE OF content ON bc_legal_ds.document_chunks
+        BEFORE INSERT OR UPDATE OF content ON sred_ds.document_chunks
         FOR EACH ROW
-        EXECUTE FUNCTION bc_legal_ds.update_chunk_search_vector();
+        EXECUTE FUNCTION sred_ds.update_chunk_search_vector();
     """)
 
 
@@ -66,18 +66,18 @@ def downgrade() -> None:
     # Drop trigger
     op.execute("""
         DROP TRIGGER IF EXISTS trigger_update_chunk_search_vector
-        ON bc_legal_ds.document_chunks
+        ON sred_ds.document_chunks
     """)
 
     # Drop trigger function
     op.execute("""
-        DROP FUNCTION IF EXISTS bc_legal_ds.update_chunk_search_vector()
+        DROP FUNCTION IF EXISTS sred_ds.update_chunk_search_vector()
     """)
 
     # Drop GIN index
     op.execute("""
-        DROP INDEX IF EXISTS bc_legal_ds.ix_document_chunks_search_vector
+        DROP INDEX IF EXISTS sred_ds.ix_document_chunks_search_vector
     """)
 
     # Drop tsvector column
-    op.drop_column('document_chunks', 'search_vector', schema='bc_legal_ds')
+    op.drop_column('document_chunks', 'search_vector', schema='sred_ds')

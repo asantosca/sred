@@ -1,5 +1,5 @@
 -- ============================================================================
--- BC Legal Tech - Row Level Security (RLS) Setup
+-- SR&ED - Row Level Security (RLS) Setup
 -- ============================================================================
 --
 -- PURPOSE: Enables PostgreSQL Row Level Security for multi-tenant data isolation.
@@ -10,15 +10,15 @@
 --
 -- PREREQUISITES:
 --   - PostgreSQL 15+ with pgvector extension
---   - Schema `bc_legal_ds` must exist (created by Alembic)
+--   - Schema `sred_ds` must exist (created by Alembic)
 --   - All tables must exist (created by Alembic)
 --
 -- HOW IT WORKS:
---   1. Creates roles: `authenticated_users` (for RLS policies) and `bc_legal_app` (app connection)
+--   1. Creates roles: `authenticated_users` (for RLS policies) and `sred_app` (app connection)
 --   2. Creates triggers for auto-updating timestamps and default groups
---   3. Enables RLS on all tables in bc_legal_ds schema
+--   3. Enables RLS on all tables in sred_ds schema
 --   4. Creates policies that filter by `app.current_company_id` session variable
---   5. Grants permissions to `bc_legal_app` role
+--   5. Grants permissions to `sred_app` role
 --
 -- USAGE IN CODE:
 --   Before any tenant-specific query, set the session variable:
@@ -26,7 +26,7 @@
 --
 -- ============================================================================
 
-SET search_path TO bc_legal_ds, public;
+SET search_path TO sred_ds, public;
 
 -- Create roles
 DO
@@ -46,9 +46,9 @@ $do$
 BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = 'bc_legal_app') THEN
+      WHERE  rolname = 'sred_app') THEN
 
-      CREATE ROLE bc_legal_app WITH LOGIN PASSWORD 'your_secure_password_here';
+      CREATE ROLE sred_app WITH LOGIN PASSWORD 'your_secure_password_here';
    END IF;
 END
 $do$;
@@ -73,7 +73,7 @@ CREATE OR REPLACE FUNCTION create_default_groups()
 RETURNS TRIGGER SECURITY DEFINER AS $$
 BEGIN
     -- Create default groups for new company
-    INSERT INTO bc_legal_ds.groups (id, company_id, name, description, permissions_json) VALUES
+    INSERT INTO sred_ds.groups (id, company_id, name, description, permissions_json) VALUES
     (public.uuid_generate_v4(), NEW.id, 'Administrators', 'Full system access', '{
         "users": {"create": true, "read": true, "update": true, "delete": true},
         "documents": {"create": true, "read": true, "update": true, "delete": true},
@@ -92,7 +92,7 @@ BEGIN
         "conversations": {"create": true, "read": true, "update": true, "delete": false},
         "company": {"read": false, "update": false}
     }'),
-    (public.uuid_generate_v4(), NEW.id, 'Paralegals', 'Limited access for paralegals', '{
+    (public.uuid_generate_v4(), NEW.id, 'Contractors', 'Limited access for Contractors', '{
         "users": {"create": false, "read": false, "update": false, "delete": false},
         "documents": {"create": false, "read": true, "update": false, "delete": false},
         "conversations": {"create": true, "read": true, "update": true, "delete": false},
@@ -119,13 +119,13 @@ DO $$
 DECLARE
     r RECORD;
 BEGIN
-    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'bc_legal_ds') LOOP
-        EXECUTE 'ALTER TABLE bc_legal_ds.' || quote_ident(r.tablename) || ' ENABLE ROW LEVEL SECURITY';
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'sred_ds') LOOP
+        EXECUTE 'ALTER TABLE sred_ds.' || quote_ident(r.tablename) || ' ENABLE ROW LEVEL SECURITY';
     END LOOP;
 END $$;
 
 -- Create RLS policies
--- Note: 'bc_legal_app' role connects for the API. It is part of 'authenticated_users'.
+-- Note: 'sred_app' role connects for the API. It is part of 'authenticated_users'.
 
 -- =======================================================
 -- 1. Authentication & System Tables (Permissive / Public)
@@ -213,7 +213,7 @@ CREATE POLICY company_isolation_documents ON documents
 CREATE POLICY company_isolation_messages ON messages
     FOR ALL TO authenticated_users
     USING (conversation_id IN (
-        SELECT id FROM bc_legal_ds.conversations 
+        SELECT id FROM sred_ds.conversations 
         WHERE company_id = current_setting('app.current_company_id', true)::UUID
     ));
 
@@ -221,7 +221,7 @@ CREATE POLICY company_isolation_messages ON messages
 CREATE POLICY company_isolation_document_chunks ON document_chunks
     FOR ALL TO authenticated_users
     USING (document_id IN (
-        SELECT id FROM bc_legal_ds.documents
+        SELECT id FROM sred_ds.documents
         WHERE company_id = current_setting('app.current_company_id', true)::UUID
     ));
 
@@ -229,7 +229,7 @@ CREATE POLICY company_isolation_document_chunks ON document_chunks
 CREATE POLICY company_isolation_user_groups ON user_groups
     FOR ALL TO authenticated_users
     USING (group_id IN (
-        SELECT id FROM bc_legal_ds.groups 
+        SELECT id FROM sred_ds.groups 
         WHERE company_id = current_setting('app.current_company_id', true)::UUID
     ));
 
@@ -237,15 +237,15 @@ CREATE POLICY company_isolation_user_groups ON user_groups
 CREATE POLICY company_isolation_matter_access ON matter_access
     FOR ALL TO authenticated_users
     USING (matter_id IN (
-        SELECT id FROM bc_legal_ds.matters 
+        SELECT id FROM sred_ds.matters 
         WHERE company_id = current_setting('app.current_company_id', true)::UUID
     ));
 
 -- Grant permissions
-GRANT USAGE ON SCHEMA bc_legal_ds TO bc_legal_app;
-GRANT USAGE ON SCHEMA public TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bc_legal_ds TO bc_legal_app;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bc_legal_ds TO bc_legal_app;
+GRANT USAGE ON SCHEMA sred_ds TO sred_app;
+GRANT USAGE ON SCHEMA public TO sred_app;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA sred_ds TO sred_app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA sred_ds TO sred_app;
 
 -- Grant permissions for RLS
-GRANT authenticated_users TO bc_legal_app;
+GRANT authenticated_users TO sred_app;

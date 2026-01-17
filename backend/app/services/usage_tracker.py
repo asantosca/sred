@@ -30,8 +30,8 @@ class UsageTracker:
             SELECT
                 c.usage_documents_count,
                 pl.max_documents
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -64,8 +64,8 @@ class UsageTracker:
             SELECT
                 c.usage_storage_bytes,
                 pl.max_storage_gb
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -96,7 +96,7 @@ class UsageTracker:
             SELECT
                 c.usage_ai_queries_count,
                 c.usage_reset_date
-            FROM bc_legal_ds.companies c
+            FROM sred_ds.companies c
             WHERE c.id = :company_id
         """)
 
@@ -129,8 +129,8 @@ class UsageTracker:
         """
         query = text("""
             SELECT pl.max_document_size_mb
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -154,7 +154,7 @@ class UsageTracker:
             file_size_bytes: Size of uploaded document in bytes
         """
         query = text("""
-            UPDATE bc_legal_ds.companies
+            UPDATE sred_ds.companies
             SET
                 usage_documents_count = usage_documents_count + 1,
                 usage_storage_bytes = usage_storage_bytes + :file_size
@@ -175,7 +175,7 @@ class UsageTracker:
             company_id: Company UUID
         """
         query = text("""
-            UPDATE bc_legal_ds.companies
+            UPDATE sred_ds.companies
             SET usage_ai_queries_count = usage_ai_queries_count + 1
             WHERE id = :company_id
         """)
@@ -192,7 +192,7 @@ class UsageTracker:
             chunk_count: Number of chunks/embeddings generated
         """
         query = text("""
-            UPDATE bc_legal_ds.companies
+            UPDATE sred_ds.companies
             SET usage_embeddings_count = usage_embeddings_count + :chunk_count
             WHERE id = :company_id
         """)
@@ -214,7 +214,7 @@ class UsageTracker:
         first_of_month = date.today().replace(day=1)
 
         query = text("""
-            UPDATE bc_legal_ds.companies
+            UPDATE sred_ds.companies
             SET
                 usage_ai_queries_count = 0,
                 usage_reset_date = :reset_date
@@ -245,8 +245,8 @@ class UsageTracker:
                 pl.max_storage_gb,
                 pl.max_document_size_mb,
                 pl.max_users
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 
@@ -314,8 +314,8 @@ class UsageTracker:
                 pl.max_storage_gb,
                 pl.max_document_size_mb,
                 pl.max_users
-            FROM bc_legal_ds.companies c
-            JOIN bc_legal_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
+            FROM sred_ds.companies c
+            JOIN sred_ds.plan_limits pl ON pl.plan_tier = c.plan_tier
             WHERE c.id = :company_id
         """)
 

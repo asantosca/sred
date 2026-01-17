@@ -17,8 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('documents', sa.Column('description', sa.Text(), nullable=True), schema='bc_legal_ds')
+    op.add_column('documents', sa.Column('description', sa.Text(), nullable=True), schema='sred_ds')
 
 
 def downgrade() -> None:
-    op.drop_column('documents', 'description', schema='bc_legal_ds')
+    op.drop_column('documents', 'description', schema='sred_ds')

@@ -2,11 +2,12 @@
 
 ## Overview
 
-BC Legal Tech uses **MailHog** for local email testing during development. MailHog captures all outgoing emails and displays them in a web interface, so you can test email functionality without sending real emails.
+SR&ED uses **MailHog** for local email testing during development. MailHog captures all outgoing emails and displays them in a web interface, so you can test email functionality without sending real emails.
 
 ## What is MailHog?
 
 MailHog is a local email testing tool that:
+
 - ✅ Runs an SMTP server (port 1025)
 - ✅ Provides a web UI to view emails (port 8025)
 - ✅ Catches all outgoing emails
@@ -38,13 +39,15 @@ docker ps | grep mailhog
 ```
 
 You should see:
+
 ```
-bc-legal-mailhog   mailhog/mailhog:latest   ...   0.0.0.0:1025->1025/tcp, 0.0.0.0:8025->8025/tcp
+sred-mailhog   mailhog/mailhog:latest   ...   0.0.0.0:1025->1025/tcp, 0.0.0.0:8025->8025/tcp
 ```
 
 ### 3. Access MailHog Web UI
 
 Open in your browser:
+
 ```
 http://localhost:8025
 ```
@@ -61,6 +64,7 @@ python test_email.py
 ```
 
 This will send 4 test emails:
+
 1. Password reset email
 2. User invitation email
 3. Welcome email
@@ -71,6 +75,7 @@ This will send 4 test emails:
 Go to http://localhost:8025 and you'll see all 4 emails appear in the inbox!
 
 Click on any email to view:
+
 - Subject
 - From/To addresses
 - HTML preview
@@ -85,6 +90,7 @@ Click on any email to view:
 The email service includes pre-built templates for:
 
 #### 1. Password Reset Email
+
 ```python
 from app.services.email import EmailService
 
@@ -97,12 +103,14 @@ await email_service.send_password_reset_email(
 ```
 
 Features:
+
 - Professional HTML template
 - Reset link with token
 - Expiration notice (1 hour)
 - Plain text fallback
 
 #### 2. User Invitation Email
+
 ```python
 await email_service.send_user_invitation_email(
     to_email="newuser@example.com",
@@ -113,6 +121,7 @@ await email_service.send_user_invitation_email(
 ```
 
 Features:
+
 - Welcome message from inviter
 - Company branding
 - Feature highlights
@@ -120,6 +129,7 @@ Features:
 - Expiration notice (7 days)
 
 #### 3. Welcome Email
+
 ```python
 await email_service.send_welcome_email(
     to_email="user@example.com",
@@ -129,12 +139,14 @@ await email_service.send_welcome_email(
 ```
 
 Features:
+
 - Personalized welcome
 - Getting started guide
 - Dashboard link
 - Support information
 
 #### 4. Custom Emails
+
 ```python
 await email_service.send_email(
     to_email="user@example.com",
@@ -159,8 +171,8 @@ SMTP_USER: str = ""
 SMTP_PASSWORD: str = ""
 SMTP_TLS: bool = False
 SMTP_SSL: bool = False
-EMAIL_FROM: str = "noreply@bclegaltech.com"
-EMAIL_FROM_NAME: str = "BC Legal Tech"
+EMAIL_FROM: str = "noreply@pendingdomain.com"
+EMAIL_FROM_NAME: str = "SR&ED"
 ```
 
 ### Production (Real SMTP)
@@ -205,10 +217,12 @@ EMAIL_FROM=your_email@gmail.com
 Email templates are in [backend/app/services/email.py](../backend/app/services/email.py).
 
 Each template has:
+
 - **HTML version**: Rich formatting with CSS
 - **Plain text version**: Fallback for email clients that don't support HTML
 
 To customize:
+
 1. Edit the template in `email.py`
 2. Update both HTML and plain text versions
 3. Test with MailHog
@@ -217,6 +231,7 @@ To customize:
 ### Template Best Practices
 
 ✅ **DO**:
+
 - Keep HTML simple (many email clients strip complex CSS)
 - Always provide plain text fallback
 - Use inline CSS (not external stylesheets)
@@ -225,6 +240,7 @@ To customize:
 - Use responsive design (mobile-friendly)
 
 ❌ **DON'T**:
+
 - Use JavaScript (email clients block it)
 - Use external images without fallback text
 - Use complex CSS layouts
@@ -236,14 +252,17 @@ To customize:
 ### MailHog Not Receiving Emails
 
 1. **Check MailHog is running**:
+
    ```bash
    docker ps | grep mailhog
    ```
 
 2. **Check SMTP connection**:
+
    ```bash
    telnet localhost 1025
    ```
+
    Should connect successfully.
 
 3. **Check email service logs**:
@@ -257,12 +276,14 @@ To customize:
 ### Cannot Access Web UI
 
 1. **Check port 8025 is available**:
+
    ```bash
    netstat -an | findstr 8025  # Windows
    lsof -i :8025  # Mac/Linux
    ```
 
 2. **Try alternate URL**:
+
    ```
    http://127.0.0.1:8025
    ```
@@ -286,12 +307,14 @@ To customize:
 ### Recommended Email Services
 
 1. **AWS SES** (Amazon Simple Email Service)
+
    - ✅ Reliable and scalable
    - ✅ Low cost ($0.10 per 1,000 emails)
    - ✅ Good for transactional emails
    - ✅ Requires domain verification
 
 2. **SendGrid**
+
    - ✅ Easy setup
    - ✅ Good free tier (100 emails/day)
    - ✅ Analytics dashboard
@@ -319,18 +342,22 @@ To customize:
 ### Security Best Practices
 
 1. **Never commit SMTP credentials**:
+
    - Use environment variables
    - Store in secrets manager (AWS Secrets Manager, etc.)
 
 2. **Use TLS/SSL**:
+
    - Always encrypt email transmission
    - Set `SMTP_TLS=true` or `SMTP_SSL=true`
 
 3. **Implement rate limiting**:
+
    - Prevent abuse
    - Protect against spam complaints
 
 4. **Monitor bounces**:
+
    - Track failed deliveries
    - Update email lists
 
@@ -344,6 +371,7 @@ To customize:
 ### Adding New Email Templates
 
 1. **Create template function** in `email.py`:
+
    ```python
    async def send_new_template_email(self, to_email: str, ...):
        html_body = """..."""
@@ -352,6 +380,7 @@ To customize:
    ```
 
 2. **Test with MailHog**:
+
    ```bash
    python test_email.py
    ```
@@ -368,9 +397,11 @@ To customize:
 Test complete flows:
 
 1. **Password Reset Flow**:
+
    - Request reset → Email sent → Click link → Reset password
 
 2. **User Invitation Flow**:
+
    - Admin invites → Email sent → User accepts → Account created
 
 3. **Welcome Email Flow**:

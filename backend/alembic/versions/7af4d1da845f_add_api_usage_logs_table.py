@@ -21,8 +21,8 @@ def upgrade() -> None:
     op.create_table(
         'api_usage_logs',
         sa.Column('id', UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
-        sa.Column('company_id', UUID(as_uuid=True), sa.ForeignKey('bc_legal_ds.companies.id'), nullable=True),
-        sa.Column('user_id', UUID(as_uuid=True), sa.ForeignKey('bc_legal_ds.users.id'), nullable=True),
+        sa.Column('company_id', UUID(as_uuid=True), sa.ForeignKey('sred_ds.companies.id'), nullable=True),
+        sa.Column('user_id', UUID(as_uuid=True), sa.ForeignKey('sred_ds.users.id'), nullable=True),
         sa.Column('service', sa.String(50), nullable=False),
         sa.Column('operation', sa.String(100), nullable=True),
         sa.Column('input_tokens', sa.Integer(), nullable=True),
@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column('document_id', UUID(as_uuid=True), nullable=True),
         sa.Column('conversation_id', UUID(as_uuid=True), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
     # Create indexes for common query patterns
@@ -42,24 +42,24 @@ def upgrade() -> None:
         'ix_api_usage_logs_company_id',
         'api_usage_logs',
         ['company_id'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.create_index(
         'ix_api_usage_logs_service',
         'api_usage_logs',
         ['service'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
     op.create_index(
         'ix_api_usage_logs_created_at',
         'api_usage_logs',
         ['created_at'],
-        schema='bc_legal_ds'
+        schema='sred_ds'
     )
 
 
 def downgrade() -> None:
-    op.drop_index('ix_api_usage_logs_created_at', table_name='api_usage_logs', schema='bc_legal_ds')
-    op.drop_index('ix_api_usage_logs_service', table_name='api_usage_logs', schema='bc_legal_ds')
-    op.drop_index('ix_api_usage_logs_company_id', table_name='api_usage_logs', schema='bc_legal_ds')
-    op.drop_table('api_usage_logs', schema='bc_legal_ds')
+    op.drop_index('ix_api_usage_logs_created_at', table_name='api_usage_logs', schema='sred_ds')
+    op.drop_index('ix_api_usage_logs_service', table_name='api_usage_logs', schema='sred_ds')
+    op.drop_index('ix_api_usage_logs_company_id', table_name='api_usage_logs', schema='sred_ds')
+    op.drop_table('api_usage_logs', schema='sred_ds')

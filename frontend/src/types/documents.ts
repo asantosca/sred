@@ -76,6 +76,10 @@ export interface Document extends DocumentBase {
   date_received: string | null
   filed_date: string | null
 
+  // AI-generated summary
+  ai_summary: string | null
+  ai_summary_generated_at: string | null
+
   // Version control
   is_current_version: boolean
   version_label: string | null

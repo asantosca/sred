@@ -28,7 +28,7 @@ def upgrade() -> None:
     # Previous limits: free=10MB, basic=50MB, professional=100MB, enterprise=500MB
     # New limits: All tiers get 500MB for document size (storage limits still apply per tier)
     op.execute("""
-        UPDATE bc_legal_ds.plan_limits
+        UPDATE sred_ds.plan_limits
         SET max_document_size_mb = 500
     """)
 
@@ -36,7 +36,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Restore original document size limits
     op.execute("""
-        UPDATE bc_legal_ds.plan_limits
+        UPDATE sred_ds.plan_limits
         SET max_document_size_mb = CASE plan_tier
             WHEN 'free' THEN 10
             WHEN 'basic' THEN 50

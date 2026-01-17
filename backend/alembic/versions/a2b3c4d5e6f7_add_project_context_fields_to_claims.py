@@ -24,14 +24,14 @@ depends_on = None
 def upgrade() -> None:
     # Add project context fields to claims table
     op.add_column('claims', sa.Column('project_title', sa.String(255), nullable=True),
-                  schema='bc_legal_ds')
+                  schema='sred_ds')
     op.add_column('claims', sa.Column('project_objective', sa.Text(), nullable=True),
-                  schema='bc_legal_ds')
+                  schema='sred_ds')
     op.add_column('claims', sa.Column('technology_focus', sa.String(500), nullable=True),
-                  schema='bc_legal_ds')
+                  schema='sred_ds')
 
 
 def downgrade() -> None:
-    op.drop_column('claims', 'technology_focus', schema='bc_legal_ds')
-    op.drop_column('claims', 'project_objective', schema='bc_legal_ds')
-    op.drop_column('claims', 'project_title', schema='bc_legal_ds')
+    op.drop_column('claims', 'technology_focus', schema='sred_ds')
+    op.drop_column('claims', 'project_objective', schema='sred_ds')
+    op.drop_column('claims', 'project_title', schema='sred_ds')

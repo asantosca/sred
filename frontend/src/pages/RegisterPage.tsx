@@ -111,9 +111,9 @@ export default function RegisterPage() {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <Input
-                label="Company / Firm Name"
+                label="Company Name"
                 type="text"
-                placeholder="Acme Law Firm"
+                placeholder="Company Name"
                 error={errors.company_name?.message}
                 {...register('company_name')}
                   />
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                 label="Admin Email"
                 type="email"
                 autoComplete="email"
-                placeholder="admin@yourfirm.com"
+                placeholder="admin@yourcompany.com"
                 error={errors.admin_email?.message}
                 helperText="This will be your login email"
                 {...register('admin_email')}
