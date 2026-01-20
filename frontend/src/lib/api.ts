@@ -453,13 +453,13 @@ export const billableApi = {
         id: string
         title: string
         matter_id: string
-        claim_name: string
+        matter_name: string
         updated_at: string
         created_at: string
       }>
-      by_claim: Array<{
+      by_matter: Array<{
         matter_id: string
-        claim_name: string
+        matter_name: string
         unbilled_count: number
       }>
     }>('/billable/unbilled/conversations', { params }),
@@ -599,6 +599,164 @@ export const t661Api = {
   // Get word limits
   getWordLimits: () =>
     api.get<{ word_limits: Record<string, number> }>('/claims/t661-word-limits'),
+}
+
+// Project Discovery API endpoints
+import type {
+  DiscoverProjectsRequest,
+  DiscoverProjectsResponse,
+  SaveProjectsRequest,
+  SaveProjectsResponse,
+  ProjectListResponse,
+  ProjectDetailResponse,
+  UpdateProjectRequest,
+  ProjectDocumentsResponse,
+  AddDocumentsRequest,
+  AnalyzeBatchRequest,
+  ChangeAnalysisResponse,
+  ApplyAdditionsRequest,
+  ApplyAdditionsResponse,
+  GenericResponse,
+} from '@/types/projects'
+
+// Workspace API types
+import type {
+  WorkspaceWithHistory,
+  WorkspaceResponse,
+  WorkspaceUpdateRequest,
+  WorkspaceDiscoverRequest,
+  WorkspaceDiscoverResponse,
+  WorkspaceChatRequest,
+  WorkspaceChatResponse,
+  WorkspaceParseResponse,
+} from '@/types/workspace'
+
+export const projectsApi = {
+  // Run project discovery for a claim
+  discover: (data: DiscoverProjectsRequest) =>
+    api.post<DiscoverProjectsResponse>('/projects/discover', data),
+
+  // Save discovered project candidates
+  save: (data: SaveProjectsRequest) =>
+    api.post<SaveProjectsResponse>('/projects/save', data),
+
+  // List projects for a claim
+  listByClaim: (claimId: string) =>
+    api.get<ProjectListResponse>(`/projects/claim/${claimId}`),
+
+  // Get project details
+  get: (projectId: string) =>
+    api.get<ProjectDetailResponse>(`/projects/${projectId}`),
+
+  // Update project
+  update: (projectId: string, data: UpdateProjectRequest) =>
+    api.patch<GenericResponse>(`/projects/${projectId}`, data),
+
+  // Approve project
+  approve: (projectId: string) =>
+    api.post<GenericResponse>(`/projects/${projectId}/approve`),
+
+  // Reject project
+  reject: (projectId: string) =>
+    api.post<GenericResponse>(`/projects/${projectId}/reject`),
+
+  // Delete project
+  delete: (projectId: string) =>
+    api.delete<GenericResponse>(`/projects/${projectId}`),
+
+  // List project documents
+  listDocuments: (projectId: string) =>
+    api.get<ProjectDocumentsResponse>(`/projects/${projectId}/documents`),
+
+  // Add documents to project
+  addDocuments: (projectId: string, data: AddDocumentsRequest) =>
+    api.post<GenericResponse>(`/projects/${projectId}/documents/add`, data),
+
+  // Remove document from project
+  removeDocument: (projectId: string, documentId: string) =>
+    api.delete<GenericResponse>(`/projects/${projectId}/documents/${documentId}`),
+
+  // Analyze new document batch for impact on existing projects
+  analyzeBatch: (data: AnalyzeBatchRequest) =>
+    api.post<ChangeAnalysisResponse>('/projects/analyze-batch', data),
+
+  // Apply recommended document additions to projects
+  applyAdditions: (data: ApplyAdditionsRequest) =>
+    api.post<ApplyAdditionsResponse>('/projects/apply-additions', data),
+}
+
+// Workspace API endpoints
+export const workspaceApi = {
+  // Get or create workspace for a claim
+  get: (claimId: string) =>
+    api.get<WorkspaceWithHistory>(`/claims/${claimId}/workspace`),
+
+  // Update workspace markdown directly
+  update: (claimId: string, data: WorkspaceUpdateRequest) =>
+    api.put<WorkspaceResponse>(`/claims/${claimId}/workspace`, data),
+
+  // Run project discovery and generate workspace markdown
+  discover: (claimId: string, data?: WorkspaceDiscoverRequest) =>
+    api.post<WorkspaceDiscoverResponse>(`/claims/${claimId}/workspace/discover`, data || {}),
+
+  // Chat in workspace context (non-streaming)
+  chat: (claimId: string, data: WorkspaceChatRequest) =>
+    api.post<WorkspaceChatResponse>(`/claims/${claimId}/workspace/chat`, data),
+
+  // Chat with streaming (returns fetch Response for SSE)
+  chatStream: async (claimId: string, data: WorkspaceChatRequest) => {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.')
+    }
+
+    const response = await fetch(`/api/v1/claims/${claimId}/workspace/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ...data, stream: true }),
+    })
+
+    // If 401, try to refresh token and retry
+    if (response.status === 401) {
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        try {
+          const { data: tokenData } = await axios.post<Token>('/api/v1/auth/refresh', {
+            refresh_token: refreshToken,
+          })
+
+          localStorage.setItem('access_token', tokenData.access_token)
+          if (tokenData.refresh_token) {
+            localStorage.setItem('refresh_token', tokenData.refresh_token)
+          }
+
+          return fetch(`/api/v1/claims/${claimId}/workspace/chat`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${tokenData.access_token}`,
+            },
+            body: JSON.stringify({ ...data, stream: true }),
+          })
+        } catch (refreshError) {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          window.location.href = '/login'
+          throw new Error('Session expired. Please log in again.')
+        }
+      }
+    }
+
+    return response
+  },
+
+  // Parse workspace markdown to structured data
+  parse: (claimId: string) =>
+    api.get<WorkspaceParseResponse>(`/claims/${claimId}/workspace/parse`),
 }
 
 export default api

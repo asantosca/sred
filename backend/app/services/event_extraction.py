@@ -79,6 +79,35 @@ Document text to analyze:
 Extract all R&D project events with dates from the above text. Respond ONLY with the JSON array, no other text."""
 
 
+def _repair_json(text: str) -> str:
+    """
+    Attempt to repair common JSON issues from LLM responses.
+
+    Args:
+        text: Potentially malformed JSON string
+
+    Returns:
+        Repaired JSON string
+    """
+    # Remove any text before the first [ or after the last ]
+    start = text.find('[')
+    end = text.rfind(']')
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
+
+    # Fix trailing commas before ] or }
+    text = re.sub(r',(\s*[}\]])', r'\1', text)
+
+    # Fix single quotes to double quotes (but not within strings)
+    # This is tricky, so we do a simple replacement for property names
+    text = re.sub(r"'(\w+)'(\s*:)", r'"\1"\2', text)
+
+    # Fix unquoted property names
+    text = re.sub(r'(\{|\,)\s*(\w+)\s*:', r'\1"\2":', text)
+
+    return text
+
+
 class EventExtractionService:
     """Service for extracting timeline events from documents using LLM"""
 
@@ -212,7 +241,13 @@ class EventExtractionService:
                 response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
                 response_text = re.sub(r'\n?```$', '', response_text)
 
-            events_data = json.loads(response_text)
+            # Try to parse JSON, with repair on failure
+            try:
+                events_data = json.loads(response_text)
+            except json.JSONDecodeError:
+                # Try to repair common JSON issues
+                repaired = _repair_json(response_text)
+                events_data = json.loads(repaired)
 
             if not isinstance(events_data, list):
                 logger.warning(f"Expected list, got {type(events_data)}")

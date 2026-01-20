@@ -134,11 +134,6 @@ class Claim(Base):
     federal_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
     provincial_credit_estimate = Column(DECIMAL(15, 2), nullable=True)
 
-    # Project-specific fields (for AI context in T661 generation)
-    project_title = Column(String(255), nullable=True)  # e.g., "ML-Based Fraud Detection Algorithm"
-    project_objective = Column(Text, nullable=True)  # 1-2 sentences describing the technical goal
-    technology_focus = Column(String(500), nullable=True)  # Specific tech area, keywords
-
     # Lead consultant
     lead_consultant_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
@@ -155,6 +150,7 @@ class Claim(Base):
     updated_by_user = relationship("User", foreign_keys=[updated_by])
     claim_access = relationship("ClaimAccess", back_populates="claim", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="claim", cascade="all, delete-orphan")
+    projects = relationship("Project", back_populates="claim", cascade="all, delete-orphan")
 
 class ClaimAccess(Base):
     """User access control for claims"""
@@ -291,12 +287,17 @@ class Document(Base):
     ai_summary = Column(Text, nullable=True)
     ai_summary_generated_at = Column(DateTime(timezone=True), nullable=True)
 
+    # SR&ED Signal Detection (Phase 2)
+    sred_signals = Column(JSON, nullable=True)  # {uncertainty_keywords, systematic_keywords, failure_keywords, novel_keywords, score}
+    temporal_metadata = Column(JSON, nullable=True)  # {date_references, team_members, project_names, organizations, technical_terms}
+    upload_batch_id = Column(UUID(as_uuid=True), ForeignKey("document_upload_batches.id"), nullable=True)
+
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    
+
     # Relationships
     company = relationship("Company")
     claim = relationship("Claim", back_populates="documents")
@@ -306,6 +307,8 @@ class Document(Base):
     created_by_user = relationship("User", foreign_keys=[created_by])
     updated_by_user = relationship("User", foreign_keys=[updated_by])
     chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+    project_tags = relationship("DocumentProjectTag", back_populates="document", cascade="all, delete-orphan")
+    upload_batch = relationship("DocumentUploadBatch")
 
 class DocumentChunk(Base):
     """Document chunks for RAG vector search"""
@@ -328,6 +331,9 @@ class DocumentChunk(Base):
     start_char = Column(Integer, nullable=True)
     end_char = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # SR&ED Signal Detection (Phase 2)
+    sred_keyword_matches = Column(JSON, nullable=True)  # {uncertainty: [], systematic: [], failure: [], advancement: []}
 
     # Relationships
     document = relationship("Document", back_populates="chunks")
@@ -389,6 +395,12 @@ class Conversation(Base):
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Workspace fields (for project_workspace conversations)
+    conversation_type = Column(String(50), default="general")  # "general" | "project_workspace"
+    workspace_md = Column(Text, nullable=True)  # Markdown content for project workspace
+    last_discovery_at = Column(DateTime(timezone=True), nullable=True)  # Last discovery run timestamp
+    known_document_ids = Column(JSON, nullable=True)  # Document IDs at last discovery (for change detection)
 
     # Relationships
     user = relationship("User")
@@ -707,3 +719,162 @@ class FeedbackAlert(Base):
 
     # Relationships
     company = relationship("Company")
+
+
+# =====================
+# Project Discovery Models
+# =====================
+
+class DocumentUploadBatch(Base):
+    """Track document upload batches for change detection"""
+    __tablename__ = "document_upload_batches"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id", ondelete="CASCADE"), nullable=False)
+
+    # Batch info
+    batch_number = Column(Integer, nullable=True)
+    document_count = Column(Integer, nullable=True)
+    total_size_bytes = Column(BigInteger, nullable=True)
+
+    # Analysis status
+    analyzed = Column(Boolean, default=False)
+    analysis_run_id = Column(UUID(as_uuid=True), ForeignKey("project_discovery_runs.id"), nullable=True)
+
+    # Impact summary
+    impact_summary = Column(JSON, nullable=True)
+
+    # Audit
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    claim = relationship("Claim")
+    analysis_run = relationship("ProjectDiscoveryRun")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+
+
+class Project(Base):
+    """SR&ED R&D project within a claim"""
+    __tablename__ = "projects"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id", ondelete="CASCADE"), nullable=False)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+
+    # Project Identity
+    project_name = Column(String(255), nullable=False)
+    project_code = Column(String(50), nullable=True)
+
+    # SR&ED Classification
+    sred_confidence_score = Column(DECIMAL(3, 2), nullable=True)
+    project_status = Column(String(50), default="discovered")  # discovered, user_reviewed, approved, rejected, merged
+
+    # Discovery Metadata
+    discovery_method = Column(String(50), nullable=True)  # ai_clustering, user_created, manual
+    ai_suggested = Column(Boolean, default=False)
+    user_confirmed = Column(Boolean, default=False)
+
+    # Temporal Info
+    project_start_date = Column(Date, nullable=True)
+    project_end_date = Column(Date, nullable=True)
+
+    # Team Info
+    team_members = Column(ARRAY(String), nullable=True)
+    team_size = Column(Integer, nullable=True)
+
+    # Financial
+    estimated_spend = Column(DECIMAL(15, 2), nullable=True)
+    eligible_expenditures = Column(DECIMAL(15, 2), nullable=True)
+
+    # SR&ED Signals (aggregated from documents)
+    uncertainty_signal_count = Column(Integer, default=0)
+    systematic_signal_count = Column(Integer, default=0)
+    failure_signal_count = Column(Integer, default=0)
+    advancement_signal_count = Column(Integer, default=0)
+
+    # AI-Generated Summaries
+    ai_summary = Column(Text, nullable=True)
+    uncertainty_summary = Column(Text, nullable=True)
+    work_summary = Column(Text, nullable=True)
+    advancement_summary = Column(Text, nullable=True)
+
+    # Narrative Status
+    narrative_status = Column(String(50), default="not_started")  # not_started, draft, complete, needs_revision
+    narrative_line_242 = Column(Text, nullable=True)
+    narrative_line_244 = Column(Text, nullable=True)
+    narrative_line_246 = Column(Text, nullable=True)
+    narrative_word_count_242 = Column(Integer, nullable=True)
+    narrative_word_count_244 = Column(Integer, nullable=True)
+    narrative_word_count_246 = Column(Integer, nullable=True)
+
+    # Audit
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    claim = relationship("Claim", back_populates="projects")
+    company = relationship("Company")
+    document_tags = relationship("DocumentProjectTag", back_populates="project", cascade="all, delete-orphan")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+    updated_by_user = relationship("User", foreign_keys=[updated_by])
+
+
+class DocumentProjectTag(Base):
+    """Many-to-many relationship between documents and projects"""
+    __tablename__ = "document_project_tags"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+
+    # Tag metadata
+    tagged_by = Column(String(50), nullable=False)  # 'ai' or 'user'
+    confidence_score = Column(DECIMAL(3, 2), nullable=True)
+
+    # Granular tagging (for multi-project documents)
+    page_ranges = Column(Text, nullable=True)  # JSON string
+    relevance_notes = Column(Text, nullable=True)
+
+    # Audit
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    document = relationship("Document", back_populates="project_tags")
+    project = relationship("Project", back_populates="document_tags")
+    created_by_user = relationship("User", foreign_keys=[created_by])
+
+
+class ProjectDiscoveryRun(Base):
+    """Track project discovery executions"""
+    __tablename__ = "project_discovery_runs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id", ondelete="CASCADE"), nullable=False)
+
+    # Discovery parameters
+    total_documents_analyzed = Column(Integer, nullable=True)
+    discovery_algorithm = Column(String(50), nullable=True)
+    parameters = Column(JSON, nullable=True)
+
+    # Results
+    projects_discovered = Column(Integer, nullable=True)
+    high_confidence_count = Column(Integer, nullable=True)
+    medium_confidence_count = Column(Integer, nullable=True)
+    low_confidence_count = Column(Integer, nullable=True)
+
+    # Execution
+    execution_time_seconds = Column(DECIMAL(10, 2), nullable=True)
+    status = Column(String(50), nullable=True)  # running, completed, failed
+    error_message = Column(Text, nullable=True)
+
+    # Audit
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    claim = relationship("Claim")
+    created_by_user = relationship("User", foreign_keys=[created_by])

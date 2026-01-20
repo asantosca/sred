@@ -20,10 +20,6 @@ export interface Claim {
   total_eligible_expenditures?: number | null
   federal_credit_estimate?: number | null
   provincial_credit_estimate?: number | null
-  // Project-specific fields (for AI context in T661 generation)
-  project_title?: string | null
-  project_objective?: string | null
-  technology_focus?: string | null
   // Audit fields
   created_at: string
   created_by: string
@@ -47,10 +43,6 @@ export interface ClaimCreate {
   fiscal_year_end?: string | null
   naics_code?: string | null
   cra_business_number?: string | null
-  // Project-specific fields (for AI context in T661 generation)
-  project_title?: string | null
-  project_objective?: string | null
-  technology_focus?: string | null
 }
 
 export interface ClaimUpdate {
@@ -68,10 +60,6 @@ export interface ClaimUpdate {
   total_eligible_expenditures?: number | null
   federal_credit_estimate?: number | null
   provincial_credit_estimate?: number | null
-  // Project-specific fields (for AI context in T661 generation)
-  project_title?: string | null
-  project_objective?: string | null
-  technology_focus?: string | null
 }
 
 export interface ClaimListResponse {

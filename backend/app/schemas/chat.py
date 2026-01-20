@@ -121,6 +121,7 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[UUID] = Field(None, description="Existing conversation ID, or None to create new")
     message: str = Field(..., min_length=1, max_length=10000, description="User's message")
     matter_id: Optional[UUID] = Field(None, description="Matter to scope search to (for new conversations)")
+    project_id: Optional[UUID] = Field(None, description="Project to scope search to (limits RAG to project documents)")
     include_sources: bool = Field(True, description="Whether to include source citations")
     max_context_chunks: int = Field(5, ge=1, le=20, description="Max document chunks to use for context")
     similarity_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Minimum similarity for context retrieval")

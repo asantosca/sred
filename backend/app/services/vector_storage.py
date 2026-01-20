@@ -483,6 +483,7 @@ class VectorStorageService:
         query_embedding: List[float],
         company_id: UUID,
         matter_id: Optional[UUID] = None,
+        project_id: Optional[UUID] = None,
         limit: int = 10,
         similarity_threshold: float = 0.8
     ) -> List[dict]:
@@ -493,6 +494,7 @@ class VectorStorageService:
             query_embedding: The query vector to search for
             company_id: Company ID for tenant isolation (REQUIRED)
             matter_id: Optional matter ID to further filter results
+            project_id: Optional project ID to filter to project documents only
             limit: Maximum number of results to return
             similarity_threshold: Minimum similarity score (0-1, where 1 is identical)
 
@@ -508,7 +510,30 @@ class VectorStorageService:
                 # Filter by: distance < (1 - threshold) * 2
                 max_distance = (1 - similarity_threshold) * 2
 
-                if matter_id:
+                if project_id:
+                    # Filter by project (documents tagged to this project)
+                    query = """
+                        SELECT
+                            dc.id,
+                            dc.document_id,
+                            dc.content,
+                            dc.chunk_index,
+                            1 - (dc.embedding <=> $1::vector(1536)) / 2 as similarity
+                        FROM sred_ds.document_chunks dc
+                        JOIN sred_ds.documents d ON d.id = dc.document_id
+                        JOIN sred_ds.claims m ON m.id = d.claim_id
+                        JOIN sred_ds.document_project_tags dpt ON dpt.document_id = d.id
+                        WHERE m.company_id = $2
+                        AND dpt.project_id = $3
+                        AND dc.embedding IS NOT NULL
+                        AND dc.embedding <=> $1::vector(1536) < $4
+                        ORDER BY dc.embedding <=> $1::vector(1536)
+                        LIMIT $5
+                    """
+                    rows = await conn.fetch(
+                        query, query_embedding, company_id, project_id, max_distance, limit
+                    )
+                elif matter_id:
                     # Filter by both company_id AND matter_id
                     query = """
                         SELECT

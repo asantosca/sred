@@ -1,12 +1,15 @@
 // Documents page with upload and management
 
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import DocumentUpload from '@/components/documents/DocumentUpload'
 import DocumentList from '@/components/documents/DocumentList'
 import { Upload, FileText, X } from 'lucide-react'
 
 export default function DocumentsPage() {
+  const [searchParams] = useSearchParams()
+  const claimIdFromUrl = searchParams.get('claim')
   const [showUpload, setShowUpload] = useState(false)
 
   return (
@@ -58,7 +61,7 @@ export default function DocumentsPage() {
         )}
 
         {/* Document list */}
-        <DocumentList />
+        <DocumentList claimId={claimIdFromUrl || undefined} />
       </div>
     </DashboardLayout>
   )

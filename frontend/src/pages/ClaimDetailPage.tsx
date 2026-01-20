@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { claimsApi, documentsApi, billableApi } from '@/lib/api'
+import { claimsApi, documentsApi, billableApi, workspaceApi } from '@/lib/api'
 import { Claim } from '@/types/claims'
-import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, MessageSquare, Clock, History, DollarSign, Pencil, ClipboardList } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Calendar, Briefcase, X, Trash2, AlertTriangle, Clock, History, DollarSign, Pencil, FileEdit, Play } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import DocumentUpload from '@/components/documents/DocumentUpload'
-import T661DraftModal from '@/components/t661/T661DraftModal'
 
 export default function ClaimDetailPage() {
   const { claimId } = useParams<{ claimId: string }>()
@@ -23,15 +22,46 @@ export default function ClaimDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [unbilledCount, setUnbilledCount] = useState<number>(0)
-  const [showT661Modal, setShowT661Modal] = useState(false)
+  const [isDiscovering, setIsDiscovering] = useState(false)
+  const [hasWorkspace, setHasWorkspace] = useState(false)
 
   useEffect(() => {
     if (claimId) {
       fetchClaimDetails()
       fetchClaimDocuments()
       fetchUnbilledCount()
+      checkWorkspaceStatus()
     }
   }, [claimId])
+
+  const checkWorkspaceStatus = async () => {
+    try {
+      const response = await workspaceApi.get(claimId!)
+      // Has workspace if there's markdown content
+      setHasWorkspace(!!response.data.workspace_md && response.data.workspace_md.length > 0)
+    } catch (err) {
+      setHasWorkspace(false)
+    }
+  }
+
+  const handleRunDiscovery = async () => {
+    if (!claimId) return
+    try {
+      setIsDiscovering(true)
+      await workspaceApi.discover(claimId, {
+        discovery_mode: 'sred_first',
+        generate_narratives: true,
+        min_cluster_size: 3,
+      })
+      // Navigate to workspace after discovery
+      navigate(`/claims/${claimId}/workspace`)
+    } catch (err: any) {
+      console.error('Discovery failed:', err)
+      setError(err.response?.data?.detail || 'Failed to run discovery')
+    } finally {
+      setIsDiscovering(false)
+    }
+  }
 
   const fetchClaimDetails = async () => {
     try {
@@ -359,19 +389,26 @@ export default function ClaimDetailPage() {
               <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate(`/chat?matter=${claimId}`)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-md font-medium"
+                  onClick={handleRunDiscovery}
+                  disabled={isDiscovering || documents.length === 0}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  Chat about this Claim
+                  {isDiscovering ? (
+                    <div className="h-4 w-4 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                  {isDiscovering ? 'Running Discovery...' : 'Run Discovery'}
                 </button>
-                <button
-                  onClick={() => setShowT661Modal(true)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md font-medium"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Generate T661 Draft
-                </button>
+                {hasWorkspace && (
+                  <button
+                    onClick={() => navigate(`/claims/${claimId}/workspace`)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md font-medium"
+                  >
+                    <FileEdit className="h-4 w-4" />
+                    View Workspace
+                  </button>
+                )}
                 <button
                   onClick={() => setShowUpload(true)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
@@ -380,11 +417,11 @@ export default function ClaimDetailPage() {
                   Upload Document
                 </button>
                 <button
-                  onClick={() => navigate(`/documents?matter=${claimId}`)}
+                  onClick={() => navigate(`/documents?claim=${claimId}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
                 >
                   <FileText className="h-4 w-4" />
-                  View All Documents
+                  View Documents
                 </button>
                 <button
                   onClick={() => navigate(`/timeline?matter_id=${claimId}`)}
@@ -471,15 +508,6 @@ export default function ClaimDetailPage() {
           )}
         </div>
       </div>
-
-      {/* T661 Draft Modal */}
-      <T661DraftModal
-        isOpen={showT661Modal}
-        onClose={() => setShowT661Modal(false)}
-        claimId={claimId!}
-        companyName={claim.company_name}
-        claimNumber={claim.claim_number}
-      />
     </DashboardLayout>
   )
 }

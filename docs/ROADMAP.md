@@ -63,16 +63,33 @@ _Demonstrate core value proposition to PwC_
 - [ ] Project timeline with R&D milestones
 - [ ] Five-question test analysis
 
+### Project Discovery & Workspace (NEW)
+- [x] Automated project discovery from uploaded documents
+- [x] SR&ED signal detection (uncertainty, systematic, advancement keywords)
+- [x] Entity extraction (team members, project names, dates)
+- [x] HDBSCAN clustering for document grouping (with fallback for missing embeddings)
+- [x] Confidence scoring for discovered projects (high/medium/low)
+- [x] Markdown workspace with split view (editor + chat)
+- [x] AI-generated T661 narratives (Lines 242, 244, 246) per project
+- [x] Summary statistics dashboard (signal strength, review status)
+- [x] Status indicators (Ready for T661 / Needs Review)
+- [x] Workspace chat for AI-assisted editing
+
 ### UI/UX Improvements
 - [x] Consistent terminology (Claims, not Matters) throughout frontend
 - [x] Document upload from claim detail page auto-selects claim
 - [x] Celery worker queue configuration for document processing
+- [x] Streamlined claim detail page with focused quick actions
+- [x] Run Discovery button on claim page (navigates to workspace)
+- [x] View Workspace button (appears after discovery run)
+- [x] View Documents button with claim filtering
+- [x] Removed redundant UI elements (old discovery dashboard, T661 modal, chat button)
 
 ### POC Deliverables
 - [ ] Demo environment for PwC evaluation
 - [ ] Sample claims with test documents
 - [ ] Eligibility report examples
-- [ ] T661 draft examples
+- [x] T661 draft examples (via workspace narratives)
 
 ---
 

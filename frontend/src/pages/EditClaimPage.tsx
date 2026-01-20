@@ -35,10 +35,6 @@ const editClaimSchema = z.object({
   opened_date: z.string().min(1, 'Opened date is required'),
   closed_date: z.string().optional(),
   fiscal_year_end: z.string().min(1, 'Fiscal year end is required'),
-  // Project context fields (for AI guidance in T661 generation)
-  project_title: z.string().optional(),
-  project_objective: z.string().optional(),
-  technology_focus: z.string().optional(),
 }).refine(
   (data) => {
     if (!data.fiscal_year_end) return true
@@ -121,9 +117,6 @@ export default function EditClaimPage() {
         opened_date: claimData.opened_date.split('T')[0],
         closed_date: claimData.closed_date?.split('T')[0] || '',
         fiscal_year_end: claimData.fiscal_year_end?.split('T')[0] || '',
-        project_title: claimData.project_title || '',
-        project_objective: claimData.project_objective || '',
-        technology_focus: claimData.technology_focus || '',
       })
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load claim')
@@ -142,9 +135,6 @@ export default function EditClaimPage() {
         closed_date: data.closed_date || null,
         description: data.description || null,
         fiscal_year_end: data.fiscal_year_end || null,
-        project_title: data.project_title || null,
-        project_objective: data.project_objective || null,
-        technology_focus: data.technology_focus || null,
       }
 
       await claimsApi.update(claimId!, submitData)
@@ -297,46 +287,6 @@ export default function EditClaimPage() {
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
               )}
-            </div>
-
-            {/* Project Context Section - for AI Guidance */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Project Context</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                These fields help the AI focus on the specific R&D project when generating T661 drafts from your documents.
-              </p>
-
-              <div className="space-y-4">
-                <Input
-                  label="Project Title"
-                  type="text"
-                  placeholder="e.g., ML-Based Fraud Detection Algorithm"
-                  helperText="Short name for the specific R&D project"
-                  {...register('project_title')}
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project Objective
-                    <span className="text-gray-500 font-normal ml-1">(Optional)</span>
-                  </label>
-                  <textarea
-                    {...register('project_objective')}
-                    rows={2}
-                    placeholder="e.g., Develop a neural network that reduces false positives in transaction fraud detection by 40%"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">1-2 sentences describing the technical goal</p>
-                </div>
-
-                <Input
-                  label="Technology Focus"
-                  type="text"
-                  placeholder="e.g., Machine learning, anomaly detection, real-time processing"
-                  helperText="Specific technology area and keywords to help AI filter relevant content"
-                  {...register('technology_focus')}
-                />
-              </div>
             </div>
 
             {/* Fiscal Year End - Critical for SR&ED */}

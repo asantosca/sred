@@ -20,6 +20,8 @@ from app.services.chunking import chunking_service
 from app.services.embeddings import embedding_service
 from app.services.vector_storage import vector_storage_service
 from app.services.usage_logging import usage_logging_service
+from app.services.sred_signal_detector import sred_signal_detector
+from app.services.entity_extractor import entity_extractor
 
 logger = logging.getLogger(__name__)
 
@@ -364,6 +366,156 @@ class DocumentProcessor:
             await self.db.rollback()
             return False
 
+    async def process_sred_signals(self, document_id: UUID, company_id: UUID) -> bool:
+        """
+        Detect SR&ED eligibility signals in document text.
+
+        Extracts:
+        - SR&ED keyword signals (uncertainty, systematic, failure, advancement)
+        - Temporal metadata (dates, project names, team members)
+
+        Can be run after text extraction. Updates document.sred_signals and
+        document.temporal_metadata fields.
+
+        Args:
+            document_id: UUID of the document to process
+            company_id: Company ID for tenant isolation (REQUIRED)
+
+        Returns:
+            True if signal detection succeeded, False otherwise
+        """
+        try:
+            # Get document from database with tenant isolation
+            query = (
+                select(Document)
+                .join(Matter, Document.claim_id == Matter.id)
+                .where(Document.id == document_id)
+                .where(Matter.company_id == company_id)  # Tenant isolation
+            )
+            result = await self.db.execute(query)
+            document = result.scalar_one_or_none()
+
+            if not document:
+                logger.error(f"Document {document_id} not found or access denied for company {company_id}")
+                return False
+
+            # Check if text has been extracted
+            if not document.text_extracted or not document.extracted_text:
+                logger.error(f"Document {document_id} has no extracted text for signal detection")
+                return False
+
+            # Skip if already processed (has signals)
+            if document.sred_signals and document.sred_signals.get('score') is not None:
+                logger.info(f"Document {document_id} already has SR&ED signals, skipping")
+                return True
+
+            logger.info(f"Detecting SR&ED signals for document {document_id} ({document.filename})")
+
+            # Detect SR&ED signals at document level
+            signals = sred_signal_detector.detect_signals(document.extracted_text)
+
+            # Extract temporal metadata and entities
+            entities = entity_extractor.extract_entities(document.extracted_text)
+
+            # Store results in document
+            document.sred_signals = signals.to_dict()
+            document.temporal_metadata = entities.to_dict()
+
+            await self.db.commit()
+            await self.db.refresh(document)
+
+            logger.info(
+                f"Successfully detected SR&ED signals for document {document_id}: "
+                f"score={signals.score:.2f}, "
+                f"uncertainty={signals.uncertainty_count}, "
+                f"systematic={signals.systematic_count}, "
+                f"failure={signals.failure_count}, "
+                f"advancement={signals.advancement_count}"
+            )
+
+            return True
+
+        except Exception as e:
+            logger.error(
+                f"Error detecting SR&ED signals for document {document_id}: {str(e)}",
+                exc_info=True
+            )
+            await self.db.rollback()
+            return False
+
+    async def process_chunk_sred_signals(self, document_id: UUID, company_id: UUID) -> bool:
+        """
+        Detect SR&ED signals at the chunk level for a document.
+
+        Updates each DocumentChunk.sred_keyword_matches field.
+        Should be run after chunking.
+
+        Args:
+            document_id: UUID of the document
+            company_id: Company ID for tenant isolation (REQUIRED)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Get document with tenant isolation
+            query = (
+                select(Document)
+                .join(Matter, Document.claim_id == Matter.id)
+                .where(Document.id == document_id)
+                .where(Matter.company_id == company_id)
+            )
+            result = await self.db.execute(query)
+            document = result.scalar_one_or_none()
+
+            if not document:
+                logger.error(f"Document {document_id} not found or access denied")
+                return False
+
+            # Get all chunks for this document
+            chunks_query = select(DocumentChunk).where(
+                DocumentChunk.document_id == document_id
+            ).order_by(DocumentChunk.chunk_index)
+            chunks_result = await self.db.execute(chunks_query)
+            chunks = chunks_result.scalars().all()
+
+            if not chunks:
+                logger.warning(f"No chunks found for document {document_id}")
+                return False
+
+            # Detect signals for each chunk
+            updated_count = 0
+            for chunk in chunks:
+                # Skip if already has signals
+                if chunk.sred_keyword_matches:
+                    continue
+
+                signals = sred_signal_detector.detect_signals(chunk.content)
+                chunk.sred_keyword_matches = {
+                    "uncertainty": signals.keyword_matches["uncertainty"],
+                    "systematic": signals.keyword_matches["systematic"],
+                    "failure": signals.keyword_matches["failure"],
+                    "advancement": signals.keyword_matches["advancement"],
+                    "score": round(signals.score, 4)
+                }
+                updated_count += 1
+
+            await self.db.commit()
+
+            logger.info(
+                f"Updated SR&ED signals for {updated_count}/{len(chunks)} chunks "
+                f"of document {document_id}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(
+                f"Error processing chunk SR&ED signals for document {document_id}: {str(e)}",
+                exc_info=True
+            )
+            await self.db.rollback()
+            return False
+
     async def get_document_status(self, document_id: UUID, company_id: UUID) -> Optional[dict]:
         """
         Get processing status for a document with tenant isolation.
@@ -400,7 +552,9 @@ class DocumentProcessor:
             'ocr_applied': document.ocr_applied,
             'ocr_engine': document.ocr_engine,
             'ocr_pages_processed': document.ocr_pages_processed,
-            'ocr_confidence_avg': document.ocr_confidence_avg
+            'ocr_confidence_avg': document.ocr_confidence_avg,
+            'sred_signals': document.sred_signals,
+            'temporal_metadata': document.temporal_metadata
         }
 
 

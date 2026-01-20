@@ -26,6 +26,7 @@ import { UsersPage } from '@/pages/UsersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import BillablePage from '@/pages/BillablePage'
 import TimelinePage from '@/pages/TimelinePage'
+import WorkspacePage from '@/pages/WorkspacePage'
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -132,6 +133,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditClaimPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/claims/:claimId/workspace"
+            element={
+              <ProtectedRoute>
+                <WorkspacePage />
               </ProtectedRoute>
             }
           />

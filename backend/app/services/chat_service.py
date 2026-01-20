@@ -145,6 +145,7 @@ class ChatService:
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
             matter_id=conversation.claim_id,
+            project_id=request.project_id,
             max_chunks=request.max_context_chunks,
             similarity_threshold=request.similarity_threshold,
             user=current_user
@@ -316,6 +317,7 @@ class ChatService:
         context_chunks, sources = await self._retrieve_context(
             query=request.message,
             matter_id=conversation.claim_id,
+            project_id=request.project_id,
             max_chunks=request.max_context_chunks,
             similarity_threshold=request.similarity_threshold,
             user=current_user
@@ -966,18 +968,20 @@ Summary:"""
         matter_id: Optional[UUID],
         max_chunks: int,
         similarity_threshold: float,
-        user: User
+        user: User,
+        project_id: Optional[UUID] = None
     ) -> tuple[List[Dict], List[MessageSource]]:
         """
         Retrieve relevant document chunks using semantic search.
 
-        In Discovery mode (matter_id is None), no RAG context is retrieved.
+        In Discovery mode (matter_id is None and project_id is None), no RAG context is retrieved.
+        If project_id is provided, search is scoped to documents tagged with that project.
 
         Returns:
             (context_chunks, message_sources)
         """
         # Discovery mode - no RAG, just general AI assistance
-        if matter_id is None:
+        if matter_id is None and project_id is None:
             logger.info("Discovery mode: skipping RAG retrieval")
             return [], []
 
@@ -999,11 +1003,16 @@ Summary:"""
             db=self.db
         )
 
+        # Log project-scoped search
+        if project_id:
+            logger.info(f"Project-scoped RAG search for project {project_id}")
+
         # Perform vector similarity search (filtered by company_id at database level)
         search_results = await vector_storage_service.similarity_search(
             query_embedding=query_embedding,
             company_id=user.company_id,
             matter_id=matter_id,
+            project_id=project_id,
             limit=max_chunks,
             similarity_threshold=similarity_threshold
         )
