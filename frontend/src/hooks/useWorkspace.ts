@@ -134,10 +134,9 @@ export function useWorkspaceChat(claimId: string | undefined) {
         }
       }
 
-      // Invalidate workspace query if it was edited
-      if (workspaceWasEdited) {
-        queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(claimId) })
-      }
+      // Always invalidate workspace query to refresh messages
+      // (even if workspace wasn't edited, the new messages need to be fetched)
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(claimId) })
 
       return { messageId, content, workspaceWasEdited }
 
